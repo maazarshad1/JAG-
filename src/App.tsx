@@ -17,6 +17,7 @@ import {
   Settings, 
   ChevronRight, 
   ChevronDown, 
+  ChevronUp,
   Plus, 
   Search, 
   ArrowLeft, 
@@ -35,9 +36,27 @@ import {
   Edit2,
   Pencil,
   Trash2,
-  Check
+  Check,
+  TrendingUp,
+  TrendingDown,
+  ArrowUpRight,
+  ArrowDownRight,
+  FileText,
+  Users,
+  Wallet,
+  Building2,
+  LineChart as LineChartIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from 'recharts';
 import { View, Estimate, EstimateStatus, Item, CompanyData } from './types';
 
 export default function App() {
@@ -45,7 +64,7 @@ export default function App() {
     console.log("App Component Mounted. Current path:", window.location.pathname);
   }, []);
 
-  const [currentView, setCurrentView] = useState<View>('MENU');
+  const [currentView, setCurrentView] = useState<View>('HOME');
   const [companyData, setCompanyData] = useState<CompanyData>({
     name: 'Jawad Aluminium and Glass Works',
     email: 'jawadaluminium786@gmail.com',
@@ -80,8 +99,24 @@ export default function App() {
   const navigate = (view: View) => setCurrentView(view);
 
   return (
-    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 pb-20 overflow-x-hidden">
+    <div className={`min-h-screen bg-slate-100 font-sans text-slate-900 ${['HOME', 'ESTIMATE_LIST', 'MENU'].includes(currentView) ? 'pb-[120px]' : ''} overflow-x-hidden`}>
+      {['HOME', 'ESTIMATE_LIST', 'MENU'].includes(currentView) && (
+        <BottomNav currentView={currentView} onNavigate={navigate} />
+      )}
       <AnimatePresence mode="wait">
+        {currentView === 'HOME' && (
+          <motion.div 
+            key="home"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <HomeView 
+              onNavigateToEstimates={() => navigate('ESTIMATE_LIST')} 
+              onNavigateToSettings={() => navigate('PROFILE_EDIT')}
+            />
+          </motion.div>
+        )}
         {currentView === 'MENU' && (
           <motion.div 
             key="menu"
@@ -221,44 +256,260 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
-      <BottomNav currentView={currentView} onNavigate={navigate} />
     </div>
   );
 }
 
 // Layout components
 const BottomNav = ({ currentView, onNavigate }: { currentView: View, onNavigate: (view: View) => void }) => (
-  <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-2 px-1 z-50">
-    <button onClick={() => onNavigate('MENU')} className={`flex flex-col items-center gap-1 text-[10px] ${currentView === 'MENU' ? 'text-blue-600' : 'text-slate-500'} hover:text-blue-600 transition-colors`}>
-      <Home size={20} />
+  <div className="fixed bottom-0 left-0 right-0 h-[64px] bg-white border-t border-slate-200 flex justify-between items-center px-4 z-[100] shadow-[0_-4px_16px_rgba(0,0,0,0.02)]">
+    <button onClick={() => onNavigate('HOME')} className={`flex flex-col items-center justify-center w-16 h-full gap-1 text-[10px] font-semibold transition-all ${currentView === 'HOME' ? 'text-indigo-600 scale-105' : 'text-slate-400 hover:text-slate-600'}`}>
+      <Home size={22} className={currentView === 'HOME' ? 'fill-indigo-100' : ''} />
       <span>HOME</span>
     </button>
-    <button className="flex flex-col items-center gap-1 text-[10px] text-slate-500 hover:text-blue-600 transition-colors">
-      <LayoutDashboard size={20} />
+    <button onClick={() => alert("Dashboard is coming soon!")} className="flex flex-col items-center justify-center w-16 h-full gap-1 text-[10px] font-semibold text-slate-400 hover:text-slate-600 transition-all">
+      <LayoutDashboard size={22} />
       <span>DASHBOARD</span>
     </button>
-    <button className="flex flex-col items-center gap-1 text-[10px] text-slate-500 hover:text-blue-600 transition-colors">
-      <Box size={20} />
+    <button onClick={() => onNavigate('ESTIMATE_LIST')} className={`flex flex-col items-center justify-center w-16 h-full gap-1 text-[10px] font-semibold transition-all ${currentView === 'ESTIMATE_LIST' ? 'text-indigo-600 scale-105' : 'text-slate-400 hover:text-slate-600'}`}>
+      <ClipboardList size={22} className={currentView === 'ESTIMATE_LIST' ? 'fill-indigo-100' : ''} />
+      <span>ESTIMATES</span>
+    </button>
+    <button onClick={() => alert("Inventory Items coming soon!")} className="flex flex-col items-center justify-center w-16 h-full gap-1 text-[10px] font-semibold text-slate-400 hover:text-slate-600 transition-all">
+      <Box size={22} />
       <span>ITEMS</span>
     </button>
-    <button onClick={() => onNavigate('MENU')} className={`flex flex-col items-center gap-1 text-[10px] ${currentView === 'MENU' ? 'text-blue-600' : 'text-slate-500'}`}>
-      <MenuIcon size={20} />
+    <button onClick={() => onNavigate('MENU')} className={`flex flex-col items-center justify-center w-16 h-full gap-1 text-[10px] font-semibold transition-all ${currentView === 'MENU' ? 'text-indigo-600 scale-105' : 'text-slate-400 hover:text-slate-600'}`}>
+      <MenuIcon size={22} />
       <span>MENU</span>
-    </button>
-    <button className="flex flex-col items-center gap-1 text-[10px] text-slate-500 hover:text-blue-600 transition-colors">
-      <div className="relative">
-        <Monitor size={20} />
-        <div className="absolute -top-1 -right-1 flex gap-0.5">
-          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
-          <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-        </div>
-      </div>
-      <span>GET DESKTOP</span>
     </button>
   </div>
 );
 
 // --- VIEW COMPONENTS ---
+
+function HomeView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateToEstimates: () => void, onNavigateToSettings?: () => void }) {
+  const chartData = [
+    { name: 'Feb', sales: 0 },
+    { name: 'Mar', sales: 0 },
+    { name: 'Apr', sales: 0 },
+  ];
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }}
+      className="flex flex-col h-full bg-slate-100 pb-[100px]"
+    >
+      {/* Header */}
+      <div className="bg-white px-4 py-3 flex items-center justify-between border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-indigo-600 rounded flex items-center justify-center p-1 shadow-sm">
+            <span className="text-white font-bold text-lg">J</span>
+          </div>
+          <div>
+            <span className="font-bold text-xl tracking-tight text-slate-900 uppercase">J.A.G. Business</span>
+            <p className="text-[10px] text-slate-500 font-medium">PKR • Full Featured</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 text-slate-500">
+          <div className="relative p-2 hover:bg-slate-100 rounded-full cursor-pointer transition-colors">
+            <Bell size={22} />
+            <div className="absolute top-2 right-2 w-2 h-2 bg-indigo-600 rounded-full border border-white" />
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-6">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Total Sale</p>
+            <p className="text-2xl font-bold text-slate-900">Rs 0</p>
+            <div className="text-[10px] text-emerald-600 font-bold mt-1 flex items-center gap-1">
+              <TrendingUp size={12} /> 0%
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Total Purchase</p>
+            <p className="text-2xl font-bold text-slate-900">Rs 0</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Expenses (Apr)</p>
+            <p className="text-2xl font-bold text-slate-900">Rs 0</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">You'll Get</p>
+            <p className="text-2xl font-bold text-emerald-600">Rs 0</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">You'll Give</p>
+            <p className="text-2xl font-bold text-rose-500">Rs 0</p>
+          </div>
+        </div>
+
+        {/* Quick Actions Bar */}
+        <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 p-3 flex flex-wrap items-center gap-2 shadow-sm">
+          <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full cursor-pointer uppercase tracking-widest shadow-sm">
+            🔥 60% OFF
+          </div>
+          <button onClick={() => alert("Added Sale functionality coming soon!")} className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
+            <Plus size={16} /> Add Sale
+          </button>
+          <button className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
+            <FileText size={16} /> Sale Report
+          </button>
+          <button className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
+            <Building2 size={16} /> Show All
+          </button>
+          <button className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
+            <Box size={16} /> Stock Summary
+          </button>
+          <button onClick={onNavigateToEstimates} className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 ml-auto shadow-sm">
+            <ClipboardList size={16} /> Estimates
+          </button>
+        </div>
+
+        {/* 3 Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Column 1: Transaction & Party Details */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold flex items-center gap-2 text-slate-800">
+                  <FileText className="text-indigo-500" size={18} />
+                  Transaction Details
+                </h3>
+                <button className="text-indigo-600 text-xs font-bold hover:underline">Edit</button>
+              </div>
+              <div className="mt-3 flex justify-between items-start">
+                <div>
+                  <p className="font-bold text-slate-900">—</p>
+                  <p className="text-[11px] font-medium text-slate-400 mt-0.5">No sale yet</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-black text-slate-900">Rs 0</p>
+                </div>
+              </div>
+              <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl mt-4 flex justify-between items-center">
+                <span className="text-xs font-semibold text-slate-600">Remaining Balance</span>
+                <span className="font-bold text-amber-600">Rs 0</span>
+              </div>
+              <button onClick={() => alert("Added Sale functionality coming soon!")} className="mt-5 w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] transition-all text-white py-3 rounded-xl font-bold shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2">
+                <Plus size={18} /> Add New Sale
+              </button>
+              <button className="mt-3 w-full border-2 border-indigo-100 hover:border-indigo-200 hover:bg-indigo-50 transition-colors text-indigo-700 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2">
+                <FileText size={18} /> Generate Invoice
+              </button>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+                <h3 className="font-bold flex items-center gap-2 text-slate-800">
+                  <Users className="text-indigo-500" size={18} />
+                  Party Details
+                </h3>
+                <button onClick={onNavigateToSettings} className="text-indigo-600 text-xs font-bold hover:underline flex items-center gap-1">
+                  <Edit2 size={12} /> Edit Profile
+                </button>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-black text-xl shadow-inner">
+                  ?
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900">—</p>
+                  <p className="text-xs text-slate-500 mt-0.5 font-medium">—</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">—</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Column 2: Items Preview & Bank */}
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <div className="bg-slate-50 border border-slate-200 border-dashed p-4 text-center rounded-xl text-slate-400 text-sm font-medium">
+                No items in inventory
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold flex items-center gap-2 text-slate-800">
+                  <Wallet className="text-indigo-500" size={18} />
+                  Cash & Bank
+                </h3>
+                <button className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-3 py-1 rounded-full hover:bg-slate-200 transition-colors">
+                  Manage
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl hover:border-indigo-100 transition-colors cursor-default">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Bank</p>
+                  <p className="font-black text-slate-800">Rs 0</p>
+                </div>
+                <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl hover:border-indigo-100 transition-colors cursor-default">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Cash</p>
+                  <p className="font-black text-slate-800">Rs 0</p>
+                </div>
+                <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl hover:border-indigo-100 transition-colors cursor-default">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Cheques</p>
+                  <p className="font-black text-slate-800">Rs 0</p>
+                </div>
+                <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl hover:border-indigo-100 transition-colors cursor-default">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Loans</p>
+                  <p className="font-black text-slate-800">Rs 0</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Column 3: Charts & Reports */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 h-48 flex flex-col">
+              <h3 className="font-bold flex items-center gap-2 text-slate-800 mb-4 text-sm uppercase tracking-wide">
+                <LineChartIcon className="text-indigo-500" size={16} />
+                Sales Trend
+              </h3>
+              <div className="flex-1 w-full h-full min-h-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748B' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748B' }} dx={-10} tickFormatter={(val) => `Rs ${val}`} />
+                    <Tooltip cursor={{ fill: '#F1F5F9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                    <Bar dataKey="sales" fill="#4F46E5" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-slate-900 rounded-2xl text-white p-6 relative overflow-hidden shadow-xl shadow-slate-900/10">
+              <div className="relative z-10">
+                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <LineChartIcon size={12} /> JAG Reports
+                </p>
+                <h4 className="text-xl font-black mb-4 leading-tight text-white">50+ Business<br/>Reports</h4>
+                <div className="flex flex-wrap gap-2">
+                  <button className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2 rounded-xl text-xs font-bold transition-all backdrop-blur-sm">
+                    View Sales
+                  </button>
+                  <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-indigo-500/30 transition-all flex items-center gap-2">
+                    <FileText size={14} /> Export Sales
+                  </button>
+                </div>
+              </div>
+              <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -top-10 -left-10 w-32 h-32 bg-blue-500/20 rounded-full blur-xl pointer-events-none" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 function MenuView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateToEstimates: () => void, onNavigateToSettings?: () => void }) {
   const [saleExpanded, setSaleExpanded] = useState(true);
@@ -273,49 +524,13 @@ function MenuView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateT
       {/* Header */}
       <div className="bg-white px-4 py-3 flex items-center justify-between border-b border-slate-200 sticky top-0 z-40 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded flex items-center justify-center p-1 shadow-sm">
-            {/* Logo */}
-            <span className="text-white font-bold text-lg">AZ</span>
-          </div>
-          <span className="font-bold text-xl tracking-tight text-slate-900 uppercase">AluGlass CRM</span>
-        </div>
-        <div className="flex items-center gap-4 text-slate-500">
-          <div className="relative p-2 hover:bg-slate-100 rounded-full cursor-pointer transition-colors">
-            <Bell size={22} />
-            <div className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full border border-white" />
-          </div>
-          <div 
-            onClick={() => onNavigateToSettings?.()}
-            className="relative p-2 hover:bg-slate-100 rounded-full cursor-pointer transition-colors"
-          >
-            <Settings size={22} />
-          </div>
-        </div>
-      </div>
-
-      {/* Banner */}
-      <div className="p-4">
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-5 flex items-center justify-between relative overflow-hidden shadow-lg">
-          <div className="flex-1 pr-6 z-10">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Professional Suite</p>
-            <h3 className="text-white font-bold text-lg mb-4 leading-tight">Join 10,000+ Store Owners Using Our Desktop App</h3>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold py-2.5 px-6 rounded-md uppercase tracking-wider transition-all shadow-sm">
-              Try for Free
-            </button>
-          </div>
-          <div className="w-24 h-24 flex items-center justify-center relative scale-110">
-            <div className="w-20 h-16 bg-slate-800 border border-slate-700 rounded shadow-2xl flex items-center justify-center">
-              <Monitor className="text-blue-500" size={32} />
-            </div>
-            <div className="absolute -bottom-2 w-12 h-1.5 bg-slate-950 rounded-full opacity-50 shadow-xl" />
-          </div>
-          {/* Decorative elements */}
-          <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-blue-500/10 rounded-full" />
+          <MenuIcon size={24} className="text-slate-800" />
+          <span className="font-bold text-xl tracking-tight text-slate-900 uppercase">Menu</span>
         </div>
       </div>
 
       {/* Business Section */}
-      <div className="px-4">
+      <div className="px-4 mt-6">
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
           <div className="p-4 bg-slate-50 border-b border-slate-200">
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-[0.15em]">Sales Hub</h2>
@@ -346,7 +561,7 @@ function MenuView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateT
                   <MenuItem label="Sale Invoice" />
                   <MenuItem label="Payment-In" />
                   <MenuItem label="Sale Return (Credit Note)" />
-          <MenuItem label="Estimate/Quotation" onClick={onNavigateToEstimates} />
+                  <MenuItem label="Estimate/Quotation" onClick={onNavigateToEstimates} active={true} />
                   <MenuItem label="Sale Order" />
                   <MenuItem label="Delivery Note" />
                   <MenuItem label="Vyapar POS" />
@@ -370,9 +585,10 @@ function MenuView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateT
           <MenuItemWithIcon icon={<Home size={18} />} label="Cash Operations" />
           <MenuItemWithIcon icon={<Box size={18} />} label="Cheque Processing" />
           <MenuItemWithIcon 
-            icon={<Settings size={18} />} 
+            icon={<Settings size={18} className="text-slate-500" />} 
             label="Invoice Settings" 
             onClick={onNavigateToSettings}
+            active={true}
           />
         </div>
       </div>
@@ -455,7 +671,7 @@ function ProfileEditView({
       initial={{ x: 20, opacity: 0 }} 
       animate={{ x: 0, opacity: 1 }} 
       exit={{ x: -20, opacity: 0 }}
-      className="flex flex-col min-h-screen pb-24 bg-white"
+      className="flex flex-col min-h-screen pb-[140px] bg-white"
     >
       <div className="bg-slate-900 px-4 py-4 flex items-center border-b border-slate-800 sticky top-0 z-40 gap-4 shadow-sm">
         <button onClick={onBack} className="p-1 hover:bg-slate-800 rounded-lg transition-colors text-slate-300">
@@ -1214,23 +1430,23 @@ function OptionItem({ icon, label, onClick }: { icon: ReactNode, label: string, 
   );
 }
 
-function MenuItem({ label, onClick }: { label: string, onClick?: () => void }) {
+function MenuItem({ label, onClick, active = false }: { label: string, onClick?: () => void, active?: boolean }) {
   return (
     <button 
-      onClick={onClick}
-      className="w-full flex items-center justify-between px-16 py-4 border-b border-slate-100 last:border-0 hover:bg-white transition-all"
+      onClick={active ? onClick : () => alert(`${label} is coming soon!`)}
+      className={`w-full flex items-center justify-between px-16 py-4 border-b border-slate-100 last:border-0 hover:bg-white transition-all ${!active ? 'opacity-50 cursor-default' : ''}`}
     >
-      <span className="text-sm text-slate-600">{label}</span>
+      <span className="text-sm text-slate-600 font-medium">{label}</span>
       <ChevronRight size={16} className="text-slate-300" />
     </button>
   );
 }
 
-function MenuItemWithIcon({ icon, label, onClick }: { icon: ReactNode, label: string, onClick?: () => void }) {
+function MenuItemWithIcon({ icon, label, onClick, active = false }: { icon: ReactNode, label: string, onClick?: () => void, active?: boolean }) {
   return (
     <button 
-      onClick={onClick}
-      className="w-full flex items-center justify-between p-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-all text-left"
+      onClick={active ? onClick : () => alert(`${label} is coming soon!`)}
+      className={`w-full flex items-center justify-between p-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-all text-left ${!active ? 'opacity-50 cursor-default' : ''}`}
     >
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 group-hover:text-blue-600">
@@ -1275,7 +1491,7 @@ function EstimateListView({
       initial={{ x: 20, opacity: 0 }} 
       animate={{ x: 0, opacity: 1 }} 
       exit={{ x: -20, opacity: 0 }}
-      className="flex flex-col min-h-screen pb-24 bg-slate-50"
+      className="flex flex-col min-h-screen pb-[100px] bg-slate-50"
     >
       {/* Header */}
       <div className="bg-white px-4 py-4 flex items-center border-b border-slate-200 sticky top-0 z-40 gap-4 shadow-sm">
@@ -1390,7 +1606,7 @@ function EstimateListView({
       {/* FAB */}
       <button 
         onClick={onAdd}
-        className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2.5 px-8 py-4 rounded-lg shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all z-50 text-xs font-bold uppercase tracking-widest"
+        className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2.5 px-8 py-4 rounded-lg shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all z-[101] text-xs font-bold uppercase tracking-widest"
       >
         <Plus size={18} strokeWidth={3} />
         <span>Create New Estimate</span>
@@ -2004,7 +2220,7 @@ function SaleFormView({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-32">
+      <div className="flex-1 overflow-y-auto pb-[160px]">
         {/* Invoice Info */}
         <div className="grid grid-cols-2 border-b border-slate-200 bg-white shadow-sm">
           <div className="p-4 border-r border-slate-100">
