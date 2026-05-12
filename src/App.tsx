@@ -44,6 +44,7 @@ import {
   Users,
   Wallet,
   Building2,
+  Receipt,
   LineChart as LineChartIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -96,6 +97,10 @@ export default function App() {
       }
     ];
   });
+  const [sales, setSales] = useState<Estimate[]>(() => {
+    const saved = localStorage.getItem('sales');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   useEffect(() => {
     localStorage.setItem('companyData', JSON.stringify(companyData));
@@ -104,6 +109,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('estimates', JSON.stringify(estimates));
   }, [estimates]);
+
+  useEffect(() => {
+    localStorage.setItem('sales', JSON.stringify(sales));
+  }, [sales]);
   const [editingEstimate, setEditingEstimate] = useState<Estimate | null>(null);
   const [selectedEstimateForView, setSelectedEstimateForView] = useState<Estimate | null>(null);
   const [selectedEstimateForSale, setSelectedEstimateForSale] = useState<Estimate | null>(null);
@@ -112,8 +121,8 @@ export default function App() {
   const navigate = (view: View) => setCurrentView(view);
 
   return (
-    <div className={`min-h-screen bg-slate-100 font-sans text-slate-900 ${['HOME', 'ESTIMATE_LIST', 'MENU'].includes(currentView) ? 'pb-[120px]' : ''} overflow-x-hidden`}>
-      {['HOME', 'ESTIMATE_LIST', 'MENU'].includes(currentView) && (
+    <div className={`min-h-screen bg-slate-100 font-sans text-slate-900 ${['HOME', 'ESTIMATE_LIST', 'SALE_LIST', 'MENU'].includes(currentView) ? 'pb-[120px]' : ''} overflow-x-hidden`}>
+      {['HOME', 'ESTIMATE_LIST', 'SALE_LIST', 'MENU'].includes(currentView) && (
         <BottomNav currentView={currentView} onNavigate={navigate} />
       )}
       <AnimatePresence mode="wait">
@@ -127,6 +136,28 @@ export default function App() {
             <HomeView 
               onNavigateToEstimates={() => navigate('ESTIMATE_LIST')} 
               onNavigateToSettings={() => navigate('PROFILE_EDIT')}
+              sales={sales}
+              estimates={estimates}
+              onNavigateToSale={(type) => {
+                const newId = Math.random().toString(36).substr(2, 9);
+                const nextRef = sales.length + 1;
+                setSelectedEstimateForSale({
+                    id: newId,
+                    refNo: nextRef,
+                    date: new Date().toLocaleDateString('en-GB'),
+                    customerName: '',
+                    items: [],
+                    status: EstimateStatus.OPEN,
+                    totalAmount: 0,
+                    balance: 0,
+                    description: '',
+                    isSale: true,
+                    discountValue: 0,
+                    discountType: 'percentage',
+                    taxType: 'None'
+                });
+                navigate('SALE_FORM');
+              }}
             />
           </motion.div>
         )}
@@ -140,6 +171,64 @@ export default function App() {
             <MenuView 
               onNavigateToEstimates={() => navigate('ESTIMATE_LIST')} 
               onNavigateToSettings={() => navigate('PROFILE_EDIT')}
+              onNavigateToSales={() => navigate('SALE_LIST')}
+              onNavigateToSale={(type) => {
+                const newId = Math.random().toString(36).substr(2, 9);
+                const nextRef = sales.length + 1;
+                setSelectedEstimateForSale({
+                    id: newId,
+                    refNo: nextRef,
+                    date: new Date().toLocaleDateString('en-GB'),
+                    customerName: '',
+                    items: [],
+                    status: EstimateStatus.OPEN,
+                    totalAmount: 0,
+                    balance: 0,
+                    description: '',
+                    isSale: true,
+                    discountValue: 0,
+                    discountType: 'percentage',
+                    taxType: 'None'
+                });
+                navigate('SALE_FORM');
+              }}
+            />
+          </motion.div>
+        )}
+        {currentView === 'SALE_LIST' && (
+          <motion.div 
+            key="sales-list"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <SaleListView 
+              sales={sales} 
+              onBack={() => navigate('MENU')} 
+              onAdd={() => {
+                const newId = Math.random().toString(36).substr(2, 9);
+                const nextRef = sales.length + 1;
+                setSelectedEstimateForSale({
+                    id: newId,
+                    refNo: nextRef,
+                    date: new Date().toLocaleDateString('en-GB'),
+                    customerName: '',
+                    items: [],
+                    status: EstimateStatus.OPEN,
+                    totalAmount: 0,
+                    balance: 0,
+                    description: '',
+                    isSale: true,
+                    discountValue: 0,
+                    discountType: 'percentage',
+                    taxType: 'None'
+                });
+                navigate('SALE_FORM');
+              }}
+              onViewInvoice={(est) => {
+                setSelectedEstimateForView(est);
+                navigate('INVOICE_VIEW');
+              }}
             />
           </motion.div>
         )}
@@ -181,18 +270,27 @@ export default function App() {
           >
             <SaleFormView 
               initialData={selectedEstimateForSale}
-              onBack={() => navigate('ESTIMATE_LIST')}
+              onBack={() => navigate('SALE_LIST')}
               onSave={(est, stay) => {
-                const exists = estimates.find(e => e.id === est.id);
-                if (exists) {
-                  setEstimates(prev => prev.map(e => e.id === est.id ? est : e));
+                if (est.isSale) {
+                  const exists = sales.find(e => e.id === est.id);
+                  if (exists) {
+                    setSales(prev => prev.map(e => e.id === est.id ? est : e));
+                  } else {
+                    setSales(prev => [...prev, est]);
+                  }
                 } else {
-                  setEstimates(prev => [...prev, est]);
+                  const exists = estimates.find(e => e.id === est.id);
+                  if (exists) {
+                    setEstimates(prev => prev.map(e => e.id === est.id ? est : e));
+                  } else {
+                    setEstimates(prev => [...prev, est]);
+                  }
                 }
 
                 if (stay) {
                   const newId = Math.random().toString(36).substr(2, 9);
-                  const nextRef = estimates.length + 2;
+                  const nextRef = (est.isSale ? sales.length : estimates.length) + 2;
                   setSelectedEstimateForSale({
                     id: newId,
                     refNo: nextRef,
@@ -203,13 +301,13 @@ export default function App() {
                     totalAmount: 0,
                     balance: 0,
                     description: '',
-                    isSale: true,
+                    isSale: est.isSale,
                     discountValue: 0,
                     discountType: 'percentage',
                     taxType: 'None'
                   });
                 } else {
-                  navigate('ESTIMATE_LIST');
+                  navigate(est.isSale ? 'SALE_LIST' : 'ESTIMATE_LIST');
                 }
               }}
             />
@@ -288,6 +386,10 @@ const BottomNav = ({ currentView, onNavigate }: { currentView: View, onNavigate:
       <ClipboardList size={22} className={currentView === 'ESTIMATE_LIST' ? 'fill-indigo-100' : ''} />
       <span>ESTIMATES</span>
     </button>
+    <button onClick={() => onNavigate('SALE_LIST')} className={`flex flex-col items-center justify-center w-16 h-full gap-1 text-[10px] font-semibold transition-all ${currentView === 'SALE_LIST' ? 'text-indigo-600 scale-105' : 'text-slate-400 hover:text-slate-600'}`}>
+      <Receipt size={22} className={currentView === 'SALE_LIST' ? 'fill-indigo-100' : ''} />
+      <span>SALES</span>
+    </button>
     <button onClick={() => alert("Inventory Items coming soon!")} className="flex flex-col items-center justify-center w-16 h-full gap-1 text-[10px] font-semibold text-slate-400 hover:text-slate-600 transition-all">
       <Box size={22} />
       <span>ITEMS</span>
@@ -301,12 +403,31 @@ const BottomNav = ({ currentView, onNavigate }: { currentView: View, onNavigate:
 
 // --- VIEW COMPONENTS ---
 
-function HomeView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateToEstimates: () => void, onNavigateToSettings?: () => void }) {
-  const chartData = [
-    { name: 'Feb', sales: 0 },
-    { name: 'Mar', sales: 0 },
-    { name: 'Apr', sales: 0 },
-  ];
+function HomeView({ 
+  onNavigateToEstimates, 
+  onNavigateToSettings,
+  onNavigateToSale,
+  sales,
+  estimates
+}: { 
+  onNavigateToEstimates: () => void, 
+  onNavigateToSettings?: () => void,
+  onNavigateToSale: (type: 'SALE' | 'INVOICE') => void,
+  sales: Estimate[],
+  estimates: Estimate[]
+}) {
+  const totalSaleAmount = useMemo(() => sales.reduce((sum, s) => sum + s.totalAmount, 0), [sales]);
+  const totalBalanceDue = useMemo(() => sales.reduce((sum, s) => sum + s.balance, 0), [sales]);
+  const lastSale = sales.length > 0 ? sales[sales.length - 1] : null;
+
+  const chartData = useMemo(() => {
+    // Basic chart data based on recent sales
+    return [
+      { name: 'Feb', sales: 0 },
+      { name: 'Mar', sales: 0 },
+      { name: 'Apr', sales: totalSaleAmount },
+    ];
+  }, [totalSaleAmount]);
 
   return (
     <motion.div 
@@ -339,9 +460,9 @@ function HomeView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateT
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
             <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Total Sale</p>
-            <p className="text-2xl font-bold text-slate-900">Rs 0</p>
+            <p className="text-2xl font-bold text-slate-900">Rs {totalSaleAmount.toLocaleString('en-IN')}</p>
             <div className="text-[10px] text-emerald-600 font-bold mt-1 flex items-center gap-1">
-              <TrendingUp size={12} /> 0%
+              <TrendingUp size={12} /> {sales.length > 0 ? '100%' : '0%'}
             </div>
           </div>
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
@@ -354,7 +475,7 @@ function HomeView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateT
           </div>
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
             <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">You'll Get</p>
-            <p className="text-2xl font-bold text-emerald-600">Rs 0</p>
+            <p className="text-2xl font-bold text-emerald-600">Rs {totalBalanceDue.toLocaleString('en-IN')}</p>
           </div>
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
             <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">You'll Give</p>
@@ -364,7 +485,7 @@ function HomeView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateT
 
         {/* Quick Actions Bar */}
         <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 p-3 flex flex-wrap items-center gap-2 shadow-sm">
-          <button onClick={() => alert("Added Sale functionality coming soon!")} className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
+          <button onClick={() => onNavigateToSale('SALE')} className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
             <Plus size={16} /> Add Sale
           </button>
           <button className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
@@ -395,21 +516,21 @@ function HomeView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateT
               </div>
               <div className="mt-3 flex justify-between items-start">
                 <div>
-                  <p className="font-bold text-slate-900">—</p>
-                  <p className="text-[11px] font-medium text-slate-400 mt-0.5">No sale yet</p>
+                  <p className="font-bold text-slate-900">{lastSale ? lastSale.customerName || 'Walk-in' : '—'}</p>
+                  <p className="text-[11px] font-medium text-slate-400 mt-0.5">{lastSale ? `Invoice #INV-${lastSale.refNo}` : 'No sale yet'}</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-slate-900">Rs 0</p>
+                  <p className="text-2xl font-black text-slate-900">Rs {lastSale ? lastSale.totalAmount.toLocaleString('en-IN') : '0'}</p>
                 </div>
               </div>
               <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl mt-4 flex justify-between items-center">
                 <span className="text-xs font-semibold text-slate-600">Remaining Balance</span>
-                <span className="font-bold text-amber-600">Rs 0</span>
+                <span className="font-bold text-amber-600">Rs {totalBalanceDue.toLocaleString('en-IN')}</span>
               </div>
-              <button onClick={() => alert("Added Sale functionality coming soon!")} className="mt-5 w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] transition-all text-white py-3 rounded-xl font-bold shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2">
+              <button onClick={() => onNavigateToSale('SALE')} className="mt-5 w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] transition-all text-white py-3 rounded-xl font-bold shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2">
                 <Plus size={18} /> Add New Sale
               </button>
-              <button className="mt-3 w-full border-2 border-indigo-100 hover:border-indigo-200 hover:bg-indigo-50 transition-colors text-indigo-700 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2">
+              <button onClick={() => onNavigateToSale('INVOICE')} className="mt-3 w-full border-2 border-indigo-100 hover:border-indigo-200 hover:bg-indigo-50 transition-colors text-indigo-700 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2">
                 <FileText size={18} /> Generate Invoice
               </button>
             </div>
@@ -521,7 +642,17 @@ function HomeView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateT
   );
 }
 
-function MenuView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateToEstimates: () => void, onNavigateToSettings?: () => void }) {
+function MenuView({ 
+  onNavigateToEstimates, 
+  onNavigateToSettings,
+  onNavigateToSale,
+  onNavigateToSales
+}: { 
+  onNavigateToEstimates: () => void, 
+  onNavigateToSettings?: () => void,
+  onNavigateToSale: (type: 'SALE' | 'INVOICE') => void,
+  onNavigateToSales: () => void
+}) {
   const [saleExpanded, setSaleExpanded] = useState(true);
 
   return (
@@ -546,7 +677,7 @@ function MenuView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateT
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-[0.15em]">Sales Hub</h2>
           </div>
 
-          {/* Sale Category */}
+          {/* Sales Hub */}
           <div className="border-b border-slate-100 last:border-0">
             <button 
               onClick={() => setSaleExpanded(!saleExpanded)}
@@ -556,7 +687,7 @@ function MenuView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateT
                 <div className="w-8 h-8 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600">
                   <span className="text-sm font-bold opacity-70">₹</span>
                 </div>
-                <span className="font-bold text-slate-700 tracking-tight">Main Sales Channel</span>
+                <span className="font-bold text-slate-700 tracking-tight">Sales</span>
               </div>
               {saleExpanded ? <ChevronDown size={18} className="text-blue-600" /> : <ChevronRight size={18} className="text-slate-400" />}
             </button>
@@ -568,16 +699,18 @@ function MenuView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateT
                   exit={{ height: 0, opacity: 0 }}
                   className="overflow-hidden bg-slate-50/50"
                 >
-                  <MenuItem label="Sale Invoice" />
+                  <MenuItem label="Sale History / Invoice List" active={true} onClick={onNavigateToSales} />
+                  <MenuItem label="Add New Sale" active={true} onClick={() => onNavigateToSale('SALE')} />
                   <MenuItem label="Payment-In" />
-                  <MenuItem label="Sale Return (Credit Note)" />
-                  <MenuItem label="Estimate/Quotation" onClick={onNavigateToEstimates} active={true} />
-                  <MenuItem label="Sale Order" />
-                  <MenuItem label="Delivery Note" />
-                  <MenuItem label="Vyapar POS" />
+                  <MenuItem label="Sale Return" />
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
+
+          {/* Estimates/Quotations Hub */}
+          <div className="border-b border-slate-100 last:border-0">
+             <MenuItem label="Estimate/Quotation" onClick={onNavigateToEstimates} active={true} />
           </div>
 
           <MenuItemWithIcon icon={<Box size={18} className="text-slate-500" />} label="Inventory Management" />
@@ -1535,6 +1668,166 @@ function EstimateListView({
           </button>
         ))}
       </div>
+      {/* Search */}
+      <div className="p-4">
+        <div className="bg-white rounded-lg border border-slate-200 flex items-center px-4 py-3 shadow-sm focus-within:border-blue-500 transition-colors">
+          <Search size={18} className="text-slate-400 mr-3" />
+          <input 
+            type="text" 
+            placeholder="Search estimates..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full outline-none text-sm font-bold text-slate-900 placeholder:text-slate-400"
+          />
+        </div>
+      </div>
+        {/* List */ }
+        <div className="px-4 flex-1">
+          {filteredEstimates.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center px-10">
+              <div className="w-48 h-48 mb-6 opacity-40 bg-slate-200 rounded-full flex items-center justify-center">
+                <ImageIcon size={64} className="text-slate-400" />
+              </div>
+              <h3 className="text-slate-900 font-bold mb-2">No Records Found</h3>
+              <p className="text-sm font-medium text-slate-500 leading-relaxed max-w-xs">
+                Your quotation database is currently empty. Start by creating a professional estimate for your client.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredEstimates.map(est => (
+                <motion.div 
+                  key={est.id} 
+                  layoutId={est.id}
+                  onClick={() => onEdit(est)}
+                  className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                      <span className="font-bold text-slate-900 text-lg group-hover:text-blue-600 transition-colors">{est.customerName}</span>
+                    </div>
+                    <span className={`text-[10px] px-2.5 py-1 rounded font-bold uppercase tracking-[0.1em] ${
+                      est.status === EstimateStatus.OPEN 
+                        ? 'bg-blue-50 text-blue-700 border border-blue-100' 
+                        : 'bg-slate-100 text-slate-600 border border-slate-200'
+                    }`}>
+                      {est.status}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Estimate Value</span>
+                      <span className="text-base font-bold text-slate-900">Rs {est.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Reference</span>
+                      <span className="text-sm font-semibold text-slate-600">#QTN-{est.refNo.toString().padStart(4, '0')}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Issued:</span>
+                      <span className="text-[10px] font-bold text-slate-600">{est.date}</span>
+                    </div>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (est.status === EstimateStatus.OPEN) {
+                          setShowOptionsFor(est);
+                        } else {
+                          onViewInvoice(est);
+                        }
+                      }}
+                      className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold py-2 px-5 rounded uppercase tracking-wider transition-all shadow-sm"
+                    >
+                      {est.status === EstimateStatus.OPEN ? 'Process' : 'See Invoice'}
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* FAB */}
+        <button 
+          onClick={onAdd}
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2.5 px-8 py-4 rounded-lg shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all z-[101] text-xs font-bold uppercase tracking-widest"
+        >
+          <Plus size={18} strokeWidth={3} />
+          <span>Create New Estimate</span>
+        </button>
+
+        <AnimatePresence>
+          {showOptionsFor && (
+            <MoreOptionsSheet 
+              onClose={() => setShowOptionsFor(null)} 
+              estimate={showOptionsFor}
+              onConvert={onConvert}
+            />
+          )}
+        </AnimatePresence>
+
+    </motion.div>
+  );
+}
+
+function SaleListView({ 
+  sales, 
+  onBack, 
+  onAdd, 
+  onViewInvoice
+}: { 
+  sales: Estimate[], 
+  onBack: () => void, 
+  onAdd: () => void,
+  onViewInvoice: (est: Estimate) => void
+}) {
+  const [filter, setFilter] = useState<'ALL' | 'OPEN' | 'CLOSED'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredSales = useMemo(() => {
+    return sales.filter(est => {
+      const matchFilter = filter === 'ALL' || est.status === filter;
+      const matchSearch = est.customerName.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchFilter && matchSearch;
+    });
+  }, [sales, filter, searchQuery]);
+
+  return (
+    <motion.div 
+      initial={{ x: 20, opacity: 0 }} 
+      animate={{ x: 0, opacity: 1 }} 
+      exit={{ x: -20, opacity: 0 }}
+      className="flex flex-col min-h-screen pb-[100px] bg-slate-50"
+    >
+      {/* Header */}
+      <div className="bg-white px-4 py-4 flex items-center border-b border-slate-200 sticky top-0 z-40 gap-4 shadow-sm">
+        <button onClick={onBack} className="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-600">
+          <ArrowLeft size={20} />
+        </button>
+        <h1 className="font-bold text-lg text-slate-900 tracking-tight">Sales Hub</h1>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white p-4 flex gap-2 border-b border-slate-100 overflow-x-auto whitespace-nowrap scrollbar-hide">
+        {(['ALL', 'OPEN', 'CLOSED'] as const).map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-5 py-2 rounded-md text-xs font-bold uppercase tracking-wider border transition-all ${
+              filter === f 
+                ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
+                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+            }`}
+          >
+            {f === 'ALL' ? 'Show All' : f === 'OPEN' ? 'Paid' : 'Unpaid'}
+          </button>
+        ))}
+      </div>
 
       {/* Search */}
       <div className="p-4">
@@ -1542,77 +1835,68 @@ function EstimateListView({
           <Search size={18} className="text-slate-400 mr-3" />
           <input 
             type="text" 
-            placeholder="Search by customer or ref..."
-            className="flex-1 outline-none text-sm text-slate-700 placeholder-slate-400 font-medium"
+            placeholder="Search by customer..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full outline-none text-sm font-bold text-slate-900 placeholder:text-slate-400"
           />
         </div>
       </div>
 
-      {/* List */}
       <div className="px-4 flex-1">
-        {filteredEstimates.length === 0 ? (
+        {filteredSales.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-10">
             <div className="w-48 h-48 mb-6 opacity-40 bg-slate-200 rounded-full flex items-center justify-center">
-              <ImageIcon size={64} className="text-slate-400" />
+              <Receipt size={64} className="text-slate-400" />
             </div>
-            <h3 className="text-slate-900 font-bold mb-2">No Records Found</h3>
+            <h3 className="text-slate-900 font-bold mb-2">No Sales Found</h3>
             <p className="text-sm font-medium text-slate-500 leading-relaxed max-w-xs">
-              Your quotation database is currently empty. Start by creating a professional estimate for your client.
+              No sales records match your criteria.
             </p>
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredEstimates.map(est => (
+            {filteredSales.map(sale => (
               <motion.div 
-                key={est.id} 
-                layoutId={est.id}
-                onClick={() => onEdit(est)}
-                className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group"
+                key={sale.id} 
+                layoutId={sale.id}
+                onClick={() => onViewInvoice(sale)}
+                className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <span className="font-bold text-slate-900 text-lg group-hover:text-blue-600 transition-colors">{est.customerName}</span>
+                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                    <span className="font-bold text-slate-900 text-lg group-hover:text-blue-600 transition-colors">{sale.customerName || 'Walk-in Customer'}</span>
                   </div>
                   <span className={`text-[10px] px-2.5 py-1 rounded font-bold uppercase tracking-[0.1em] ${
-                    est.status === EstimateStatus.OPEN 
-                      ? 'bg-blue-50 text-blue-700 border border-blue-100' 
+                    sale.status === EstimateStatus.OPEN 
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
                       : 'bg-slate-100 text-slate-600 border border-slate-200'
                   }`}>
-                    {est.status}
+                    {sale.status === EstimateStatus.OPEN ? 'Active' : 'Settled'}
                   </span>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Estimate Value</span>
-                    <span className="text-base font-bold text-slate-900">Rs {est.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sale Amount</span>
+                    <span className="text-base font-bold text-slate-900">Rs {sale.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="text-right">
-                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Reference</span>
-                    <span className="text-sm font-semibold text-slate-600">#QTN-{est.refNo.toString().padStart(4, '0')}</span>
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Invoice No.</span>
+                    <span className="text-sm font-semibold text-slate-600">#INV-{sale.refNo.toString().padStart(4, '0')}</span>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">Issued:</span>
-                    <span className="text-[10px] font-bold text-slate-600">{est.date}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Date:</span>
+                    <span className="text-[10px] font-bold text-slate-600">{sale.date}</span>
                   </div>
                   <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (est.status === EstimateStatus.OPEN) {
-                        setShowOptionsFor(est);
-                      } else {
-                        onViewInvoice(est);
-                      }
-                    }}
-                    className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold py-2 px-5 rounded uppercase tracking-wider transition-all shadow-sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold py-2 px-5 rounded uppercase tracking-wider transition-all shadow-sm"
                   >
-                    {est.status === EstimateStatus.OPEN ? 'Process' : 'See Invoice'}
+                    View Invoice
                   </button>
                 </div>
               </motion.div>
@@ -1624,21 +1908,11 @@ function EstimateListView({
       {/* FAB */}
       <button 
         onClick={onAdd}
-        className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2.5 px-8 py-4 rounded-lg shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all z-[101] text-xs font-bold uppercase tracking-widest"
+        className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2.5 px-8 py-4 rounded-lg shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all z-[101] text-xs font-bold uppercase tracking-widest"
       >
         <Plus size={18} strokeWidth={3} />
-        <span>Create New Estimate</span>
+        <span>Add New Sale</span>
       </button>
-
-      <AnimatePresence>
-        {showOptionsFor && (
-          <MoreOptionsSheet 
-            onClose={() => setShowOptionsFor(null)} 
-            estimate={showOptionsFor}
-            onConvert={onConvert}
-          />
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 }
