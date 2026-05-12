@@ -39,6 +39,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { View, Estimate, EstimateStatus, Item, CompanyData } from './types';
 
 export default function App() {
+  useEffect(() => {
+    console.log("App Component Mounted. Current path:", window.location.pathname);
+  }, []);
+
   const [currentView, setCurrentView] = useState<View>('MENU');
   const [companyData, setCompanyData] = useState<CompanyData>({
     name: 'Jawad Aluminium and Glass Works',
@@ -75,115 +79,146 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-900 pb-20 overflow-x-hidden">
-      {currentView === 'MENU' && (
-        <div key="menu">
-          <MenuView 
-            onNavigateToEstimates={() => navigate('ESTIMATE_LIST')} 
-            onNavigateToSettings={() => navigate('PROFILE_EDIT')}
-          />
-        </div>
-      )}
-      {currentView === 'ESTIMATE_LIST' && (
-        <div key="list">
-          <EstimateListView 
-            estimates={estimates} 
-            onBack={() => navigate('MENU')} 
-            onAdd={() => {
-              setEditingEstimate(null);
-              navigate('ESTIMATE_FORM');
-            }}
-            onEdit={(est) => {
-              setEditingEstimate(est);
-              navigate('ESTIMATE_FORM');
-            }}
-            onConvert={(est) => {
-              setSelectedEstimateForSale(est);
-              navigate('SALE_FORM');
-            }}
-            onViewInvoice={(est) => {
-              setSelectedEstimateForView(est);
-              navigate('INVOICE_VIEW');
-            }}
-          />
-        </div>
-      )}
-      {currentView === 'SALE_FORM' && selectedEstimateForSale && (
-        <div key={`sale-${selectedEstimateForSale.id}`}>
-          <SaleFormView 
-            initialData={selectedEstimateForSale}
-            onBack={() => navigate('ESTIMATE_LIST')}
-            onSave={(est, stay) => {
-              // Check if it already exists
-              const exists = estimates.find(e => e.id === est.id);
-              if (exists) {
-                setEstimates(prev => prev.map(e => e.id === est.id ? est : e));
-              } else {
-                setEstimates(prev => [...prev, est]);
-              }
+      <AnimatePresence mode="wait">
+        {currentView === 'MENU' && (
+          <motion.div 
+            key="menu"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <MenuView 
+              onNavigateToEstimates={() => navigate('ESTIMATE_LIST')} 
+              onNavigateToSettings={() => navigate('PROFILE_EDIT')}
+            />
+          </motion.div>
+        )}
+        {currentView === 'ESTIMATE_LIST' && (
+          <motion.div 
+            key="list"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <EstimateListView 
+              estimates={estimates} 
+              onBack={() => navigate('MENU')} 
+              onAdd={() => {
+                setEditingEstimate(null);
+                navigate('ESTIMATE_FORM');
+              }}
+              onEdit={(est) => {
+                setEditingEstimate(est);
+                navigate('ESTIMATE_FORM');
+              }}
+              onConvert={(est) => {
+                setSelectedEstimateForSale(est);
+                navigate('SALE_FORM');
+              }}
+              onViewInvoice={(est) => {
+                setSelectedEstimateForView(est);
+                navigate('INVOICE_VIEW');
+              }}
+            />
+          </motion.div>
+        )}
+        {currentView === 'SALE_FORM' && selectedEstimateForSale && (
+          <motion.div 
+            key={`sale-${selectedEstimateForSale.id}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <SaleFormView 
+              initialData={selectedEstimateForSale}
+              onBack={() => navigate('ESTIMATE_LIST')}
+              onSave={(est, stay) => {
+                const exists = estimates.find(e => e.id === est.id);
+                if (exists) {
+                  setEstimates(prev => prev.map(e => e.id === est.id ? est : e));
+                } else {
+                  setEstimates(prev => [...prev, est]);
+                }
 
-              if (stay) {
-                const newId = Math.random().toString(36).substr(2, 9);
-                const nextRef = String(estimates.length + 2);
-                setSelectedEstimateForSale({
-                  id: newId,
-                  refNo: nextRef as any, // Simple cast for now
-                  date: new Date().toLocaleDateString('en-GB'),
-                  customerName: '',
-                  items: [],
-                  status: EstimateStatus.OPEN,
-                  totalAmount: 0,
-                  balance: 0,
-                  description: '',
-                  isSale: true,
-                  discountValue: 0,
-                  discountType: 'percentage',
-                  taxType: 'None'
-                });
-              } else {
+                if (stay) {
+                  const newId = Math.random().toString(36).substr(2, 9);
+                  const nextRef = estimates.length + 2;
+                  setSelectedEstimateForSale({
+                    id: newId,
+                    refNo: nextRef,
+                    date: new Date().toLocaleDateString('en-GB'),
+                    customerName: '',
+                    items: [],
+                    status: EstimateStatus.OPEN,
+                    totalAmount: 0,
+                    balance: 0,
+                    description: '',
+                    isSale: true,
+                    discountValue: 0,
+                    discountType: 'percentage',
+                    taxType: 'None'
+                  });
+                } else {
+                  navigate('ESTIMATE_LIST');
+                }
+              }}
+            />
+          </motion.div>
+        )}
+        {currentView === 'ESTIMATE_FORM' && (
+          <motion.div 
+            key="form"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <EstimateFormView 
+              initialData={editingEstimate}
+              onBack={() => navigate('ESTIMATE_LIST')}
+              onSave={(est) => {
+                if (editingEstimate) {
+                  setEstimates(prev => prev.map(e => e.id === est.id ? est : e));
+                } else {
+                  setEstimates(prev => [...prev, est]);
+                }
                 navigate('ESTIMATE_LIST');
-              }
-            }}
-          />
-        </div>
-      )}
-      {currentView === 'ESTIMATE_FORM' && (
-        <div key="form">
-          <EstimateFormView 
-            initialData={editingEstimate}
-            onBack={() => navigate('ESTIMATE_LIST')}
-            onSave={(est) => {
-              if (editingEstimate) {
-                setEstimates(prev => prev.map(e => e.id === est.id ? est : e));
-              } else {
-                setEstimates(prev => [...prev, est]);
-              }
-              navigate('ESTIMATE_LIST');
-            }}
-          />
-        </div>
-      )}
-      {currentView === 'INVOICE_VIEW' && selectedEstimateForView && (
-        <div key="invoice">
-          <InvoiceView 
-            estimate={selectedEstimateForView} 
-            onBack={() => navigate('ESTIMATE_LIST')} 
-            companyData={companyData}
-            onUpdateCompany={(data) => setCompanyData(data)}
-          />
-        </div>
-      )}
-      {currentView === 'PROFILE_EDIT' && (
-        <div key="profile">
-          <ProfileEditView 
-            companyData={companyData}
-            onBack={() => navigate('MENU')}
-            onSave={(data) => {
-              setCompanyData(data);
-              navigate('MENU');
-            }}
-          />
-        </div>
-      )}
+              }}
+            />
+          </motion.div>
+        )}
+        {currentView === 'INVOICE_VIEW' && selectedEstimateForView && (
+          <motion.div 
+            key="invoice"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+          >
+            <InvoiceView 
+              estimate={selectedEstimateForView} 
+              onBack={() => navigate('ESTIMATE_LIST')} 
+              companyData={companyData}
+              onUpdateCompany={(data) => setCompanyData(data)}
+            />
+          </motion.div>
+        )}
+        {currentView === 'PROFILE_EDIT' && (
+          <motion.div 
+            key="profile"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <ProfileEditView 
+              companyData={companyData}
+              onBack={() => navigate('MENU')}
+              onSave={(data) => {
+                setCompanyData(data);
+                navigate('MENU');
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <BottomNav currentView={currentView} onNavigate={navigate} />
     </div>
   );
