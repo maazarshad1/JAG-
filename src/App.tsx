@@ -2455,7 +2455,7 @@ function SaleFormView({
       </div>
 
       {/* Action Buttons */}
-      <div className="fixed bottom-0 left-0 right-0 h-20 flex border-t border-slate-200 z-50 bg-white p-4 gap-4 shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
+      <div className="fixed bottom-0 left-0 right-0 h-20 flex border-t border-slate-200 z-[101] bg-white p-4 gap-4 shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
         <button 
           onClick={handleSaveAndNew}
           className="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg transition-all text-xs uppercase tracking-widest"
