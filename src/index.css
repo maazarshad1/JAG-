@@ -17,6 +17,11 @@
 }
 
 @layer base {
+  html {
+    -moz-text-size-adjust: none;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
   body {
     @apply bg-slate-100 text-slate-900 antialiased;
   }
