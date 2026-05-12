@@ -8,7 +8,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo, ReactNode, useRef, useEffect } from 'react';
+console.log("App.tsx module executing");
+import React, { useState, useMemo, ReactNode, useRef, useEffect, Component, ErrorInfo } from 'react';
 import SignaturePad from 'signature_pad';
 import { 
   Bell, 
