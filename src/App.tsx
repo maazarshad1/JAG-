@@ -110,7 +110,10 @@ export default function App() {
       <AnimatePresence mode="wait">
         {currentView === 'MENU' && (
           <div key="menu">
-            <MenuView onNavigateToEstimates={() => navigate('ESTIMATE_LIST')} />
+            <MenuView 
+              onNavigateToEstimates={() => navigate('ESTIMATE_LIST')} 
+              onNavigateToSettings={() => navigate('PROFILE_EDIT')}
+            />
           </div>
         )}
         {currentView === 'ESTIMATE_LIST' && (
@@ -199,6 +202,18 @@ export default function App() {
             />
           </div>
         )}
+        {currentView === 'PROFILE_EDIT' && (
+          <div key="profile">
+            <ProfileEditView 
+              companyData={companyData}
+              onBack={() => navigate('MENU')}
+              onSave={(data) => {
+                setCompanyData(data);
+                navigate('MENU');
+              }}
+            />
+          </div>
+        )}
       </AnimatePresence>
       <BottomNav />
     </div>
@@ -207,7 +222,7 @@ export default function App() {
 
 // --- VIEW COMPONENTS ---
 
-function MenuView({ onNavigateToEstimates }: { onNavigateToEstimates: () => void }) {
+function MenuView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateToEstimates: () => void, onNavigateToSettings?: () => void }) {
   const [saleExpanded, setSaleExpanded] = useState(true);
 
   return (
@@ -231,7 +246,10 @@ function MenuView({ onNavigateToEstimates }: { onNavigateToEstimates: () => void
             <Bell size={22} />
             <div className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full border border-white" />
           </div>
-          <div className="relative p-2 hover:bg-slate-100 rounded-full cursor-pointer transition-colors">
+          <div 
+            onClick={() => onNavigateToSettings?.()}
+            className="relative p-2 hover:bg-slate-100 rounded-full cursor-pointer transition-colors"
+          >
             <Settings size={22} />
           </div>
         </div>
@@ -313,13 +331,274 @@ function MenuView({ onNavigateToEstimates }: { onNavigateToEstimates: () => void
           <MenuItemWithIcon icon={<Box size={18} />} label="Bank Accounts" />
           <MenuItemWithIcon icon={<Home size={18} />} label="Cash Operations" />
           <MenuItemWithIcon icon={<Box size={18} />} label="Cheque Processing" />
-          <MenuItemWithIcon icon={<Box size={18} />} label="Loan Settlement" />
+          <MenuItemWithIcon 
+            icon={<Settings size={18} />} 
+            label="Invoice Settings" 
+            onClick={onNavigateToSettings}
+          />
         </div>
       </div>
     </motion.div>
   );
 }
 
+function ProfileEditView({ 
+  companyData, 
+  onBack, 
+  onSave 
+}: { 
+  companyData: CompanyData, 
+  onBack: () => void, 
+  onSave: (data: CompanyData) => void 
+}) {
+  const [data, setData] = useState<CompanyData>(companyData);
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sigPad = useRef<SignaturePad | null>(null);
+
+  useEffect(() => {
+    if (showSignatureModal && canvasRef.current && !sigPad.current) {
+      sigPad.current = new SignaturePad(canvasRef.current, {
+        backgroundColor: 'rgb(255, 255, 255)'
+      });
+      
+      const resizeCanvas = () => {
+        if (canvasRef.current && sigPad.current) {
+          const ratio = Math.max(window.devicePixelRatio || 1, 1);
+          canvasRef.current.width = canvasRef.current.offsetWidth * ratio;
+          canvasRef.current.height = canvasRef.current.offsetHeight * ratio;
+          canvasRef.current.getContext("2d")?.scale(ratio, ratio);
+          sigPad.current.clear();
+        }
+      };
+      
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+      
+      return () => {
+        window.removeEventListener("resize", resizeCanvas);
+        sigPad.current = null;
+      };
+    }
+  }, [showSignatureModal]);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setData(prev => ({ ...prev, logo: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const saveSignature = () => {
+    if (sigPad.current && !sigPad.current.isEmpty()) {
+      const signature = sigPad.current.toDataURL('image/png');
+      setData(prev => ({ ...prev, signature }));
+      setShowSignatureModal(false);
+    }
+  };
+
+  const clearSignature = () => {
+    sigPad.current?.clear();
+  };
+
+  return (
+    <motion.div 
+      initial={{ x: 20, opacity: 0 }} 
+      animate={{ x: 0, opacity: 1 }} 
+      exit={{ x: -20, opacity: 0 }}
+      className="flex flex-col min-h-screen pb-24 bg-white"
+    >
+      <div className="bg-slate-900 px-4 py-4 flex items-center border-b border-slate-800 sticky top-0 z-40 gap-4 shadow-sm">
+        <button onClick={onBack} className="p-1 hover:bg-slate-800 rounded-lg transition-colors text-slate-300">
+          <ArrowLeft size={20} />
+        </button>
+        <h1 className="font-bold text-lg text-white tracking-tight uppercase">Invoice Settings</h1>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-5 space-y-8">
+        {/* Logo Section */}
+        <section>
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Business Logo</h2>
+          <div className="flex items-center gap-6">
+            <div className="w-32 h-32 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center p-2 relative group bg-slate-50 overflow-hidden">
+              {data.logo ? (
+                <img src={data.logo} alt="Logo" className="w-full h-full object-contain" />
+              ) : (
+                <ImageIcon size={32} className="text-slate-200" />
+              )}
+              <input 
+                type="file" 
+                id="profile-logo-upload" 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleLogoUpload} 
+              />
+              <label 
+                htmlFor="profile-logo-upload" 
+                className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white text-[10px] font-bold"
+              >
+                <Plus size={20} className="mb-1" />
+                CHANGE
+              </label>
+            </div>
+            <div className="flex-1 space-y-2">
+              <p className="text-sm font-bold text-slate-900">Company Logo</p>
+              <p className="text-xs text-slate-500 leading-relaxed">This logo will appear at the top of your estimates and invoices. Recommended size: 512x512px.</p>
+              {data.logo && (
+                <button 
+                  onClick={() => setData(prev => ({ ...prev, logo: '' }))}
+                  className="text-red-500 text-xs font-bold hover:underline"
+                >
+                  Remove Logo
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Company Info */}
+        <section className="space-y-4">
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Company Information</h2>
+          <div className="space-y-4">
+            <div className="relative pt-2">
+              <div className="absolute -top-1.5 left-3 bg-white px-2 z-10 text-[10px] font-bold text-slate-500">Business Name</div>
+              <input 
+                type="text" 
+                value={data.name}
+                onChange={(e) => setData({ ...data, name: e.target.value })}
+                className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              />
+            </div>
+            <div className="relative pt-2">
+              <div className="absolute -top-1.5 left-3 bg-white px-2 z-10 text-[10px] font-bold text-slate-500">Address</div>
+              <textarea 
+                value={data.address}
+                onChange={(e) => setData({ ...data, address: e.target.value })}
+                rows={3}
+                className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="relative pt-2">
+                <div className="absolute -top-1.5 left-3 bg-white px-2 z-10 text-[10px] font-bold text-slate-500">Phone</div>
+                <input 
+                  type="text" 
+                  value={data.phone}
+                  onChange={(e) => setData({ ...data, phone: e.target.value })}
+                  className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                />
+              </div>
+              <div className="relative pt-2">
+                <div className="absolute -top-1.5 left-3 bg-white px-2 z-10 text-[10px] font-bold text-slate-500">Email</div>
+                <input 
+                  type="email" 
+                  value={data.email}
+                  onChange={(e) => setData({ ...data, email: e.target.value })}
+                  className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Signature Section */}
+        <section>
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Authorized Signature</h2>
+          <div className="border-2 border-dashed border-slate-200 rounded-xl overflow-hidden bg-slate-50 relative group aspect-video flex flex-col items-center justify-center cursor-pointer p-4" onClick={() => setShowSignatureModal(true)}>
+            {data.signature ? (
+              <img src={data.signature} alt="Signature" className="max-w-full max-h-full object-contain" />
+            ) : (
+              <div className="flex flex-col items-center gap-3 text-slate-400">
+                <Pencil size={32} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Click to set signature</span>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <div className="bg-slate-900 text-white p-2 rounded-full shadow-xl">
+                <Edit2 size={20} />
+              </div>
+            </div>
+          </div>
+          <p className="mt-2 text-[10px] text-slate-400 font-medium">This signature will be automatically printed on all your final invoices.</p>
+        </section>
+
+        {/* Business Terms */}
+        <section className="pb-10">
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Invoice Terms</h2>
+          <div className="relative pt-2">
+            <div className="absolute -top-1.5 left-3 bg-white px-2 z-10 text-[10px] font-bold text-slate-500">Terms & Conditions</div>
+            <textarea 
+              value={data.terms}
+              onChange={(e) => setData({ ...data, terms: e.target.value })}
+              rows={4}
+              className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+            />
+          </div>
+        </section>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-40">
+        <button 
+          onClick={() => onSave(data)}
+          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 uppercase tracking-[0.2em] text-xs"
+        >
+          <CheckCircle2 size={20} />
+          Apply Changes
+        </button>
+      </div>
+
+      {/* Signature Modal Overlay */}
+      <AnimatePresence>
+        {showSignatureModal && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[110]"
+              onClick={() => setShowSignatureModal(false)}
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 50 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-lg bg-white rounded-2xl shadow-2xl z-[111] overflow-hidden"
+            >
+              <div className="p-5 bg-slate-900 text-white flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Pencil size={20} />
+                  <h3 className="font-bold uppercase tracking-widest text-sm">Draw Signature</h3>
+                </div>
+                <button onClick={() => setShowSignatureModal(false)} className="hover:bg-slate-800 p-2 rounded-lg transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-6">
+                <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl overflow-hidden mb-6 h-64">
+                  <canvas ref={canvasRef} className="w-full h-full cursor-crosshair touch-none" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <button onClick={clearSignature} className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-2">
+                    <Trash2 size={18} />
+                    Reset
+                  </button>
+                  <button onClick={saveSignature} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2">
+                    <Check size={18} />
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
 function numberToWords(num: number): string {
   const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
   const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
@@ -895,9 +1174,12 @@ function MenuItem({ label, active = false, onClick }: { label: string, active?: 
   );
 }
 
-function MenuItemWithIcon({ icon, label }: { icon: ReactNode, label: string }) {
+function MenuItemWithIcon({ icon, label, onClick }: { icon: ReactNode, label: string, onClick?: () => void }) {
   return (
-    <button className="w-full flex items-center justify-between p-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-all text-left">
+    <button 
+      onClick={onClick}
+      className="w-full flex items-center justify-between p-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-all text-left"
+    >
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 group-hover:text-blue-600">
           {icon}
@@ -1102,14 +1384,19 @@ function EstimateFormView({
   }, [subtotal, discountValue, discountType]);
   const totalAmount = subtotal - discountAmount;
 
-  const handleAddItem = (item: Item) => {
+  const handleAddItem = (item: Item, stay?: boolean) => {
     if (editingItemIndex !== null) {
       setItems(prev => prev.map((it, idx) => idx === editingItemIndex ? item : it));
     } else {
       setItems(prev => [...prev, item]);
     }
-    setShowItemModal(false);
-    setEditingItemIndex(null);
+    
+    if (!stay) {
+      setShowItemModal(false);
+      setEditingItemIndex(null);
+    } else {
+      setEditingItemIndex(null);
+    }
   };
 
   const handleSave = () => {
@@ -1348,7 +1635,7 @@ function ItemModal({
 }: { 
   show: boolean, 
   onClose: () => void, 
-  onSave: (item: Item) => void,
+  onSave: (item: Item, stay?: boolean) => void,
   editingItem: Item | null
 }) {
   const [name, setName] = useState(editingItem?.name || '');
@@ -1357,7 +1644,45 @@ function ItemModal({
   const [unit, setUnit] = useState(editingItem?.unit || 'Nos');
   const [showUnitPicker, setShowUnitPicker] = useState(false);
 
+  useEffect(() => {
+    if (show) {
+      setName(editingItem?.name || '');
+      setQuantity(editingItem?.quantity || 1);
+      setRate(editingItem?.rate || 0);
+      setUnit(editingItem?.unit || 'Nos');
+    }
+  }, [show, editingItem]);
+
   if (!show) return null;
+
+  const handleConfirm = () => {
+    onSave({
+      id: editingItem?.id || Math.random().toString(36).substr(2, 9),
+      name,
+      quantity,
+      rate,
+      unit,
+      tax: 0,
+      discount: 0
+    }, false);
+  };
+
+  const handleSaveAndNew = () => {
+    onSave({
+      id: editingItem?.id || Math.random().toString(36).substr(2, 9),
+      name,
+      quantity,
+      rate,
+      unit,
+      tax: 0,
+      discount: 0
+    }, true);
+    // Reset fields
+    setName('');
+    setQuantity(1);
+    setRate(0);
+    setUnit('Nos');
+  };
 
   return (
     <div className="fixed inset-0 z-[60] bg-slate-50 flex flex-col">
@@ -1435,19 +1760,14 @@ function ItemModal({
 
       {/* Item Modal Buttons */}
       <div className="flex h-20 border-t border-slate-200 z-50 bg-white p-4 gap-4">
-        <button className="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-lg transition-all text-xs uppercase tracking-widest">
+        <button 
+          onClick={handleSaveAndNew}
+          className="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-lg transition-all text-xs uppercase tracking-widest"
+        >
           Save & New
         </button>
         <button 
-          onClick={() => onSave({
-            id: editingItem?.id || Math.random().toString(36).substr(2, 9),
-            name,
-            quantity,
-            rate,
-            unit,
-            tax: 0,
-            discount: 0
-          })}
+          onClick={handleConfirm}
           className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg flex items-center justify-center transition-all text-xs uppercase tracking-widest shadow-lg"
         >
           Confirm Item
@@ -1546,7 +1866,7 @@ function SaleFormView({
     }
   }, [isReceived, totalAmount]);
 
-  const handleAddItem = (item: Item) => {
+  const handleAddItem = (item: Item, stay?: boolean) => {
     if (editingItemIndex !== null) {
       const newItems = [...items];
       newItems[editingItemIndex] = item;
@@ -1554,7 +1874,12 @@ function SaleFormView({
     } else {
       setItems([...items, item]);
     }
-    setShowItemModal(false);
+    
+    if (!stay) {
+      setShowItemModal(false);
+    } else {
+      setEditingItemIndex(null);
+    }
   };
 
   const handleSave = () => {
