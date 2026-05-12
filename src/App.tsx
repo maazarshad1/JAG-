@@ -8,9 +8,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-console.log("App.tsx module executing");
-import React, { useState, useMemo, ReactNode, useRef, useEffect, Component, ErrorInfo } from 'react';
-import SignaturePad from 'signature_pad';
+console.log("App.tsx: STARTING MODULE LOADING");
+import React, { useState, useMemo, ReactNode, useRef, useEffect } from 'react';
+// import SignaturePad from 'signature_pad';
+const SignaturePad: any = null;
 import { 
   Bell, 
   Settings, 
@@ -36,7 +37,7 @@ import {
   Trash2,
   Check
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { View, Estimate, EstimateStatus, Item, CompanyData } from './types';
 
 export default function App() {
@@ -395,9 +396,16 @@ function ProfileEditView({
 
   useEffect(() => {
     if (showSignatureModal && canvasRef.current && !sigPad.current) {
-      sigPad.current = new SignaturePad(canvasRef.current, {
-        backgroundColor: 'rgb(255, 255, 255)'
-      });
+      if (typeof SignaturePad === 'function') {
+        try {
+          // @ts-ignore
+          sigPad.current = new SignaturePad(canvasRef.current, {
+            backgroundColor: 'rgb(255, 255, 255)'
+          });
+        } catch (e) {
+          console.error("SignaturePad init error", e);
+        }
+      }
       
       const resizeCanvas = () => {
         if (canvasRef.current && sigPad.current) {
@@ -706,9 +714,16 @@ function InvoiceView({
 
   React.useEffect(() => {
     if (showSignatureModal && canvasRef.current && !sigPad.current) {
-      sigPad.current = new SignaturePad(canvasRef.current, {
-        backgroundColor: 'rgb(255, 255, 255)'
-      });
+      if (typeof SignaturePad === 'function') {
+        try {
+          // @ts-ignore
+          sigPad.current = new SignaturePad(canvasRef.current, {
+            backgroundColor: 'rgb(255, 255, 255)'
+          });
+        } catch (e) {
+          console.error("SignaturePad init error", e);
+        }
+      }
       
       const resizeCanvas = () => {
         if (canvasRef.current && sigPad.current) {

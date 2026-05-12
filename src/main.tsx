@@ -1,43 +1,28 @@
+console.log("main.tsx: STARTING EXECUTION");
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-console.log("main.tsx executing");
+console.log("main.tsx: Imports completed");
 
-window.addEventListener('error', (event) => {
+window.onerror = function(message, source, lineno, colno, error) {
+  console.log("main.tsx: GLOBAL ERROR CAUGHT", message);
   const errorDiv = document.createElement('div');
-  errorDiv.style.position = 'fixed';
-  errorDiv.style.top = '0';
-  errorDiv.style.left = '0';
-  errorDiv.style.right = '0';
-  errorDiv.style.zIndex = '9999';
-  errorDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
-  errorDiv.style.color = 'white';
-  errorDiv.style.padding = '20px';
-  errorDiv.style.fontFamily = 'monospace';
-  errorDiv.style.whiteSpace = 'pre-wrap';
-  errorDiv.style.overflow = 'auto';
-  errorDiv.style.maxHeight = '100vh';
-  errorDiv.innerHTML = `<h3>Global Error</h3><b>${event.message}</b><br><br>${event.error?.stack || ''}`;
+  errorDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:red;color:white;padding:20px;font-family:monospace;';
+  errorDiv.innerHTML = `<h3>Global Error</h3>${message}<br><small>${source}:${lineno}</small>`;
   document.body.appendChild(errorDiv);
-});
+};
 
 try {
-  const rootElement = document.getElementById('root');
-  console.log("rootElement:", rootElement);
-  if (!rootElement) throw new Error("No root element found!");
-  
-  createRoot(rootElement).render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  );
-  console.log("createRoot called successfully");
-} catch (err: any) {
-  console.error("Error during rendering:", err);
-  const errorDiv = document.createElement('div');
-  errorDiv.textContent = `Render Error: ${err.message}`;
-  document.body.appendChild(errorDiv);
+  const root = document.getElementById('root');
+  if (root) {
+    createRoot(root).render(<StrictMode><App /></StrictMode>);
+    console.log("main.tsx: Render called");
+  } else {
+    console.error("main.tsx: Root element not found");
+  }
+} catch (e: any) {
+  console.error("main.tsx: Render crash", e);
 }
 
