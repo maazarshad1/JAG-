@@ -10,8 +10,7 @@
 
 console.log("App.tsx: STARTING MODULE LOADING");
 import React, { useState, useMemo, ReactNode, useRef, useEffect } from 'react';
-// import SignaturePad from 'signature_pad';
-const SignaturePad: any = null;
+import SignaturePad from 'signature_pad';
 import { 
   Bell, 
   Settings, 
@@ -65,32 +64,46 @@ export default function App() {
   }, []);
 
   const [currentView, setCurrentView] = useState<View>('HOME');
-  const [companyData, setCompanyData] = useState<CompanyData>({
-    name: 'Jawad Aluminium and Glass Works',
-    email: 'jawadaluminium786@gmail.com',
-    phone: '03235528196',
-    address: 'Shop#1 Habib Plaza Near River Bridge Main Double Road Phase 5 Ghouri Town Islamabad',
-    logo: '',
-    terms: 'Thanks for doing business with us! Advance payment 90% After completion 10% = Note This Quotation is valid for only two days'
+  const [companyData, setCompanyData] = useState<CompanyData>(() => {
+    const saved = localStorage.getItem('companyData');
+    return saved ? JSON.parse(saved) : {
+      name: 'Jawad Aluminium and Glass Works',
+      email: 'jawadaluminium786@gmail.com',
+      phone: '03235528196',
+      address: 'Shop#1 Habib Plaza Near River Bridge Main Double Road Phase 5 Ghouri Town Islamabad',
+      logo: '',
+      terms: 'Thanks for doing business with us! Advance payment 90% After completion 10% = Note This Quotation is valid for only two days'
+    };
   });
-  const [estimates, setEstimates] = useState<Estimate[]>([
-    {
-      id: '1',
-      refNo: 1,
-      date: '12 May, 26',
-      customerName: 'maaad',
-      items: [
-        { id: 'i1', name: 'Glass', quantity: 36, unit: 'SQR FEET', rate: 200, tax: 0, discount: 0 }
-      ],
-      status: EstimateStatus.OPEN,
-      discountValue: 0,
-      discountType: 'percentage',
-      taxType: 'None',
-      description: '',
-      totalAmount: 7200,
-      balance: 7200
-    }
-  ]);
+  const [estimates, setEstimates] = useState<Estimate[]>(() => {
+    const saved = localStorage.getItem('estimates');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: '1',
+        refNo: 1,
+        date: '12 May, 26',
+        customerName: 'maaad',
+        items: [
+          { id: 'i1', name: 'Glass', quantity: 36, unit: 'SQR FEET', rate: 200, tax: 0, discount: 0 }
+        ],
+        status: EstimateStatus.OPEN,
+        discountValue: 0,
+        discountType: 'percentage',
+        taxType: 'None',
+        description: '',
+        totalAmount: 7200,
+        balance: 7200
+      }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('companyData', JSON.stringify(companyData));
+  }, [companyData]);
+
+  useEffect(() => {
+    localStorage.setItem('estimates', JSON.stringify(estimates));
+  }, [estimates]);
   const [editingEstimate, setEditingEstimate] = useState<Estimate | null>(null);
   const [selectedEstimateForView, setSelectedEstimateForView] = useState<Estimate | null>(null);
   const [selectedEstimateForSale, setSelectedEstimateForSale] = useState<Estimate | null>(null);
@@ -351,9 +364,6 @@ function HomeView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateT
 
         {/* Quick Actions Bar */}
         <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 p-3 flex flex-wrap items-center gap-2 shadow-sm">
-          <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full cursor-pointer uppercase tracking-widest shadow-sm">
-            🔥 60% OFF
-          </div>
           <button onClick={() => alert("Added Sale functionality coming soon!")} className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
             <Plus size={16} /> Add Sale
           </button>
@@ -934,7 +944,10 @@ function InvoiceView({
         try {
           // @ts-ignore
           sigPad.current = new SignaturePad(canvasRef.current, {
-            backgroundColor: 'rgb(255, 255, 255)'
+            backgroundColor: 'rgb(255, 255, 255)',
+            onEnd: () => {
+              setShowSignatureModal(prev => prev);
+            }
           });
         } catch (e) {
           console.error("SignaturePad init error", e);
@@ -973,10 +986,15 @@ function InvoiceView({
   };
 
   const saveSignature = () => {
+    console.log("Attempting to save signature");
     if (sigPad.current && !sigPad.current.isEmpty()) {
       const signature = sigPad.current.toDataURL('image/png');
+      console.log("Signature captured:", signature.substring(0, 50) + "...");
       onUpdateCompany({ ...companyData, signature });
       setShowSignatureModal(false);
+      console.log("Signature saved and modal closed");
+    } else {
+      console.log("Signature pad is empty or sigPad is null");
     }
   };
 
@@ -1014,11 +1032,11 @@ function InvoiceView({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-slate-200 overflow-y-auto"
+      className="fixed inset-0 z-[100] bg-slate-200 overflow-y-auto overflow-x-hidden"
     >
-      <div className="max-w-5xl mx-auto p-4 sm:p-12 min-h-screen">
+      <div className="w-full max-w-3xl mx-auto p-1 sm:p-2 min-h-screen">
         {/* Toolbar */}
-        <div className="flex items-center justify-between mb-8 sticky top-0 bg-slate-200/90 backdrop-blur-md py-4 z-10 print:hidden">
+        <div className="flex items-center justify-between mb-2 sticky top-0 bg-slate-200/90 backdrop-blur-md py-1 z-10 print:hidden text-[10px]">
           <div className="flex items-center gap-4">
             <button onClick={onBack} className="p-2 hover:bg-white rounded-lg transition-colors border border-slate-300 bg-white/50">
               <ArrowLeft size={20} />
@@ -1040,89 +1058,88 @@ function InvoiceView({
         </div>
 
         {/* Paper Container */}
-        <div className="bg-white border border-slate-400 shadow-2xl p-4 sm:p-8 md:p-12 print:shadow-none print:border-none print:p-0 mx-auto w-full min-h-[297mm]">
+        <div className="bg-white border border-slate-400 shadow-2xl p-3 sm:p-4 print:shadow-none print:border-none print:p-0 mx-auto w-full max-w-3xl">
           
           {/* Header Title */}
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-slate-700 tracking-[0.1em] uppercase">
+          <div className="text-center mb-3">
+            <h1 className="text-2xl font-bold text-slate-700 tracking-[0.1em] uppercase">
               {estimate.isSale ? 'Sale Invoice' : 'Estimate'}
             </h1>
           </div>
 
           {/* Business Header Box */}
-          <div className="border border-slate-400 p-6 flex gap-6 mb-6">
-            <div className="w-28 h-28 border border-slate-400 flex items-center justify-center relative group bg-slate-50 overflow-hidden rounded">
+          <div className="border border-slate-400 p-3 flex gap-3 mb-3">
+            <div className="w-20 h-20 border border-slate-400 flex items-center justify-center relative group bg-slate-50 overflow-hidden rounded">
                <input type="file" id="logo-upload" className="hidden" accept="image/*" onChange={handleLogoUpload} />
                {companyData.logo ? (
                  <img src={companyData.logo} alt="Logo" className="w-full h-full object-contain" />
                ) : (
                 <div className="flex flex-col items-center gap-1 opacity-20">
-                  <Monitor size={32} />
-                  <span className="text-[10px] font-black uppercase">JAG</span>
+                  <Monitor size={24} />
+                  <span className="text-[8px] font-black uppercase">JAG</span>
                 </div>
                )}
-               <label htmlFor="logo-upload" className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white font-bold text-[10px] print:hidden">
-                  <Edit2 size={18} className="mb-1" />
-                  EDIT LOGO
+               <label htmlFor="logo-upload" className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white font-bold text-[8px] print:hidden">
+                  <Edit2 size={12} className="mb-0.5" />
+                  EDIT
                </label>
             </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-slate-900 mb-1">{companyData.name}</h2>
-              <p className="text-sm text-slate-700 mb-3">{companyData.address}</p>
-              <div className="grid grid-cols-2 text-sm font-medium">
-                <p><span className="text-slate-400 mr-2">Phone:</span> {companyData.phone}</p>
-                <p><span className="text-slate-400 mr-2">Email:</span> {companyData.email}</p>
+              <h2 className="text-lg font-bold text-slate-900 mb-0.5">{companyData.name}</h2>
+              <p className="text-[10px] text-slate-700 mb-1">{companyData.address}</p>
+              <div className="grid grid-cols-2 text-[10px] font-medium">
+                <p><span className="text-slate-400">P:</span> {companyData.phone}</p>
+                <p><span className="text-slate-400">E:</span> {companyData.email}</p>
               </div>
             </div>
           </div>
 
           {/* Details Grid */}
-          <div className="grid grid-cols-2 border border-slate-400 mb-6 bg-white overflow-hidden text-sm">
-            <div className="p-4 border-r border-slate-400 flex flex-col h-full">
-              <span className="text-xs font-bold text-slate-900 underline mb-3 uppercase tracking-wider">
+          <div className="grid grid-cols-2 border border-slate-400 mb-3 bg-white overflow-hidden text-[10px]">
+            <div className="p-2 border-r border-slate-400 flex flex-col h-full">
+              <span className="font-bold text-slate-900 underline mb-1 uppercase tracking-wider">
                 {estimate.isSale ? 'Invoice For:' : 'Estimate For:'}
               </span>
-              <span className="text-lg font-bold text-slate-800">{estimate.customerName}</span>
+              <span className="text-sm font-bold text-slate-800">{estimate.customerName}</span>
             </div>
             <div className="p-0 flex flex-col h-full">
-               <div className="p-4 border-b border-slate-400 flex justify-between items-center bg-slate-50/50">
-                  <span className="text-xs font-bold text-slate-900 underline uppercase tracking-wider">
+               <div className="p-1 px-2 border-b border-slate-400 flex justify-between items-center bg-slate-50/50">
+                  <span className="font-bold text-slate-900 underline uppercase tracking-wider">
                     {estimate.isSale ? 'Invoice Details:' : 'Estimate Details:'}
                   </span>
                </div>
-               <div className="p-4 space-y-1 font-bold text-slate-800">
-                  <div className="flex"><span className="w-20 text-slate-400">No:</span> {estimate.refNo}</div>
-                  <div className="flex"><span className="w-20 text-slate-400">Date:</span> {estimate.date}</div>
-                  <div className="flex"><span className="w-20 text-slate-400">Time:</span> 06:01 PM</div>
+               <div className="p-2 space-y-0.5 font-bold text-slate-800 text-[10px]">
+                  <div className="flex"><span className="w-12 text-slate-400">No:</span> {estimate.refNo}</div>
+                  <div className="flex"><span className="w-12 text-slate-400">Date:</span> {estimate.date}</div>
                </div>
             </div>
           </div>
 
           {/* Table */}
-          <div className="border border-slate-400 mb-6 overflow-x-auto scrollbar-hide">
-            <table className="w-full text-sm border-collapse min-w-[600px] sm:min-w-full">
-              <thead className="bg-slate-50 font-bold border-b border-slate-400">
+          <div className="border border-slate-400 mb-3 overflow-hidden">
+            <table className="w-full text-sm border-collapse table-fixed">
+              <thead className="bg-slate-50 font-bold border-b border-slate-400 text-[10px]">
                 <tr>
-                  <th className="border-r border-slate-400 p-2 w-10 text-center">#</th>
-                  <th className="border-r border-slate-400 p-2 text-left">Item name</th>
-                  <th className="border-r border-slate-400 p-2 w-24 text-center">Quantity</th>
-                  <th className="border-r border-slate-400 p-2 w-32 text-right">Price/ Unit (Rs)</th>
-                  <th className="p-2 w-32 text-right">Amount(Rs)</th>
+                  <th className="border-r border-slate-400 p-1 w-8 text-center">#</th>
+                  <th className="border-r border-slate-400 p-1 text-left">Item name</th>
+                  <th className="border-r border-slate-400 p-1 w-20 text-center">Quantity</th>
+                  <th className="border-r border-slate-400 p-1 w-28 text-right">Price/ Unit (Rs)</th>
+                  <th className="p-1 w-28 text-right">Amount(Rs)</th>
                 </tr>
               </thead>
-              <tbody className="font-medium text-slate-800">
+              <tbody className="font-medium text-slate-800 text-xs">
                 {estimate.items.map((item, idx) => (
                   <tr key={idx} className="border-b border-slate-400 last:border-b-0">
-                    <td className="border-r border-slate-400 p-3 text-center">{idx + 1}</td>
-                    <td className="border-r border-slate-400 p-3 break-all sm:break-normal">{item.name}</td>
-                    <td className="border-r border-slate-400 p-3 text-center">{item.quantity}</td>
-                    <td className="border-r border-slate-400 p-3 text-right">Rs {item.rate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="p-3 text-right font-bold">Rs {(item.quantity * item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="border-r border-slate-400 p-1 text-center">{idx + 1}</td>
+                    <td className="border-r border-slate-400 p-1 break-all sm:break-normal">{item.name}</td>
+                    <td className="border-r border-slate-400 p-1 text-center">{item.quantity}</td>
+                    <td className="border-r border-slate-400 p-1 text-right">Rs {item.rate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="p-1 text-right font-bold">Rs {(item.quantity * item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                   </tr>
                 ))}
                 {/* Visual fill */}
                 {[...Array(Math.max(0, 4 - estimate.items.length))].map((_, i) => (
-                  <tr key={`empty-${i}`} className="h-10 border-b border-slate-400 last:border-b-0">
+                  <tr key={`empty-${i}`} className="h-6 border-b border-slate-400 last:border-b-0">
                     <td className="border-r border-slate-400"></td>
                     <td className="border-r border-slate-400"></td>
                     <td className="border-r border-slate-400"></td>
@@ -1131,71 +1148,64 @@ function InvoiceView({
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="border-t border-slate-400 font-bold bg-slate-50/30">
+              <tfoot className="border-t border-slate-400 font-bold bg-slate-50/30 text-xs">
                 <tr>
-                  <td colSpan={2} className="border-r border-slate-400 p-3 text-left">Total</td>
-                  <td className="border-r border-slate-400 p-3 text-center">{estimate.items.reduce((s, i) => s + i.quantity, 0)}</td>
-                  <td className="border-r border-slate-400 p-3"></td>
-                  <td className="p-3 text-right font-black">Rs {subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  <td colSpan={2} className="border-r border-slate-400 p-1 text-left">Total</td>
+                  <td className="border-r border-slate-400 p-1 text-center">{estimate.items.reduce((s, i) => s + i.quantity, 0)}</td>
+                  <td className="border-r border-slate-400 p-1"></td>
+                  <td className="p-1 text-right font-black">Rs {subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                 </tr>
               </tfoot>
             </table>
           </div>
 
           {/* Summary Box */}
-          <div className="flex justify-end mb-8">
-            <div className="w-full sm:w-80 border border-slate-400 text-xs font-bold divide-y divide-slate-400">
-              <div className="flex">
-                <div className="flex-1 p-2 bg-slate-50/50">Sub Total</div>
-                <div className="w-1/2 p-2 text-right">: Rs {subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+          <div className="flex justify-end mb-4">
+            <div className="w-full sm:w-64 text-[10px] font-bold border border-slate-400">
+              <div className="flex border-b border-slate-400">
+                <div className="flex-1 p-1 bg-slate-50 border-r border-slate-400">Sub Total</div>
+                <div className="w-8 p-1 text-center border-r border-slate-400">:</div>
+                <div className="w-32 p-1 text-right">Rs {subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
               </div>
               {(estimate.discountValue || 0) > 0 && (
-                <div className="flex text-orange-600">
-                  <div className="flex-1 p-2 bg-orange-50/20">Discount {estimate.discountType === 'percentage' ? `(${estimate.discountValue}%)` : ''}</div>
-                  <div className="w-1/2 p-2 text-right">: - Rs {(estimate.discountType === 'percentage' ? (subtotal * estimate.discountValue!) / 100 : estimate.discountValue!).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                <div className="flex border-b border-slate-400 text-orange-600">
+                  <div className="flex-1 p-1 bg-orange-50 border-r border-slate-400">Discount</div>
+                  <div className="w-8 p-1 text-center border-r border-slate-400">:</div>
+                  <div className="w-32 p-1 text-right">- Rs {(estimate.discountType === 'percentage' ? (subtotal * estimate.discountValue!) / 100 : estimate.discountValue!).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
                 </div>
               )}
-              <div className="flex border-t-2 border-slate-900/10">
-                <div className="flex-1 p-2 bg-slate-50/50">Total</div>
-                <div className="w-1/2 p-2 text-right">: Rs {(estimate.totalAmount || subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+              <div className="flex bg-slate-100 border-b border-slate-400">
+                <div className="flex-1 p-1 border-r border-slate-400 font-bold">Total</div>
+                <div className="w-8 p-1 text-center border-r border-slate-400">:</div>
+                <div className="w-32 p-1 text-right font-bold">Rs {(estimate.totalAmount || subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
               </div>
-              {estimate.isSale && (
-                <>
-                  <div className="flex text-green-600">
-                    <div className="flex-1 p-2 bg-green-50/50">Received</div>
-                    <div className="w-1/2 p-2 text-right">: Rs {(estimate.receivedAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                  </div>
-                  <div className="flex text-red-600">
-                    <div className="flex-1 p-2 bg-red-50/50">Balance Due</div>
-                    <div className="w-1/2 p-2 text-right">: Rs {(estimate.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                  </div>
-                </>
-              )}
-              <div className="p-2">
-                <span className="text-slate-400 block mb-1 uppercase text-[9px] tracking-widest">
+              <div className="p-1 bg-slate-50 border-b border-slate-400">
+                <span className="text-slate-900 block uppercase text-[9px] tracking-tight font-bold">
                   {estimate.isSale ? 'Invoice' : 'Estimate'} Amount In Words :
                 </span>
-                <p className="text-slate-900 leading-snug">{numberToWords(subtotal)}</p>
+              </div>
+              <div className="p-1 min-h-[32px]">
+                <p className="text-slate-700 leading-snug text-[9px] font-normal">{numberToWords(estimate.totalAmount || subtotal)}</p>
               </div>
             </div>
           </div>
 
           {/* Terms */}
-          <div className="border border-slate-400 mb-8 overflow-hidden rounded-sm cursor-pointer hover:bg-slate-50 group relative" onClick={() => setShowSettingsModal(true)}>
-            <div className="bg-slate-50 p-2 border-b border-slate-400 text-[10px] font-black uppercase tracking-widest">
+          <div className="border border-slate-400 mb-3 overflow-hidden rounded-sm cursor-pointer hover:bg-slate-50 group relative" onClick={() => setShowSettingsModal(true)}>
+            <div className="bg-slate-50 p-1 px-2 border-b border-slate-400 text-[8px] font-black uppercase tracking-widest">
               Terms And Conditions:
             </div>
-            <div className="p-4 text-[10px] font-bold text-slate-600 normal-case italic leading-relaxed">
+            <div className="p-2 text-[9px] font-bold text-slate-600 normal-case italic leading-relaxed">
               {companyData.terms}
             </div>
             <div className="absolute inset-0 bg-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center print:hidden">
-                <Pencil size={20} className="text-blue-600" />
+                <Pencil size={16} className="text-blue-600" />
             </div>
           </div>
 
           {/* Signature Box */}
-          <div className="flex justify-end mt-12">
-            <div className="w-72 border border-slate-400 h-40 flex flex-col relative group">
+          <div className="flex justify-end mt-4">
+            <div className="w-56 border border-slate-400 h-24 flex flex-col relative group">
               <div 
                 onClick={() => setShowSignatureModal(true)}
                 className="flex-1 flex flex-col items-center justify-center p-4 cursor-pointer relative overflow-hidden"
@@ -1254,7 +1264,15 @@ function InvoiceView({
                     <Trash2 size={18} />
                     Reset Pad
                   </button>
-                  <button onClick={saveSignature} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2">
+                  <button 
+  onClick={saveSignature} 
+  disabled={sigPad.current?.isEmpty()}
+  className={`font-bold py-4 rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 ${
+    sigPad.current?.isEmpty() 
+      ? 'bg-slate-300 text-white cursor-not-allowed' 
+      : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
+  }`}
+>
                     <Check size={18} />
                     Confirm Signature
                   </button>
