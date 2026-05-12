@@ -73,152 +73,153 @@ export default function App() {
   // Helper to handle navigation
   const navigate = (view: View) => setCurrentView(view);
 
-  // Layout components
-  const BottomNav = () => (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-2 px-1 z-50">
-      <button onClick={() => navigate('MENU')} className="flex flex-col items-center gap-1 text-[10px] text-slate-500 hover:text-blue-600 transition-colors">
-        <Home size={20} />
-        <span>HOME</span>
-      </button>
-      <button className="flex flex-col items-center gap-1 text-[10px] text-slate-500 hover:text-blue-600 transition-colors">
-        <LayoutDashboard size={20} />
-        <span>DASHBOARD</span>
-      </button>
-      <button className="flex flex-col items-center gap-1 text-[10px] text-slate-500 hover:text-blue-600 transition-colors">
-        <Box size={20} />
-        <span>ITEMS</span>
-      </button>
-      <button onClick={() => navigate('MENU')} className={`flex flex-col items-center gap-1 text-[10px] ${currentView === 'MENU' ? 'text-blue-600' : 'text-slate-500'}`}>
-        <MenuIcon size={20} />
-        <span>MENU</span>
-      </button>
-      <button className="flex flex-col items-center gap-1 text-[10px] text-slate-500 hover:text-blue-600 transition-colors">
-        <div className="relative">
-          <Monitor size={20} />
-          <div className="absolute -top-1 -right-1 flex gap-0.5">
-            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
-            <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-          </div>
-        </div>
-        <span>GET DESKTOP</span>
-      </button>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-900 pb-20 overflow-x-hidden">
-      <AnimatePresence mode="wait">
-        {currentView === 'MENU' && (
-          <div key="menu">
-            <MenuView 
-              onNavigateToEstimates={() => navigate('ESTIMATE_LIST')} 
-              onNavigateToSettings={() => navigate('PROFILE_EDIT')}
-            />
-          </div>
-        )}
-        {currentView === 'ESTIMATE_LIST' && (
-          <div key="list">
-            <EstimateListView 
-              estimates={estimates} 
-              onBack={() => navigate('MENU')} 
-              onAdd={() => {
-                setEditingEstimate(null);
-                navigate('ESTIMATE_FORM');
-              }}
-              onEdit={(est) => {
-                setEditingEstimate(est);
-                navigate('ESTIMATE_FORM');
-              }}
-              onConvert={(est) => {
-                setSelectedEstimateForSale(est);
-                navigate('SALE_FORM');
-              }}
-              onViewInvoice={(est) => {
-                setSelectedEstimateForView(est);
-                navigate('INVOICE_VIEW');
-              }}
-            />
-          </div>
-        )}
-        {currentView === 'SALE_FORM' && selectedEstimateForSale && (
-          <div key={`sale-${selectedEstimateForSale.id}`}>
-            <SaleFormView 
-              initialData={selectedEstimateForSale}
-              onBack={() => navigate('ESTIMATE_LIST')}
-              onSave={(est, stay) => {
-                // Check if it already exists
-                const exists = estimates.find(e => e.id === est.id);
-                if (exists) {
-                  setEstimates(prev => prev.map(e => e.id === est.id ? est : e));
-                } else {
-                  setEstimates(prev => [...prev, est]);
-                }
+      {currentView === 'MENU' && (
+        <div key="menu">
+          <MenuView 
+            onNavigateToEstimates={() => navigate('ESTIMATE_LIST')} 
+            onNavigateToSettings={() => navigate('PROFILE_EDIT')}
+          />
+        </div>
+      )}
+      {currentView === 'ESTIMATE_LIST' && (
+        <div key="list">
+          <EstimateListView 
+            estimates={estimates} 
+            onBack={() => navigate('MENU')} 
+            onAdd={() => {
+              setEditingEstimate(null);
+              navigate('ESTIMATE_FORM');
+            }}
+            onEdit={(est) => {
+              setEditingEstimate(est);
+              navigate('ESTIMATE_FORM');
+            }}
+            onConvert={(est) => {
+              setSelectedEstimateForSale(est);
+              navigate('SALE_FORM');
+            }}
+            onViewInvoice={(est) => {
+              setSelectedEstimateForView(est);
+              navigate('INVOICE_VIEW');
+            }}
+          />
+        </div>
+      )}
+      {currentView === 'SALE_FORM' && selectedEstimateForSale && (
+        <div key={`sale-${selectedEstimateForSale.id}`}>
+          <SaleFormView 
+            initialData={selectedEstimateForSale}
+            onBack={() => navigate('ESTIMATE_LIST')}
+            onSave={(est, stay) => {
+              // Check if it already exists
+              const exists = estimates.find(e => e.id === est.id);
+              if (exists) {
+                setEstimates(prev => prev.map(e => e.id === est.id ? est : e));
+              } else {
+                setEstimates(prev => [...prev, est]);
+              }
 
-                if (stay) {
-                  const newId = Math.random().toString(36).substr(2, 9);
-                  const nextRef = String(estimates.length + 2);
-                  setSelectedEstimateForSale({
-                    id: newId,
-                    refNo: nextRef,
-                    date: new Date().toLocaleDateString('en-GB'),
-                    customerName: '',
-                    items: [],
-                    status: EstimateStatus.OPEN,
-                    totalAmount: 0,
-                    balance: 0,
-                    description: '',
-                    isSale: true
-                  });
-                } else {
-                  navigate('ESTIMATE_LIST');
-                }
-              }}
-            />
-          </div>
-        )}
-        {currentView === 'ESTIMATE_FORM' && (
-          <div key="form">
-            <EstimateFormView 
-              initialData={editingEstimate}
-              onBack={() => navigate('ESTIMATE_LIST')}
-              onSave={(est) => {
-                if (editingEstimate) {
-                  setEstimates(prev => prev.map(e => e.id === est.id ? est : e));
-                } else {
-                  setEstimates(prev => [...prev, est]);
-                }
+              if (stay) {
+                const newId = Math.random().toString(36).substr(2, 9);
+                const nextRef = String(estimates.length + 2);
+                setSelectedEstimateForSale({
+                  id: newId,
+                  refNo: nextRef as any, // Simple cast for now
+                  date: new Date().toLocaleDateString('en-GB'),
+                  customerName: '',
+                  items: [],
+                  status: EstimateStatus.OPEN,
+                  totalAmount: 0,
+                  balance: 0,
+                  description: '',
+                  isSale: true,
+                  discountValue: 0,
+                  discountType: 'percentage',
+                  taxType: 'None'
+                });
+              } else {
                 navigate('ESTIMATE_LIST');
-              }}
-            />
-          </div>
-        )}
-        {currentView === 'INVOICE_VIEW' && selectedEstimateForView && (
-          <div key="invoice">
-            <InvoiceView 
-              estimate={selectedEstimateForView} 
-              onBack={() => navigate('ESTIMATE_LIST')} 
-              companyData={companyData}
-              onUpdateCompany={(data) => setCompanyData(data)}
-            />
-          </div>
-        )}
-        {currentView === 'PROFILE_EDIT' && (
-          <div key="profile">
-            <ProfileEditView 
-              companyData={companyData}
-              onBack={() => navigate('MENU')}
-              onSave={(data) => {
-                setCompanyData(data);
-                navigate('MENU');
-              }}
-            />
-          </div>
-        )}
-      </AnimatePresence>
-      <BottomNav />
+              }
+            }}
+          />
+        </div>
+      )}
+      {currentView === 'ESTIMATE_FORM' && (
+        <div key="form">
+          <EstimateFormView 
+            initialData={editingEstimate}
+            onBack={() => navigate('ESTIMATE_LIST')}
+            onSave={(est) => {
+              if (editingEstimate) {
+                setEstimates(prev => prev.map(e => e.id === est.id ? est : e));
+              } else {
+                setEstimates(prev => [...prev, est]);
+              }
+              navigate('ESTIMATE_LIST');
+            }}
+          />
+        </div>
+      )}
+      {currentView === 'INVOICE_VIEW' && selectedEstimateForView && (
+        <div key="invoice">
+          <InvoiceView 
+            estimate={selectedEstimateForView} 
+            onBack={() => navigate('ESTIMATE_LIST')} 
+            companyData={companyData}
+            onUpdateCompany={(data) => setCompanyData(data)}
+          />
+        </div>
+      )}
+      {currentView === 'PROFILE_EDIT' && (
+        <div key="profile">
+          <ProfileEditView 
+            companyData={companyData}
+            onBack={() => navigate('MENU')}
+            onSave={(data) => {
+              setCompanyData(data);
+              navigate('MENU');
+            }}
+          />
+        </div>
+      )}
+      <BottomNav currentView={currentView} onNavigate={navigate} />
     </div>
   );
 }
+
+// Layout components
+const BottomNav = ({ currentView, onNavigate }: { currentView: View, onNavigate: (view: View) => void }) => (
+  <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-2 px-1 z-50">
+    <button onClick={() => onNavigate('MENU')} className={`flex flex-col items-center gap-1 text-[10px] ${currentView === 'MENU' ? 'text-blue-600' : 'text-slate-500'} hover:text-blue-600 transition-colors`}>
+      <Home size={20} />
+      <span>HOME</span>
+    </button>
+    <button className="flex flex-col items-center gap-1 text-[10px] text-slate-500 hover:text-blue-600 transition-colors">
+      <LayoutDashboard size={20} />
+      <span>DASHBOARD</span>
+    </button>
+    <button className="flex flex-col items-center gap-1 text-[10px] text-slate-500 hover:text-blue-600 transition-colors">
+      <Box size={20} />
+      <span>ITEMS</span>
+    </button>
+    <button onClick={() => onNavigate('MENU')} className={`flex flex-col items-center gap-1 text-[10px] ${currentView === 'MENU' ? 'text-blue-600' : 'text-slate-500'}`}>
+      <MenuIcon size={20} />
+      <span>MENU</span>
+    </button>
+    <button className="flex flex-col items-center gap-1 text-[10px] text-slate-500 hover:text-blue-600 transition-colors">
+      <div className="relative">
+        <Monitor size={20} />
+        <div className="absolute -top-1 -right-1 flex gap-0.5">
+          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+          <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+        </div>
+      </div>
+      <span>GET DESKTOP</span>
+    </button>
+  </div>
+);
 
 // --- VIEW COMPONENTS ---
 
@@ -308,7 +309,7 @@ function MenuView({ onNavigateToEstimates, onNavigateToSettings }: { onNavigateT
                   <MenuItem label="Sale Invoice" />
                   <MenuItem label="Payment-In" />
                   <MenuItem label="Sale Return (Credit Note)" />
-                  <MenuItem label="Estimate/Quotation" active onClick={onNavigateToEstimates} />
+          <MenuItem label="Estimate/Quotation" onClick={onNavigateToEstimates} />
                   <MenuItem label="Sale Order" />
                   <MenuItem label="Delivery Note" />
                   <MenuItem label="Vyapar POS" />
@@ -1162,14 +1163,14 @@ function OptionItem({ icon, label, onClick }: { icon: ReactNode, label: string, 
   );
 }
 
-function MenuItem({ label, active = false, onClick }: { label: string, active?: boolean, onClick?: () => void }) {
+function MenuItem({ label, onClick }: { label: string, onClick?: () => void }) {
   return (
     <button 
       onClick={onClick}
-      className={`w-full flex items-center justify-between px-16 py-4 border-b border-slate-100 last:border-0 hover:bg-white transition-all ${active ? 'bg-white border-l-4 border-l-blue-600' : ''}`}
+      className="w-full flex items-center justify-between px-16 py-4 border-b border-slate-100 last:border-0 hover:bg-white transition-all"
     >
-      <span className={`text-sm ${active ? 'text-slate-900 font-bold' : 'text-slate-600'}`}>{label}</span>
-      <ChevronRight size={16} className={active ? 'text-blue-600' : 'text-slate-300'} />
+      <span className="text-sm text-slate-600">{label}</span>
+      <ChevronRight size={16} className="text-slate-300" />
     </button>
   );
 }
