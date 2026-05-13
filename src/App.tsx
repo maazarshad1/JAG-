@@ -48,6 +48,8 @@ import {
   LineChart as LineChartIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { 
   BarChart, 
   Bar, 
@@ -1068,8 +1070,32 @@ function InvoiceView({
   const subtotal = estimate.items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sigPad = useRef<SignaturePad | null>(null);
+
+  const handleDownloadPDF = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      const element = document.getElementById('invoice-paper');
+      if (!element) return;
+      
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${estimate.isSale ? 'Invoice' : 'Estimate'}_${estimate.refNo}.pdf`);
+    } catch (error) {
+      console.error('Failed to generate PDF', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   React.useEffect(() => {
     if (showSignatureModal && canvasRef.current && !sigPad.current) {
@@ -1181,8 +1207,11 @@ function InvoiceView({
                 <Settings size={18} />
                 Edit Info
              </button>
-             <button onClick={() => window.print()} className="bg-white border border-slate-300 text-slate-700 px-6 py-2 rounded flex items-center gap-2 font-bold text-sm shadow-sm hover:bg-slate-50 transition-colors">
-                Print / Save
+             <button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded flex items-center gap-2 font-bold text-sm shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50">
+                {isGeneratingPDF ? 'Saving...' : 'Save PDF'}
+             </button>
+             <button onClick={() => window.print()} className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded flex items-center gap-2 font-bold text-sm shadow-sm hover:bg-slate-50 transition-colors">
+                Print
              </button>
              <button onClick={handleShare} className="bg-slate-900 text-white px-6 py-2 rounded flex items-center gap-2 font-bold text-sm shadow-lg hover:bg-slate-800 transition-colors">
                 Share
@@ -1191,7 +1220,7 @@ function InvoiceView({
         </div>
 
         {/* Paper Container */}
-        <div className="bg-white border border-slate-400 shadow-2xl p-3 sm:p-4 print:shadow-none print:border-none print:p-0 mx-auto w-full max-w-3xl">
+        <div id="invoice-paper" className="bg-white border border-slate-400 shadow-2xl p-3 sm:p-4 print:shadow-none print:border-none print:p-0 mx-auto w-full max-w-3xl relative">
           
           {/* Header Title */}
           <div className="text-center mb-3">
