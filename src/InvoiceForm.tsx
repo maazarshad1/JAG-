@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Estimate, InventoryItem } from './types';
 import { Settings, Share2, Plus, Minus, Trash2, Calendar, GripVertical, Search } from 'lucide-react';
 
-export function InvoiceForm({ isSale, onSave, onCancel, initialData }: { isSale: boolean, onSave: (inv: Estimate, print: boolean) => void, onCancel: () => void, initialData?: Estimate }) {
+export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [] }: { isSale: boolean, onSave: (inv: Estimate, print: boolean) => void, onCancel: () => void, initialData?: Estimate, parties?: any[] }) {
     const defaultRows = [{ id: '1', name: '', qty: 1, unit: 'PCS', price: 0 }];
     const mapItemsToRows = (items: any[]) => {
         return items.map((item, idx) => ({
@@ -15,6 +15,9 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData }: { isSale:
     };
     const [rows, setRows] = useState(initialData && initialData.items && initialData.items.length > 0 ? mapItemsToRows(initialData.items) : defaultRows);
     const [party, setParty] = useState(initialData ? initialData.customerName : '');
+    const [showPartySuggestions, setShowPartySuggestions] = useState(false);
+    const filteredParties = parties.filter(p => p.name.toLowerCase().includes(party.toLowerCase()) && party !== '').slice(0, 5);
+
     const [invoiceNo, setInvoiceNo] = useState(initialData && initialData.isSale === isSale ? Number(initialData.refNo) : 1);
     const [date, setDate] = useState(initialData ? initialData.date : new Date().toISOString().split('T')[0]);
     const [discountValue, setDiscountValue] = useState(0);
@@ -105,8 +108,31 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData }: { isSale:
                                         style={{ width: '100%', padding: '10px 12px 10px 36px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
                                         placeholder="Search by Name/Phone *" 
                                         value={party} 
-                                        onChange={e => setParty(e.target.value)} 
+                                        onChange={e => {
+                                            setParty(e.target.value);
+                                            setShowPartySuggestions(true);
+                                        }}
+                                        onFocus={() => setShowPartySuggestions(true)}
+                                        onBlur={() => setTimeout(() => setShowPartySuggestions(false), 200)}
                                     />
+                                    {showPartySuggestions && filteredParties.length > 0 && (
+                                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #d1d5db', borderRadius: '6px', marginTop: '4px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', zIndex: 10 }}>
+                                            {filteredParties.map((p, i) => (
+                                                <div 
+                                                    key={i} 
+                                                    style={{ padding: '8px 12px', fontSize: '14px', cursor: 'pointer', borderBottom: i === filteredParties.length - 1 ? 'none' : '1px solid #f3f4f6' }}
+                                                    className="hover:bg-slate-50"
+                                                    onClick={() => {
+                                                        setParty(p.name);
+                                                        setShowPartySuggestions(false);
+                                                    }}
+                                                >
+                                                    <div style={{ fontWeight: 600, color: '#111827' }}>{p.name}</div>
+                                                    <div style={{ fontSize: '12px', color: '#6b7280' }}>Balance: Rs {p.balance?.toLocaleString('en-IN')}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                                 {party && <div style={{ fontSize: '12px', color: '#3b82f6', marginTop: '4px', fontWeight: 500 }}>BAL 1300</div>}
                             </div>

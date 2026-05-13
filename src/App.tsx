@@ -89,49 +89,77 @@ export default function App() {
     }
   };
 
+  const [editingInvoice, setEditingInvoice] = useState<Estimate | null>(null);
+
+  const handleEditSale = (inv: Estimate) => {
+    setEditingInvoice(inv);
+    setCurrentView('SALE_FORM');
+  };
+
+  const handleEditEstimate = (est: Estimate) => {
+    setEditingInvoice(est);
+    setCurrentView('ESTIMATE_FORM');
+  };
+
+  const handleViewInvoice = (inv: Estimate) => {
+    setCurrentInvoice(inv);
+    setCurrentView('INVOICE_VIEW');
+  };
+
   const handleSaveInvoice = (inv: Estimate, isSale: boolean, printAndPreview: boolean) => {
-      // Check if it's a conversion from an estimate
-      if (isSale && convertingEstimateId) {
-          setEstimates(prev => prev.map(e => e.id === convertingEstimateId ? { ...e, status: 'Converted' } : e));
-          setConvertingEstimateId(null);
-      }
-      
-      // Automatic party management
-      if (inv.customerName && inv.customerName !== 'Walk-in Customer') {
-          let updatedParties = [...parties];
-          let partyIndex = updatedParties.findIndex(p => p.name.toLowerCase() === inv.customerName.toLowerCase());
-          
-          if (partyIndex >= 0) {
-              if (isSale) {
-                  updatedParties[partyIndex] = {
-                      ...updatedParties[partyIndex],
-                      balance: (updatedParties[partyIndex].balance || 0) + inv.totalAmount
-                  };
-              }
+      // Check if it's an update
+      if (editingInvoice) {
+          if (isSale) {
+              setSales(prev => prev.map(s => s.id === editingInvoice.id ? { ...inv, id: editingInvoice.id } : s));
           } else {
-              updatedParties.push({
-                  id: Date.now().toString() + "_party",
-                  name: inv.customerName,
-                  phone: '',
-                  email: '',
-                  address: '',
-                  balance: isSale ? inv.totalAmount : 0
-              });
+              setEstimates(prev => prev.map(e => e.id === editingInvoice.id ? { ...inv, id: editingInvoice.id } : e));
           }
-          setParties(updatedParties);
+          setEditingInvoice(null);
+      } else {
+          // Check if it's a conversion from an estimate
+          if (isSale && convertingEstimateId) {
+              setEstimates(prev => prev.map(e => e.id === convertingEstimateId ? { ...e, status: 'Converted' } : e));
+              setConvertingEstimateId(null);
+          }
           
-          if (partyIndex === -1) {
-              inv.partyId = updatedParties[updatedParties.length - 1].id;
+          // Automatic party management
+          if (inv.customerName && inv.customerName !== 'Walk-in Customer') {
+              let updatedParties = [...parties];
+              let partyIndex = updatedParties.findIndex(p => p.name.toLowerCase() === inv.customerName.toLowerCase());
+              
+              if (partyIndex >= 0) {
+                  if (isSale) {
+                      updatedParties[partyIndex] = {
+                          ...updatedParties[partyIndex],
+                          balance: (updatedParties[partyIndex].balance || 0) + inv.totalAmount
+                      };
+                  }
+              } else {
+                  updatedParties.push({
+                      id: Date.now().toString() + "_party",
+                      name: inv.customerName,
+                      phone: '',
+                      email: '',
+                      address: '',
+                      balance: isSale ? inv.totalAmount : 0
+                  });
+              }
+              setParties(updatedParties);
+              
+              if (partyIndex === -1) {
+                  inv.partyId = updatedParties[updatedParties.length - 1].id;
+              } else {
+                  inv.partyId = updatedParties[partyIndex].id;
+              }
+          }
+
+          if (isSale) {
+              setSales([...sales, inv]);
           } else {
-              inv.partyId = updatedParties[partyIndex].id;
+              setEstimates([...estimates, inv]);
           }
       }
 
-      if (isSale) {
-          setSales([...sales, inv]);
-      } else {
-          setEstimates([...estimates, inv]);
-      }
       if (printAndPreview) {
           setCurrentInvoice(inv);
           setCurrentView('INVOICE_VIEW');
@@ -148,12 +176,12 @@ export default function App() {
         
         <div id="module-container">
           {currentView === 'HOME' && <DashboardModule sales={sales} parties={parties} items={items} />}
-          {currentView === 'SALE_LIST' && <HomeModule sales={sales} onAddSale={() => setCurrentView('SALE_FORM')} />}
+          {currentView === 'SALE_LIST' && <HomeModule sales={sales} onAddSale={() => setCurrentView('SALE_FORM')} onEditSale={handleEditSale} onViewSale={handleViewInvoice} />}
           {currentView === 'PARTIES_LIST' && <PartiesModule parties={parties} sales={sales} estimates={estimates} onAddParty={() => {}} />}
           {currentView === 'ITEMS_LIST' && <ItemsModule items={items} onAddItem={() => {}} />}
-          {currentView === 'ESTIMATE_LIST' && <EstimatesModule estimates={estimates} onAddEstimate={() => setCurrentView('ESTIMATE_FORM')} onConvertToSale={handleConvertToSale} />}
-          {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale, print) => handleSaveInvoice(sale, true, print)} onCancel={() => { setConvertingEstimateId(null); setCurrentView('SALE_LIST'); }} initialData={convertingEstimateId ? estimates.find(e => e.id === convertingEstimateId) : undefined} />}
-          {currentView === 'ESTIMATE_FORM' && <InvoiceForm isSale={false} onSave={(est, print) => handleSaveInvoice(est, false, print)} onCancel={() => setCurrentView('ESTIMATE_LIST')} />}
+          {currentView === 'ESTIMATE_LIST' && <EstimatesModule estimates={estimates} onAddEstimate={() => setCurrentView('ESTIMATE_FORM')} onConvertToSale={handleConvertToSale} onEditEstimate={handleEditEstimate} onViewEstimate={handleViewInvoice} />}
+          {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale, print) => handleSaveInvoice(sale, true, print)} onCancel={() => { setConvertingEstimateId(null); setEditingInvoice(null); setCurrentView('SALE_LIST'); }} initialData={editingInvoice || (convertingEstimateId ? estimates.find(e => e.id === convertingEstimateId) : undefined)} parties={parties} />}
+          {currentView === 'ESTIMATE_FORM' && <InvoiceForm isSale={false} onSave={(est, print) => handleSaveInvoice(est, false, print)} onCancel={() => { setEditingInvoice(null); setCurrentView('ESTIMATE_LIST'); }} initialData={editingInvoice || undefined} parties={parties} />}
           {currentView === 'INVOICE_VIEW' && currentInvoice && (
              <InvoiceView 
                 estimate={currentInvoice} 

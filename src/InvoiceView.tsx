@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Monitor, Settings, Edit2, Download, Printer, Pencil, Share2, Trash2, X, Check } from 'lucide-react';
 import SignaturePad from 'signature_pad';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { Estimate, CompanyData } from './types';
 
 export function InvoiceView({
@@ -16,6 +18,74 @@ export function InvoiceView({
 }) {
   const subtotal = estimate.items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
   
+  const handleDownloadPDF = async () => {
+    const element = document.getElementById('invoice-paper');
+    if (!element) return;
+    
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${estimate.isSale ? 'Invoice' : 'Estimate'}_${estimate.refNo}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try printing to PDF instead.');
+    }
+  };
+
+  const handlePrint = (type: 'normal' | 'thermal') => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow popups for printing');
+      return;
+    }
+
+    const invoiceContent = document.getElementById('invoice-paper')?.innerHTML;
+    const styles = document.head.innerHTML;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          ${styles}
+          <style>
+            body { background: white !important; margin: 0; padding: 0; }
+            #invoice-paper { box-shadow: none !important; border: none !important; width: 100% !important; max-width: none !important; margin: 0 !important; transform: none !important; }
+            .print\\:hidden { display: none !important; }
+            @page { margin: 10mm; size: ${type === 'thermal' ? '80mm 200mm' : 'A4'}; }
+            ${type === 'thermal' ? `
+              #invoice-paper { width: 72mm !important; font-size: 10px !important; }
+              #invoice-paper h2 { font-size: 16px !important; }
+              #invoice-paper h1 { font-size: 14px !important; }
+              .repl-table { font-size: 9px !important; }
+            ` : ''}
+          </style>
+        </head>
+        <body>
+          <div id="invoice-paper">
+            ${invoiceContent}
+          </div>
+          <script>
+            window.onload = () => {
+              window.print();
+              setTimeout(() => window.close(), 100);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
   function numberToWords(num: number): string {
     if (num === 0) return 'Zero';
     const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
@@ -270,9 +340,9 @@ export function InvoiceView({
                  </button>
               </div>
               <div className="p-4 flex flex-col gap-3">
-                 <button onClick={() => window.print()} className="w-full py-2.5 bg-white border border-slate-300 text-slate-700 font-semibold rounded hover:bg-slate-50 flex items-center justify-center gap-2 text-sm"><Download size={18} /> Download PDF</button>
-                 <button onClick={() => window.print()} className="w-full py-2.5 bg-white border border-slate-300 text-slate-700 font-semibold rounded hover:bg-slate-50 flex items-center justify-center gap-2 text-sm"><Printer size={18} /> Print Invoice (Thermal)</button>
-                 <button onClick={() => window.print()} className="w-full py-2.5 bg-indigo-600 text-white font-semibold rounded hover:bg-indigo-700 flex items-center justify-center gap-2 text-sm shadow-sm"><Printer size={18} /> Print Invoice (Normal)</button>
+                 <button onClick={handleDownloadPDF} className="w-full py-2.5 bg-white border border-slate-300 text-slate-700 font-semibold rounded hover:bg-slate-50 flex items-center justify-center gap-2 text-sm"><Download size={18} /> Download PDF</button>
+                 <button onClick={() => handlePrint('thermal')} className="w-full py-2.5 bg-white border border-slate-300 text-slate-700 font-semibold rounded hover:bg-slate-50 flex items-center justify-center gap-2 text-sm"><Printer size={18} /> Print Invoice (Thermal)</button>
+                 <button onClick={() => handlePrint('normal')} className="w-full py-2.5 bg-indigo-600 text-white font-semibold rounded hover:bg-indigo-700 flex items-center justify-center gap-2 text-sm shadow-sm"><Printer size={18} /> Print Invoice (Normal)</button>
               </div>
            </div>
        </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Estimate } from './types';
 
-export function HomeModule({ sales, onAddSale }: { sales: Estimate[], onAddSale: () => void }) {
+export function HomeModule({ sales, onAddSale, onEditSale, onViewSale }: { sales: Estimate[], onAddSale: () => void, onEditSale: (inv: Estimate) => void, onViewSale: (inv: Estimate) => void }) {
     const totalSales = sales.reduce((sum, inv) => sum + inv.totalAmount, 0);
     const received = sales.reduce((sum, inv) => sum + (inv.receivedAmount || 0), 0);
     const balance = sales.reduce((sum, inv) => sum + inv.balance, 0);
@@ -70,7 +70,7 @@ export function HomeModule({ sales, onAddSale }: { sales: Estimate[], onAddSale:
                         </thead>
                         <tbody>
                             {sales.map((inv) => (
-                                <tr key={inv.id} style={{ borderBottom: '1px solid #f3f4f6' }} className="hover:bg-slate-50 transition-colors">
+                                <tr key={inv.id} style={{ borderBottom: '1px solid #f3f4f6', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors" onClick={() => onViewSale(inv)}>
                                     <td style={{ padding: '12px 16px', fontSize: '13px' }}>{inv.date}</td>
                                     <td style={{ padding: '12px 16px', fontSize: '13px' }}>{inv.refNo}</td>
                                     <td style={{ padding: '12px 16px', fontSize: '13px', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={inv.customerName}>{inv.customerName}</td>
@@ -80,9 +80,9 @@ export function HomeModule({ sales, onAddSale }: { sales: Estimate[], onAddSale:
                                     <td style={{ padding: '12px 16px', fontSize: '13px', textAlign: 'right' }}>Rs {inv.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                                     <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                                         <div style={{ display: 'flex', gap: '12px', color: '#6b7280', justifyContent: 'flex-end' }}>
-                                            <i className="fa-solid fa-print cursor-pointer hover:color-blue"></i>
-                                            <i className="fa-solid fa-share-nodes cursor-pointer hover:color-blue"></i>
-                                            <i className="fa-solid fa-ellipsis-vertical cursor-pointer hover:color-blue"></i>
+                                            <i className="fa-solid fa-pencil cursor-pointer hover:text-blue-600" onClick={(e) => { e.stopPropagation(); onEditSale(inv); }}></i>
+                                            <i className="fa-solid fa-print cursor-pointer hover:text-blue-600" onClick={(e) => { e.stopPropagation(); onViewSale(inv); }}></i>
+                                            <i className="fa-solid fa-share-nodes cursor-pointer hover:text-blue-600"></i>
                                         </div>
                                     </td>
                                 </tr>

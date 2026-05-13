@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Estimate } from './types';
 import { FileText } from 'lucide-react';
 
-export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale }: { estimates: Estimate[], onAddEstimate: () => void, onConvertToSale: (id: string, type: 'SALE' | 'SALE_ORDER') => void }) {
+export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onEditEstimate, onViewEstimate }: { estimates: Estimate[], onAddEstimate: () => void, onConvertToSale: (id: string, type: 'SALE' | 'SALE_ORDER') => void, onEditEstimate: (est: Estimate) => void, onViewEstimate: (est: Estimate) => void }) {
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
     const totalQuotations = estimates.reduce((sum, e) => sum + e.totalAmount, 0);
     const converted = estimates.filter(e => e.status === 'Converted').reduce((sum, e) => sum + e.totalAmount, 0);
@@ -74,7 +74,7 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale }: {
                                 {estimates.map(est => {
                                     const isOpen = est.status !== 'Converted';
                                     return (
-                                        <tr key={est.id} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                                        <tr key={est.id} style={{ borderBottom: '1px solid #E5E7EB', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors" onClick={() => onViewEstimate(est)}>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{est.date}</td>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{est.refNo}</td>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', fontWeight: 500, maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{est.customerName}</td>
@@ -86,23 +86,26 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale }: {
                                                 </span>
                                             </td>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', textAlign: 'right' }}>
-                                                {isOpen && (
-                                                    <div style={{ display: 'inline-block', position: 'relative' }}>
-                                                        <span 
-                                                            style={{ color: '#3b82f6', cursor: 'pointer', fontWeight: 500, fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '4px', marginRight: '16px' }} 
-                                                            onClick={() => setOpenDropdownId(openDropdownId === est.id ? null : est.id)}
-                                                        >
-                                                            Convert <i className="fa-solid fa-chevron-down" style={{ fontSize: '10px' }}></i>
-                                                        </span>
-                                                        {openDropdownId === est.id && (
-                                                            <div style={{ position: 'absolute', top: '100%', right: '16px', backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '4px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', zIndex: 10, width: '150px', textAlign: 'left', overflow: 'hidden' }}>
-                                                                <div style={{ padding: '8px 16px', cursor: 'pointer', color: '#374151', fontSize: '13px' }} onClick={() => { onConvertToSale(est.id, 'SALE'); setOpenDropdownId(null); }} className="hover:bg-slate-50">Convert to Sale</div>
-                                                                <div style={{ padding: '8px 16px', cursor: 'pointer', color: '#374151', fontSize: '13px' }} onClick={() => { onConvertToSale(est.id, 'SALE_ORDER'); setOpenDropdownId(null); }} className="hover:bg-slate-50">Convert to Sale Order</div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                <i className="fa-solid fa-ellipsis-vertical" style={{ color: '#9ca3af', cursor: 'pointer', padding: '4px' }}></i>
+                                                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                    {isOpen && (
+                                                        <div style={{ display: 'inline-block', position: 'relative' }}>
+                                                            <span 
+                                                                style={{ color: '#3b82f6', cursor: 'pointer', fontWeight: 500, fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '4px' }} 
+                                                                onClick={(e) => { e.stopPropagation(); setOpenDropdownId(openDropdownId === est.id ? null : est.id); }}
+                                                            >
+                                                                Convert <i className="fa-solid fa-chevron-down" style={{ fontSize: '10px' }}></i>
+                                                            </span>
+                                                            {openDropdownId === est.id && (
+                                                                <div style={{ position: 'absolute', top: '100%', right: 0, backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '4px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', zIndex: 10, width: '150px', textAlign: 'left', overflow: 'hidden' }}>
+                                                                    <div style={{ padding: '8px 16px', cursor: 'pointer', color: '#374151', fontSize: '13px' }} onClick={(e) => { e.stopPropagation(); onConvertToSale(est.id, 'SALE'); setOpenDropdownId(null); }} className="hover:bg-slate-50">Convert to Sale</div>
+                                                                    <div style={{ padding: '8px 16px', cursor: 'pointer', color: '#374151', fontSize: '13px' }} onClick={(e) => { e.stopPropagation(); onConvertToSale(est.id, 'SALE_ORDER'); setOpenDropdownId(null); }} className="hover:bg-slate-50">Convert to Sale Order</div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    <i className="fa-solid fa-pencil" style={{ color: '#3b82f6', cursor: 'pointer', padding: '4px' }} onClick={(e) => { e.stopPropagation(); onEditEstimate(est); }}></i>
+                                                    <i className="fa-solid fa-ellipsis-vertical" style={{ color: '#9ca3af', cursor: 'pointer', padding: '4px' }}></i>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
