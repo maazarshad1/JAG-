@@ -19,7 +19,12 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
     const [billingAddress, setBillingAddress] = useState(initialData ? (initialData.billingAddress || '') : '');
     
     const [showPartySuggestions, setShowPartySuggestions] = useState(false);
-    const filteredParties = parties.filter(p => p.name.toLowerCase().includes(party.toLowerCase()) && party !== '').slice(0, 5);
+    const filteredParties = party === '' 
+        ? parties 
+        : parties.filter(p => 
+            p.name.toLowerCase().includes(party.toLowerCase()) || 
+            (p.phone && p.phone.includes(party))
+        );
 
     const [invoiceNo, setInvoiceNo] = useState(initialData && initialData.isSale === isSale ? Number(initialData.refNo) : 1);
     const [date, setDate] = useState(initialData ? initialData.date : new Date().toISOString().split('T')[0]);
