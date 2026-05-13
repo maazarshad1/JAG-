@@ -3,6 +3,23 @@ export enum EstimateStatus {
   CLOSED = 'CLOSED',
 }
 
+export interface InventoryItem {
+  id: string | number;
+  name: string;
+  unit: string;
+  price: number;
+  stock: number;
+  minStock: number;
+}
+
+export interface Party {
+  id: string | number;
+  name: string;
+  balance: number;
+  type: 'receive' | 'pay';
+  phone: string;
+}
+
 export interface Item {
   id: string;
   name: string;
@@ -18,8 +35,9 @@ export interface Estimate {
   refNo: number;
   date: string;
   customerName: string;
+  partyId?: string | number;
   items: Item[];
-  status: EstimateStatus;
+  status: EstimateStatus | string;
   discountValue: number;
   discountType: 'percentage' | 'fixed';
   taxType: string;
@@ -28,7 +46,7 @@ export interface Estimate {
   balance: number;
   isSale?: boolean;
   receivedAmount?: number;
-  paymentType?: 'Cash' | 'Cheque' | 'Online';
+  paymentType?: 'Cash' | 'Cheque' | 'Online' | 'Credit';
 }
 
 export interface CompanyData {
@@ -41,4 +59,4 @@ export interface CompanyData {
   terms?: string;
 }
 
-export type View = 'HOME' | 'MENU' | 'ESTIMATE_LIST' | 'ESTIMATE_FORM' | 'INVOICE_VIEW' | 'PROFILE_EDIT' | 'SALE_FORM' | 'SALE_LIST';
+export type View = 'HOME' | 'MENU' | 'ESTIMATE_LIST' | 'ESTIMATE_FORM' | 'INVOICE_VIEW' | 'PROFILE_EDIT' | 'SALE_FORM' | 'SALE_LIST' | 'PARTIES_LIST' | 'ITEMS_LIST';

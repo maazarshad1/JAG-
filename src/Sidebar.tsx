@@ -1,0 +1,92 @@
+import React, { useState } from 'react';
+import { View } from './types';
+
+export function Sidebar({ currentView, setCurrentView, onAction }: { currentView: View, setCurrentView: (v: View) => void, onAction: (action: string) => void }) {
+    const [saleGroupOpen, setSaleGroupOpen] = useState(true);
+
+    return (
+        <aside id="sidebar">
+            <div className="sidebar-search">
+                <div className="search-box">
+                    <span>Open Anything (Ctrl+F)</span>
+                </div>
+            </div>
+            
+            <nav className="sidebar-nav">
+                <button 
+                  className={`nav-item ${currentView === 'HOME' ? 'active' : ''} border-0 bg-transparent w-full text-left font-sans text-sm`} 
+                  onClick={() => setCurrentView('HOME')}
+                >
+                    <i className="fa-solid fa-house"></i>
+                    <span>Home</span>
+                </button>
+                
+                <button 
+                  className={`nav-item ${currentView === 'PARTIES_LIST' ? 'active' : ''} border-0 bg-transparent w-full text-left`} 
+                  onClick={() => setCurrentView('PARTIES_LIST')}
+                >
+                    <i className="fa-solid fa-users"></i>
+                    <span>Parties</span>
+                    <i className="fa-solid fa-plus right-icon" onClick={(e) => { e.stopPropagation(); onAction('ADD_PARTY'); }}></i>
+                </button>
+                
+                <button 
+                  className={`nav-item ${currentView === 'ITEMS_LIST' ? 'active' : ''} border-0 bg-transparent w-full text-left`} 
+                  onClick={() => setCurrentView('ITEMS_LIST')}
+                >
+                    <i className="fa-solid fa-box"></i>
+                    <span>Items</span>
+                    <i className="fa-solid fa-plus right-icon" onClick={(e) => { e.stopPropagation(); onAction('ADD_ITEM'); }}></i>
+                </button>
+                
+                <div className="nav-group">
+                    <div className="nav-item group-header" onClick={() => setSaleGroupOpen(!saleGroupOpen)}>
+                        <i className="fa-solid fa-receipt"></i>
+                        <span>Sale</span>
+                        <i className={`fa-solid ${saleGroupOpen ? 'fa-chevron-down' : 'fa-chevron-right'} right-icon group-toggle`}></i>
+                    </div>
+                    {saleGroupOpen && (
+                        <div className="nav-subgroup" id="group-sale">
+                            <button 
+                              className={`nav-subitem ${currentView === 'HOME' ? 'active' : ''} border-0 bg-transparent w-full text-left`} 
+                              onClick={() => setCurrentView('HOME')}
+                            >
+                                <span>Sale Invoices</span>
+                                <i className="fa-solid fa-plus right-icon" onClick={(e) => { e.stopPropagation(); setCurrentView('SALE_FORM'); }}></i>
+                            </button>
+                            <button 
+                              className={`nav-subitem ${currentView === 'ESTIMATE_LIST' ? 'active' : ''} border-0 bg-transparent w-full text-left`} 
+                              onClick={() => setCurrentView('ESTIMATE_LIST')}
+                            >
+                                <span>Estimate/ Quotation</span>
+                                <i className="fa-solid fa-plus right-icon" onClick={(e) => { e.stopPropagation(); setCurrentView('ESTIMATE_FORM'); }}></i>
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                <div className="nav-group">
+                    <div className="nav-item group-header">
+                        <i className="fa-solid fa-cart-shopping"></i>
+                        <span>Purchase & Expense</span>
+                        <i className="fa-solid fa-chevron-down right-icon group-toggle"></i>
+                    </div>
+                </div>
+
+                <div className="nav-group">
+                    <div className="nav-item group-header">
+                        <i className="fa-solid fa-arrow-trend-up"></i>
+                        <span>Grow Your Business</span>
+                        <i className="fa-solid fa-chevron-down right-icon group-toggle"></i>
+                    </div>
+                </div>
+            </nav>
+
+            <div className="sidebar-footer">
+                <div className="company-logo">M</div>
+                <div className="company-name" onClick={() => setCurrentView('PROFILE_EDIT')}>My Company</div>
+                <i className="fa-solid fa-settings"></i>
+            </div>
+        </aside>
+    );
+}
