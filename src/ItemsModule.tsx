@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { InventoryItem } from './types';
 
-export function ItemsModule({ items, onAddItem }: { items: InventoryItem[], onAddItem: () => void }) {
+export function ItemsModule({ items, onAddItem, onEditItem }: { items: InventoryItem[], onAddItem: () => void, onEditItem: (item: InventoryItem) => void }) {
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(items[0] || null);
 
     return (
@@ -60,7 +60,7 @@ export function ItemsModule({ items, onAddItem }: { items: InventoryItem[], onAd
                                 <h2 style={{ fontSize: '20px', fontWeight: 500, color: '#111827', marginBottom: '4px' }}>{selectedItem.name}</h2>
                             </div>
                             <div style={{ display: 'flex', gap: '12px' }}>
-                                <button className="btn" style={{ background: '#f3f4f6', color: '#4b5563' }}><i className="fa-solid fa-pen"></i> Edit</button>
+                                <button className="btn" style={{ background: '#f3f4f6', color: '#4b5563' }} onClick={() => onEditItem(selectedItem)}><i className="fa-solid fa-pen"></i> Edit</button>
                             </div>
                         </div>
                         

@@ -177,8 +177,8 @@ export default function App() {
         <div id="module-container">
           {currentView === 'HOME' && <DashboardModule sales={sales} parties={parties} items={items} />}
           {currentView === 'SALE_LIST' && <HomeModule sales={sales} onAddSale={() => setCurrentView('SALE_FORM')} onEditSale={handleEditSale} onViewSale={handleViewInvoice} />}
-          {currentView === 'PARTIES_LIST' && <PartiesModule parties={parties} sales={sales} estimates={estimates} onAddParty={() => {}} />}
-          {currentView === 'ITEMS_LIST' && <ItemsModule items={items} onAddItem={() => {}} />}
+          {currentView === 'PARTIES_LIST' && <PartiesModule parties={parties} sales={sales} estimates={estimates} onAddParty={() => {}} onEditParty={(p) => alert('Edit Party: ' + p.name)} />}
+          {currentView === 'ITEMS_LIST' && <ItemsModule items={items} onAddItem={() => {}} onEditItem={(item) => alert('Edit Item: ' + item.name)} />}
           {currentView === 'ESTIMATE_LIST' && <EstimatesModule estimates={estimates} onAddEstimate={() => setCurrentView('ESTIMATE_FORM')} onConvertToSale={handleConvertToSale} onEditEstimate={handleEditEstimate} onViewEstimate={handleViewInvoice} />}
           {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale, print) => handleSaveInvoice(sale, true, print)} onCancel={() => { setConvertingEstimateId(null); setEditingInvoice(null); setCurrentView('SALE_LIST'); }} initialData={editingInvoice || (convertingEstimateId ? estimates.find(e => e.id === convertingEstimateId) : undefined)} parties={parties} />}
           {currentView === 'ESTIMATE_FORM' && <InvoiceForm isSale={false} onSave={(est, print) => handleSaveInvoice(est, false, print)} onCancel={() => { setEditingInvoice(null); setCurrentView('ESTIMATE_LIST'); }} initialData={editingInvoice || undefined} parties={parties} />}

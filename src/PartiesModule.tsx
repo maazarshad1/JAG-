@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Party, Estimate } from './types';
 
-export function PartiesModule({ parties, sales, estimates, onAddParty }: { parties: Party[], sales: Estimate[], estimates: Estimate[], onAddParty: () => void }) {
+export function PartiesModule({ parties, sales, estimates, onAddParty, onEditParty }: { parties: Party[], sales: Estimate[], estimates: Estimate[], onAddParty: () => void, onEditParty: (party: Party) => void }) {
     const [selectedParty, setSelectedParty] = useState<Party | null>(parties[0] || null);
     
     // Derived transactions for selected party
@@ -71,7 +71,7 @@ export function PartiesModule({ parties, sales, estimates, onAddParty }: { parti
                         <div style={{ padding: '16px 24px', background: '#fff', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#111827', textTransform: 'uppercase', margin: 0, maxWidth: '400px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={selectedParty.name}>{selectedParty.name}</h2>
-                                <i className="fa-solid fa-pen-to-square" style={{ color: '#3b82f6', fontSize: '14px', cursor: 'pointer' }}></i>
+                                <i className="fa-solid fa-pen-to-square" style={{ color: '#3b82f6', fontSize: '14px', cursor: 'pointer' }} onClick={() => onEditParty(selectedParty)}></i>
                             </div>
                             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                                 <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', fontSize: '20px', cursor: 'pointer' }}></i>

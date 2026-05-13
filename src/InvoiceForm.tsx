@@ -105,7 +105,7 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
                                     <Search size={16} className="absolute left-3 top-3 text-gray-400" />
                                     <input 
                                         type="text" 
-                                        style={{ width: '100%', padding: '10px 12px 10px 36px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
+                                        style={{ width: '100%', padding: '10px 36px 10px 36px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
                                         placeholder="Search by Name/Phone *" 
                                         value={party} 
                                         onChange={e => {
@@ -115,26 +115,35 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
                                         onFocus={() => setShowPartySuggestions(true)}
                                         onBlur={() => setTimeout(() => setShowPartySuggestions(false), 200)}
                                     />
+                                    <div style={{ position: 'absolute', right: '12px', top: '10px', color: '#111827', pointerEvents: 'none' }}>
+                                        <i className="fa-solid fa-chevron-down" style={{ fontSize: '12px' }}></i>
+                                    </div>
                                     {showPartySuggestions && filteredParties.length > 0 && (
-                                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #d1d5db', borderRadius: '6px', marginTop: '4px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', zIndex: 10 }}>
+                                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #d1d5db', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px', borderTop: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', zIndex: 10, maxHeight: '200px', overflowY: 'auto' }}>
                                             {filteredParties.map((p, i) => (
                                                 <div 
                                                     key={i} 
-                                                    style={{ padding: '8px 12px', fontSize: '14px', cursor: 'pointer', borderBottom: i === filteredParties.length - 1 ? 'none' : '1px solid #f3f4f6' }}
+                                                    style={{ padding: '10px 12px', fontSize: '14px', cursor: 'pointer', borderTop: '1px solid #f3f4f6' }}
                                                     className="hover:bg-slate-50"
                                                     onClick={() => {
                                                         setParty(p.name);
                                                         setShowPartySuggestions(false);
                                                     }}
                                                 >
-                                                    <div style={{ fontWeight: 600, color: '#111827' }}>{p.name}</div>
-                                                    <div style={{ fontSize: '12px', color: '#6b7280' }}>Balance: Rs {p.balance?.toLocaleString('en-IN')}</div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <span style={{ fontWeight: 500, color: '#374151' }}>{p.name}</span>
+                                                        <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 600 }}>BAL: {p.balance?.toLocaleString('en-IN')}</span>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
                                     )}
                                 </div>
-                                {party && <div style={{ fontSize: '12px', color: '#3b82f6', marginTop: '4px', fontWeight: 500 }}>BAL 1300</div>}
+                                {party && (
+                                    <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px', fontWeight: 700 }}>
+                                        BAL: {parties.find(p => p.name.toLowerCase() === party.toLowerCase())?.balance?.toLocaleString('en-IN') || '0.00'}
+                                    </div>
+                                )}
                             </div>
                             <div style={{ flex: 1, display: 'flex', gap: '24px' }}>
                                 <div style={{ flex: 1 }}>
