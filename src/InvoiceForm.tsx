@@ -15,6 +15,9 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
     };
     const [rows, setRows] = useState(initialData && initialData.items && initialData.items.length > 0 ? mapItemsToRows(initialData.items) : defaultRows);
     const [party, setParty] = useState(initialData ? initialData.customerName : '');
+    const [customerPhone, setCustomerPhone] = useState(initialData ? (initialData.customerPhone || '') : '');
+    const [billingAddress, setBillingAddress] = useState(initialData ? (initialData.billingAddress || '') : '');
+    
     const [showPartySuggestions, setShowPartySuggestions] = useState(false);
     const filteredParties = parties.filter(p => p.name.toLowerCase().includes(party.toLowerCase()) && party !== '').slice(0, 5);
 
@@ -55,6 +58,8 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
             refNo: invoiceNo,
             date,
             customerName: party || 'Walk-in Customer',
+            customerPhone,
+            billingAddress,
             partyId: party, 
             items: rows.map((r, i) => ({
                 id: i.toString(),
@@ -79,10 +84,10 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
     return (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: '#f8fafc', zIndex: 100, display: 'flex', flexDirection: 'column' }}>
             <div style={{ backgroundColor: '#fff', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', height: '40px', fontSize: '13px', color: '#4b5563', padding: '0 20px', gap: '24px' }}>
-                <span style={{ cursor: 'pointer', hover: { color: '#111827' } }}>Company</span>
-                <span style={{ cursor: 'pointer', hover: { color: '#111827' } }}>Help</span>
-                <span style={{ cursor: 'pointer', hover: { color: '#111827' } }}>Versions</span>
-                <span style={{ cursor: 'pointer', hover: { color: '#111827' } }}>Shortcuts</span>
+                <span style={{ cursor: 'pointer' }}>Company</span>
+                <span style={{ cursor: 'pointer' }}>Help</span>
+                <span style={{ cursor: 'pointer' }}>Versions</span>
+                <span style={{ cursor: 'pointer' }}>Shortcuts</span>
             </div>
             
             <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
@@ -90,7 +95,7 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
                     <div style={{ padding: '16px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                             <button onClick={onCancel} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '16px' }}><i className="fa-solid fa-arrow-left"></i></button>
-                            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827' }}>{isSale ? 'Sale Invoice' : 'Estimate/Quotation'}</h2>
+                            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827' }}>{isSale ? 'Sale Invoice' : 'Estimate/Quotation'} ({isSale ? 'Credit' : 'Cash'})</h2>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                             <Settings size={20} className="text-gray-500 cursor-pointer" />
@@ -98,75 +103,100 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
                     </div>
 
                     <div style={{ padding: '24px', flex: 1 }}>
-                        <div style={{ display: 'flex', gap: '48px', marginBottom: '32px' }}>
-                            <div style={{ flex: 1 }}>
-                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>Party <span style={{ color: '#ef4444' }}>*</span></label>
-                                <div style={{ position: 'relative' }}>
-                                    <Search size={16} className="absolute left-3 top-3 text-gray-400" />
-                                    <input 
-                                        type="text" 
-                                        style={{ width: '100%', padding: '10px 36px 10px 36px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
-                                        placeholder="Search by Name/Phone *" 
-                                        value={party} 
-                                        onChange={e => {
-                                            setParty(e.target.value);
-                                            setShowPartySuggestions(true);
-                                        }}
-                                        onFocus={() => setShowPartySuggestions(true)}
-                                        onBlur={() => setTimeout(() => setShowPartySuggestions(false), 200)}
-                                    />
-                                    <div style={{ position: 'absolute', right: '12px', top: '10px', color: '#111827', pointerEvents: 'none' }}>
-                                        <i className="fa-solid fa-chevron-down" style={{ fontSize: '12px' }}></i>
-                                    </div>
-                                    {showPartySuggestions && filteredParties.length > 0 && (
-                                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #d1d5db', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px', borderTop: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', zIndex: 10, maxHeight: '200px', overflowY: 'auto' }}>
-                                            {filteredParties.map((p, i) => (
-                                                <div 
-                                                    key={i} 
-                                                    style={{ padding: '10px 12px', fontSize: '14px', cursor: 'pointer', borderTop: '1px solid #f3f4f6' }}
-                                                    className="hover:bg-slate-50"
-                                                    onClick={() => {
-                                                        setParty(p.name);
-                                                        setShowPartySuggestions(false);
-                                                    }}
-                                                >
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <span style={{ fontWeight: 500, color: '#374151' }}>{p.name}</span>
-                                                        <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 600 }}>BAL: {p.balance?.toLocaleString('en-IN')}</span>
-                                                    </div>
+                        <div style={{ display: 'flex', gap: '32px', marginBottom: '32px' }}>
+                            <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>Customer <span style={{ color: '#ef4444' }}>*</span></label>
+                                        <div style={{ position: 'relative' }}>
+                                            <Search size={16} className="absolute left-3 top-3 text-gray-400" />
+                                            <input 
+                                                type="text" 
+                                                style={{ width: '100%', padding: '10px 36px 10px 36px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
+                                                placeholder="Search by Name/Phone *" 
+                                                value={party} 
+                                                onChange={e => {
+                                                    setParty(e.target.value);
+                                                    setShowPartySuggestions(true);
+                                                }}
+                                                onFocus={() => setShowPartySuggestions(true)}
+                                                onBlur={() => setTimeout(() => setShowPartySuggestions(false), 200)}
+                                            />
+                                            {showPartySuggestions && filteredParties.length > 0 && (
+                                                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #d1d5db', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px', borderTop: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', zIndex: 10, maxHeight: '200px', overflowY: 'auto' }}>
+                                                    {filteredParties.map((p, i) => (
+                                                        <div 
+                                                            key={i} 
+                                                            style={{ padding: '10px 12px', fontSize: '14px', cursor: 'pointer', borderTop: '1px solid #f3f4f6' }}
+                                                            className="hover:bg-slate-50"
+                                                            onClick={() => {
+                                                                setParty(p.name);
+                                                                setCustomerPhone(p.phone || '');
+                                                                setBillingAddress(p.billingAddress || '');
+                                                                setShowPartySuggestions(false);
+                                                            }}
+                                                        >
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                <span style={{ fontWeight: 500, color: '#374151' }}>{p.name}</span>
+                                                                <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 600 }}>BAL: {p.balance?.toLocaleString('en-IN')}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                                {party && (
-                                    <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px', fontWeight: 700 }}>
-                                        BAL: {parties.find(p => p.name.toLowerCase() === party.toLowerCase())?.balance?.toLocaleString('en-IN') || '0.00'}
                                     </div>
-                                )}
-                            </div>
-                            <div style={{ flex: 1, display: 'flex', gap: '24px' }}>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>Ref No</label>
-                                    <input 
-                                        type="number" 
-                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
-                                        value={invoiceNo} 
-                                        onChange={e => setInvoiceNo(Number(e.target.value))} 
-                                    />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>Invoice Date</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <Calendar size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+                                    <div style={{ width: '200px' }}>
+                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>Phone No.</label>
                                         <input 
-                                            type="date" 
-                                            style={{ width: '100%', padding: '10px 36px 10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none', appearance: 'none' }} 
-                                            value={date} 
-                                            onChange={e => setDate(e.target.value)} 
+                                            type="text" 
+                                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
+                                            placeholder="Phone No." 
+                                            value={customerPhone} 
+                                            onChange={e => setCustomerPhone(e.target.value)}
                                         />
                                     </div>
                                 </div>
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>Billing Address</label>
+                                    <textarea 
+                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none', minHeight: '80px', resize: 'vertical' }} 
+                                        placeholder="Billing Address"
+                                        value={billingAddress}
+                                        onChange={e => setBillingAddress(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>Ref No</label>
+                                        <input 
+                                            type="number" 
+                                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
+                                            value={invoiceNo} 
+                                            onChange={e => setInvoiceNo(Number(e.target.value))} 
+                                        />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>Invoice Date</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <Calendar size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+                                            <input 
+                                                type="date" 
+                                                style={{ width: '100%', padding: '10px 36px 10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none', appearance: 'none' }} 
+                                                value={date} 
+                                                onChange={e => setDate(e.target.value)} 
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                {party && (
+                                    <div style={{ fontSize: '14px', color: '#10b981', fontWeight: 700, padding: '10px', backgroundColor: '#f0fdf4', borderRadius: '6px', border: '1px solid #bcf0da', width: 'fit-content' }}>
+                                        BAL: {parties.find(p => p.name.toLowerCase() === party.toLowerCase())?.balance?.toLocaleString('en-IN') || '0.00'}
+                                    </div>
+                                )}
                             </div>
                         </div>
 

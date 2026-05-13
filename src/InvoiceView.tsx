@@ -303,7 +303,11 @@ export function InvoiceView({
             <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
                <div style={{ flex: 1, borderRight: '1px solid #000' }}>
                   <div style={{ padding: '6px 12px', borderBottom: '1px solid #000', fontSize: '13px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice For:' : 'Estimate For:'}</div>
-                  <div style={{ padding: '12px', fontSize: '14px', fontWeight: 'bold', minHeight: '80px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{estimate.customerName || 'M.r'}</div>
+                  <div style={{ padding: '12px', fontSize: '14px', fontWeight: 'bold', minHeight: '80px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                    <div style={{ marginBottom: '4px' }}>{estimate.customerName || 'M.r'}</div>
+                    {estimate.customerPhone && <div style={{ fontWeight: 'normal', fontSize: '13px', marginBottom: '4px' }}>Phone: <span style={{ fontWeight: 'bold' }}>{estimate.customerPhone}</span></div>}
+                    {estimate.billingAddress && <div style={{ fontWeight: 'normal', fontSize: '12px', whiteSpace: 'pre-wrap', color: '#444' }}>{estimate.billingAddress}</div>}
+                  </div>
                </div>
                <div style={{ flex: 1 }}>
                   <div style={{ padding: '6px 12px', borderBottom: '1px solid #000', fontSize: '13px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice Details:' : 'Estimate Details:'}</div>

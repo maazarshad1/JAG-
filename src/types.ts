@@ -39,6 +39,8 @@ export interface Estimate {
   refNo: number;
   date: string;
   customerName: string;
+  customerPhone?: string;
+  billingAddress?: string;
   partyId?: string | number;
   items: Item[];
   status: EstimateStatus | string;
