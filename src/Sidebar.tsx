@@ -27,7 +27,6 @@ export function Sidebar({ currentView, setCurrentView, onAction }: { currentView
                 >
                     <i className="fa-solid fa-users"></i>
                     <span>Parties</span>
-                    <i className="fa-solid fa-plus right-icon" onClick={(e) => { e.stopPropagation(); onAction('ADD_PARTY'); }}></i>
                 </button>
                 
                 <button 
@@ -36,7 +35,6 @@ export function Sidebar({ currentView, setCurrentView, onAction }: { currentView
                 >
                     <i className="fa-solid fa-box"></i>
                     <span>Items</span>
-                    <i className="fa-solid fa-plus right-icon" onClick={(e) => { e.stopPropagation(); onAction('ADD_ITEM'); }}></i>
                 </button>
                 
                 <div className="nav-group">
@@ -48,8 +46,8 @@ export function Sidebar({ currentView, setCurrentView, onAction }: { currentView
                     {saleGroupOpen && (
                         <div className="nav-subgroup" id="group-sale">
                             <button 
-                              className={`nav-subitem ${currentView === 'HOME' ? 'active' : ''} border-0 bg-transparent w-full text-left`} 
-                              onClick={() => setCurrentView('HOME')}
+                              className={`nav-subitem ${currentView === 'SALE_LIST' ? 'active' : ''} border-0 bg-transparent w-full text-left`} 
+                              onClick={() => setCurrentView('SALE_LIST')}
                             >
                                 <span>Sale Invoices</span>
                                 <i className="fa-solid fa-plus right-icon" onClick={(e) => { e.stopPropagation(); setCurrentView('SALE_FORM'); }}></i>
@@ -60,6 +58,15 @@ export function Sidebar({ currentView, setCurrentView, onAction }: { currentView
                             >
                                 <span>Estimate/ Quotation</span>
                                 <i className="fa-solid fa-plus right-icon" onClick={(e) => { e.stopPropagation(); setCurrentView('ESTIMATE_FORM'); }}></i>
+                            </button>
+                            <button className="nav-subitem border-0 bg-transparent w-full text-left">
+                                <span>Proforma Invoice</span>
+                            </button>
+                            <button className="nav-subitem border-0 bg-transparent w-full text-left">
+                                <span>Payment-In</span>
+                            </button>
+                            <button className="nav-subitem border-0 bg-transparent w-full text-left">
+                                <span>Sale Order</span>
                             </button>
                         </div>
                     )}

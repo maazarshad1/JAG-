@@ -5,6 +5,7 @@ import { View, Estimate, CompanyData, Party, InventoryItem } from './types';
 import { Sidebar } from './Sidebar';
 import { TopHeader } from './TopHeader';
 import { HomeModule } from './HomeModule';
+import { DashboardModule } from './DashboardModule';
 import { EstimatesModule } from './EstimatesModule';
 import { PartiesModule } from './PartiesModule';
 import { ItemsModule } from './ItemsModule';
@@ -82,11 +83,42 @@ export default function App() {
     const estimate = estimates.find(e => e.id === estimateId);
     if (estimate) {
         setSales(prev => [...prev, { ...estimate, id: Date.now().toString(), status: 'CLOSED', isSale: true }]);
-        setCurrentView('HOME');
+        setCurrentView('SALE_LIST');
     }
   };
 
   const handleSaveInvoice = (inv: Estimate, isSale: boolean, printAndPreview: boolean) => {
+      // Automatic party management
+      if (inv.customerName && inv.customerName !== 'Walk-in Customer') {
+          let updatedParties = [...parties];
+          let partyIndex = updatedParties.findIndex(p => p.name.toLowerCase() === inv.customerName.toLowerCase());
+          
+          if (partyIndex >= 0) {
+              if (isSale) {
+                  updatedParties[partyIndex] = {
+                      ...updatedParties[partyIndex],
+                      balance: (updatedParties[partyIndex].balance || 0) + inv.totalAmount
+                  };
+              }
+          } else {
+              updatedParties.push({
+                  id: Date.now().toString() + "_party",
+                  name: inv.customerName,
+                  phone: '',
+                  email: '',
+                  address: '',
+                  balance: isSale ? inv.totalAmount : 0
+              });
+          }
+          setParties(updatedParties);
+          
+          if (partyIndex === -1) {
+              inv.partyId = updatedParties[updatedParties.length - 1].id;
+          } else {
+              inv.partyId = updatedParties[partyIndex].id;
+          }
+      }
+
       if (isSale) {
           setSales([...sales, inv]);
       } else {
@@ -96,7 +128,7 @@ export default function App() {
           setCurrentInvoice(inv);
           setCurrentView('INVOICE_VIEW');
       } else {
-          setCurrentView(isSale ? 'HOME' : 'ESTIMATE_LIST');
+          setCurrentView(isSale ? 'SALE_LIST' : 'ESTIMATE_LIST');
       }
   };
 
@@ -107,18 +139,19 @@ export default function App() {
         <TopHeader title={companyData.name} onAction={handleAction} />
         
         <div id="module-container">
-          {currentView === 'HOME' && <HomeModule sales={sales} onAddSale={() => setCurrentView('SALE_FORM')} />}
+          {currentView === 'HOME' && <DashboardModule sales={sales} parties={parties} items={items} />}
+          {currentView === 'SALE_LIST' && <HomeModule sales={sales} onAddSale={() => setCurrentView('SALE_FORM')} />}
           {currentView === 'PARTIES_LIST' && <PartiesModule parties={parties} sales={sales} estimates={estimates} onAddParty={() => {}} />}
           {currentView === 'ITEMS_LIST' && <ItemsModule items={items} onAddItem={() => {}} />}
           {currentView === 'ESTIMATE_LIST' && <EstimatesModule estimates={estimates} onAddEstimate={() => setCurrentView('ESTIMATE_FORM')} onConvertToSale={handleConvertToSale} />}
-          {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale, print) => handleSaveInvoice(sale, true, print)} onCancel={() => setCurrentView('HOME')} />}
+          {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale, print) => handleSaveInvoice(sale, true, print)} onCancel={() => setCurrentView('SALE_LIST')} />}
           {currentView === 'ESTIMATE_FORM' && <InvoiceForm isSale={false} onSave={(est, print) => handleSaveInvoice(est, false, print)} onCancel={() => setCurrentView('ESTIMATE_LIST')} />}
           {currentView === 'INVOICE_VIEW' && currentInvoice && (
              <InvoiceView 
                 estimate={currentInvoice} 
                 companyData={companyData} 
                 setCompanyData={setCompanyData} 
-                onBack={() => setCurrentView(currentInvoice.isSale ? 'HOME' : 'ESTIMATE_LIST')} 
+                onBack={() => setCurrentView(currentInvoice.isSale ? 'SALE_LIST' : 'ESTIMATE_LIST')} 
              />
           )}
           {currentView === 'PROFILE_EDIT' && (

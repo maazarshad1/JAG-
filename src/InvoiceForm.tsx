@@ -3,14 +3,14 @@ import { Estimate, InventoryItem } from './types';
 import { Settings, Share2, Plus, Minus, Trash2, Calendar, GripVertical, Search } from 'lucide-react';
 
 export function InvoiceForm({ isSale, onSave, onCancel }: { isSale: boolean, onSave: (inv: Estimate, print: boolean) => void, onCancel: () => void }) {
-    const [rows, setRows] = useState([{ id: '1', name: '', qty: 1, unit: 'NONE', price: 0 }]);
+    const [rows, setRows] = useState([{ id: '1', name: '', qty: 1, unit: 'PCS', price: 0 }]);
     const [party, setParty] = useState('');
     const [invoiceNo, setInvoiceNo] = useState(1);
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [discountValue, setDiscountValue] = useState(0);
     const [discountPercent, setDiscountPercent] = useState(0);
 
-    const addRow = () => setRows([...rows, { id: Date.now().toString(), name: '', qty: 1, unit: 'NONE', price: 0 }]);
+    const addRow = () => setRows([...rows, { id: Date.now().toString(), name: '', qty: 1, unit: 'PCS', price: 0 }]);
     
     const updateRow = (index: number, field: string, value: any) => {
         const newRows = [...rows];
@@ -155,12 +155,17 @@ export function InvoiceForm({ isSale, onSave, onCancel }: { isSale: boolean, onS
                                             </td>
                                             <td style={{ padding: '12px' }}>
                                                 <select value={row.unit} onChange={e => updateRow(idx, 'unit', e.target.value)} style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px', backgroundColor: 'transparent', cursor: 'pointer' }}>
-                                                    <option>NONE</option>
-                                                    <option>QUINTAL (QTL)</option>
-                                                    <option>ROLLS (ROL)</option>
-                                                    <option>SQ. FEET (SQF)</option>
-                                                    <option>SQ. METERS (SQM)</option>
-                                                    <option>TABLETS (TBS)</option>
+                                                    <option value="PCS">PCS</option>
+                                                    <option value="KG">KG</option>
+                                                    <option value="BOX">BOX</option>
+                                                    <option value="LTR">LTR</option>
+                                                    <option value="MTR">MTR</option>
+                                                    <option value="NOS">NOS</option>
+                                                    <option value="QUINTAL">QUINTAL (QTL)</option>
+                                                    <option value="ROLLS">ROLLS (ROL)</option>
+                                                    <option value="SQ. FEET">SQ. FEET (SQF)</option>
+                                                    <option value="SQ. METERS">SQ. METERS (SQM)</option>
+                                                    <option value="TABLETS">TABLETS (TBS)</option>
                                                 </select>
                                             </td>
                                             <td style={{ padding: '12px', textAlign: 'right' }}>
