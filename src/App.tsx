@@ -119,7 +119,7 @@ export default function App() {
         setConvertingEstimateId(estimateId);
         setCurrentView('SALE_FORM');
     } else {
-        setEstimates(prev => prev.map(e => e.id === estimateId ? { ...e, status: 'Converted' } : e));
+        setEstimates(prev => prev.map(e => e.id === estimateId ? { ...e, status: 'Closed' } : e));
     }
   };
 
@@ -152,7 +152,7 @@ export default function App() {
       } else {
           // Check if it's a conversion from an estimate
           if (isSale && convertingEstimateId) {
-              setEstimates(prev => prev.map(e => e.id === convertingEstimateId ? { ...e, status: 'Converted' } : e));
+              setEstimates(prev => prev.map(e => e.id === convertingEstimateId ? { ...e, status: 'Closed' } : e));
               setConvertingEstimateId(null);
           }
           

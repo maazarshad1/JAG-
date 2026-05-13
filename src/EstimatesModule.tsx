@@ -5,8 +5,8 @@ import { FileText } from 'lucide-react';
 export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onEditEstimate, onViewEstimate }: { estimates: Estimate[], onAddEstimate: () => void, onConvertToSale: (id: string, type: 'SALE' | 'SALE_ORDER') => void, onEditEstimate: (est: Estimate) => void, onViewEstimate: (est: Estimate) => void }) {
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
     const totalQuotations = estimates.reduce((sum, e) => sum + e.totalAmount, 0);
-    const converted = estimates.filter(e => e.status === 'Converted').reduce((sum, e) => sum + e.totalAmount, 0);
-    const open = estimates.filter(e => e.status !== 'Converted').reduce((sum, e) => sum + e.totalAmount, 0);
+    const converted = estimates.filter(e => e.status === 'Closed').reduce((sum, e) => sum + e.totalAmount, 0);
+    const open = estimates.filter(e => e.status !== 'Closed').reduce((sum, e) => sum + e.totalAmount, 0);
 
     return (
         <div style={{ flex: 1, backgroundColor: 'var(--bg-main)', display: 'flex', flexDirection: 'column' }}>
@@ -39,7 +39,7 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
                         </div>
                     </div>
                     <div className="card-footer" style={{ display: 'flex', fontSize: '12px', color: '#6b7280', borderTop: '1px solid #f3f4f6', paddingTop: '12px', justifyContent: 'space-between' }}>
-                        <span>Converted: <b style={{ color: '#111827' }}>Rs {converted.toLocaleString('en-IN')}</b></span>
+                        <span>Closed: <b style={{ color: '#111827' }}>Rs {converted.toLocaleString('en-IN')}</b></span>
                         <span style={{ color: '#d1d5db' }}>|</span>
                         <span>Open: <b style={{ color: '#111827' }}>Rs {open.toLocaleString('en-IN')}</b></span>
                     </div>
@@ -72,7 +72,7 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
                             </thead>
                             <tbody>
                                 {estimates.map(est => {
-                                    const isOpen = est.status !== 'Converted';
+                                    const isOpen = est.status !== 'Closed';
                                     return (
                                         <tr key={est.id} style={{ borderBottom: '1px solid #E5E7EB', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors" onClick={() => onViewEstimate(est)}>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{est.date}</td>
@@ -82,7 +82,7 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
                                             <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', textAlign: 'right' }}>Rs {est.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', textAlign: 'center' }}>
                                                 <span style={{ backgroundColor: isOpen ? '#fef3c7' : '#d1fae5', color: isOpen ? '#d97706' : '#10b981', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>
-                                                    {isOpen ? 'Open' : 'Converted'}
+                                                    {isOpen ? 'Open' : 'Closed'}
                                                 </span>
                                             </td>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', textAlign: 'right' }}>
