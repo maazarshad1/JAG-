@@ -18,12 +18,11 @@ export function InvoiceView({
 }) {
   const subtotal = estimate.items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
   
-  const handleDownloadPDF = async () => {
+  const generatePDFBlob = async (): Promise<{blob: Blob, fileName: string} | null> => {
     const element = document.getElementById('invoice-paper');
-    if (!element) return;
+    if (!element) return null;
     
     try {
-      // Create a style element that overrides the oklab/oklch colors for the capture
       const style = document.createElement('style');
       style.innerHTML = `
         * { 
@@ -40,8 +39,16 @@ export function InvoiceView({
         backgroundColor: '#ffffff',
         onclone: (clonedDoc) => {
           clonedDoc.head.appendChild(style);
-          // Manually fix potential oklab colors in the clone if needed
-          // but usually color-scheme: light helps fallback
+          // Sanitize oklab/oklch colors which crash html2canvas
+          const allStyles = clonedDoc.querySelectorAll('style');
+          allStyles.forEach(s => {
+             s.innerHTML = s.innerHTML.replace(/(oklch|oklab)\([^)]+\)/g, '#000');
+          });
+          clonedDoc.querySelectorAll('*').forEach((el: any) => {
+            if (el.style && el.style.cssText) {
+                el.style.cssText = el.style.cssText.replace(/(oklch|oklab)\([^)]+\)/g, '#000');
+            }
+          });
         }
       });
       
@@ -52,17 +59,55 @@ export function InvoiceView({
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${estimate.isSale ? 'Invoice' : 'Estimate'}_${estimate.refNo}.pdf`);
+      return {
+        blob: pdf.output('blob'),
+        fileName: `${estimate.isSale ? 'Invoice' : 'Estimate'}_${estimate.refNo}.pdf`
+      };
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Error in PDF generation:', error);
+      return null;
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    const result = await generatePDFBlob();
+    if (result) {
+      const url = URL.createObjectURL(result.blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = result.fileName;
+      link.click();
+      URL.revokeObjectURL(url);
+    } else {
       alert('Failed to generate PDF automatically. Please use "Print Invoice (Normal)" and select "Save as PDF" in the printer settings.');
     }
   };
 
-  const handleShareWhatsApp = async () => {
-    const text = `Invoice from ${companyData.name}\nInvoice No: ${estimate.refNo}\nTotal Amount: Rs ${estimate.totalAmount}\nBalance: Rs ${estimate.balance}\n\nView here: ${window.location.href}`;
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+  const handleShare = async (platform?: 'whatsapp' | 'email') => {
+    try {
+      const result = await generatePDFBlob();
+      if (result) {
+        const file = new File([result.blob], result.fileName, { type: 'application/pdf' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: result.fileName,
+            text: `Invoice from ${companyData.name}\nInvoice No: ${estimate.refNo}`
+          });
+          return;
+        }
+      }
+    } catch (err) {
+      console.error('File sharing failed:', err);
+    }
+
+    // Fallback platforms
+    if (platform === 'whatsapp') {
+      const text = `Invoice from ${companyData.name}\nInvoice No: ${estimate.refNo}\nTotal Amount: Rs ${estimate.totalAmount}\nBalance: Rs ${estimate.balance}\n\nView here: ${window.location.href}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    } else {
+      window.open(`mailto:?subject=${estimate.isSale ? 'Invoice' : 'Estimate'} ${estimate.refNo}&body=Here is your ${estimate.isSale ? 'invoice' : 'estimate'}`, '_blank');
+    }
   };
 
   const handlePrint = (type: 'normal' | 'thermal') => {
@@ -204,9 +249,9 @@ export function InvoiceView({
           <span className="text-sm font-medium text-slate-800">New transaction saved successfully</span>
       </div>
 
-      <div className="max-w-[1200px] mx-auto p-4 sm:p-6 pb-20 flex flex-col lg:flex-row gap-8">
+      <div className="max-w-[1200px] mx-auto p-4 sm:p-6 pb-20 flex flex-col gap-8">
         
-        <div className="flex-1">
+        <div className="w-full">
             {/* Toolbar (Hidden on print) */}
             <div className="flex items-center justify-between mb-6 print:hidden bg-transparent">
               <div className="flex items-center gap-4">
@@ -367,34 +412,51 @@ export function InvoiceView({
             </div>
 
           </div>
+        </div>
+          
+          {/* Sharing Panel: Now under the preview */}
+          <div className="w-full max-w-[794px] mx-auto print:hidden mt-8">
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                 <div className="p-4 border-b border-slate-100 flex justify-between items-center">
+                   <h3 className="font-bold text-slate-800 text-lg">Share & Download</h3>
+                   <div className="flex gap-2">
+                     <button onClick={handleDownloadPDF} className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-semibold hover:bg-indigo-700 flex items-center gap-2 transition-all active:scale-95">
+                       <Download size={16} /> Download PDF
+                     </button>
+                   </div>
+                 </div>
+                 
+                 <div className="p-6">
+                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                     <button onClick={() => handleShare('whatsapp')} className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-emerald-50 border border-slate-100 transition-colors group">
+                       <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform"><i className="fa-brands fa-whatsapp text-2xl"></i></div>
+                       <span className="text-sm font-semibold text-slate-700 font-sans">WhatsApp</span>
+                     </button>
+                     
+                     <button onClick={() => handleShare('email')} className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-red-50 border border-slate-100 transition-colors group">
+                       <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform"><i className="fa-solid fa-envelope text-xl"></i></div>
+                       <span className="text-sm font-semibold text-slate-700 font-sans">Gmail</span>
+                     </button>
 
+                     <button onClick={() => handlePrint('thermal')} className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-slate-50 border border-slate-100 transition-colors group text-slate-700">
+                       <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 shadow-md group-hover:scale-110 transition-transform"><Printer size={22} /></div>
+                       <span className="text-sm font-semibold font-sans">Print Thermal</span>
+                     </button>
 
+                     <button onClick={() => handlePrint('normal')} className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-slate-50 border border-slate-100 transition-colors group text-slate-700">
+                       <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 shadow-md group-hover:scale-110 transition-transform"><Monitor size={22} /></div>
+                       <span className="text-sm font-semibold font-sans">Print A4</span>
+                     </button>
+                   </div>
+                 </div>
+
+                 <div className="p-4 bg-slate-50 border-t border-slate-100 text-[10px] text-slate-400 text-center uppercase tracking-wider font-bold">
+                   Professional Invoice Management System
+                 </div>
+              </div>
+          </div>
 
         </div>
-      </div>
-
-       {/* Right Side: Sharing Panel */}
-       <div className="w-full lg:w-[320px] print:hidden shrink-0 lg:mt-16">
-           <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden sticky top-6">
-              <div className="p-4 border-b border-slate-100"><h3 className="font-bold text-slate-800 text-lg">Share Invoice</h3></div>
-              <div className="flex border-b border-slate-100">
-                 <button onClick={handleShareWhatsApp} className="flex-1 py-4 flex flex-col items-center gap-2 hover:bg-slate-50 border-r border-slate-100 cursor-pointer">
-                    <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white"><i className="fa-brands fa-whatsapp text-2xl"></i></div>
-                    <span className="text-sm font-medium text-slate-700">WhatsApp</span>
-                 </button>
-                 <button onClick={() => window.open(`mailto:?subject=${estimate.isSale ? 'Invoice' : 'Estimate'} ${estimate.refNo}&body=Here is your ${estimate.isSale ? 'invoice' : 'estimate'}`, '_blank')} className="flex-1 py-4 flex flex-col items-center gap-2 hover:bg-slate-50 cursor-pointer">
-                    <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center text-white"><i className="fa-solid fa-envelope text-xl"></i></div>
-                    <span className="text-sm font-medium text-slate-700">Gmail</span>
-                 </button>
-              </div>
-              <div className="p-4 flex flex-col gap-3">
-                 <button onClick={handleDownloadPDF} className="w-full py-2.5 bg-white border border-slate-300 text-slate-700 font-semibold rounded hover:bg-slate-50 flex items-center justify-center gap-2 text-sm"><Download size={18} /> Download PDF</button>
-                 <button onClick={() => handlePrint('thermal')} className="w-full py-2.5 bg-white border border-slate-300 text-slate-700 font-semibold rounded hover:bg-slate-50 flex items-center justify-center gap-2 text-sm"><Printer size={18} /> Print Invoice (Thermal)</button>
-                 <button onClick={() => handlePrint('normal')} className="w-full py-2.5 bg-indigo-600 text-white font-semibold rounded hover:bg-indigo-700 flex items-center justify-center gap-2 text-sm shadow-sm"><Printer size={18} /> Print Invoice (Normal)</button>
-              </div>
-           </div>
-       </div>
-
       </div>
 
       {/* Signature Modal */}
