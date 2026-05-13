@@ -156,13 +156,13 @@ export function InvoiceView({
             </div>
 
             {/* Table */}
-            <table className="repl-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <table className="repl-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
               <thead>
                 <tr style={{ background: '#f8fafc' }}>
                   <th style={{ width: '30px', textAlign: 'left' }}>#</th>
                   <th style={{ textAlign: 'left' }}>Item name</th>
-                  <th style={{ width: '80px', textAlign: 'right' }}>Quantity</th>
-                  <th style={{ width: '120px', textAlign: 'right' }}>Price/ Unit (₨)</th>
+                  <th style={{ width: '70px', textAlign: 'right' }}>Quantity</th>
+                  <th style={{ width: '110px', textAlign: 'right' }}>Price/<br/>Unit (₨)</th>
                   <th style={{ width: '120px', textAlign: 'right' }}>Amount(₨)</th>
                 </tr>
               </thead>
@@ -170,7 +170,7 @@ export function InvoiceView({
                 {estimate.items.map((item, index) => (
                    <tr key={index}>
                      <td style={{ verticalAlign: 'top', fontWeight: 'bold' }}>{index + 1}</td>
-                     <td style={{ verticalAlign: 'top', fontWeight: 'bold', color: '#333' }}>{item.name || 'Item Name'}</td>
+                     <td style={{ verticalAlign: 'top', fontWeight: 'bold', color: '#333', wordBreak: 'break-word', whiteSpace: 'normal', paddingRight: '8px' }}>{item.name || 'Item Name'}</td>
                      <td style={{ verticalAlign: 'top', textAlign: 'right' }}>{item.quantity}</td>
                      <td style={{ verticalAlign: 'top', textAlign: 'right' }}>₨ {item.rate.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                      <td style={{ verticalAlign: 'top', textAlign: 'right' }}>₨ {((item.quantity * item.rate) || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
