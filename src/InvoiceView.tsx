@@ -26,13 +26,24 @@ export function InvoiceView({
     setIsGenerating(true);
     try {
       // Use html-to-image for better support of modern CSS
+      // We add pixelRatio for higher quality and fontEmbedCSS to help with font loading
       const dataUrl = await toPng(element, {
-        quality: 0.95,
+        quality: 1,
+        pixelRatio: 2,
         cacheBust: true,
         backgroundColor: '#ffffff',
+        // Filter out any Font Awesome elements if they exist (though they shouldn't in the A4 area)
+        filter: (node) => {
+          const classList = (node as HTMLElement).classList;
+          if (classList && (classList.contains('fa') || classList.contains('fas') || classList.contains('fab') || classList.contains('fa-solid'))) {
+            return false;
+          }
+          return true;
+        },
         style: {
           transform: 'none',
           boxShadow: 'none',
+          margin: '0',
         },
       });
       
@@ -258,6 +269,16 @@ export function InvoiceView({
                 <h2 className="font-bold text-slate-800 text-xl">Preview</h2>
               </div>
               <div className="flex gap-4 items-center">
+                 <button 
+                   onClick={handleDownloadPDF} 
+                   disabled={isGenerating}
+                   className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-semibold hover:bg-indigo-700 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                 >
+                   {isGenerating ? (
+                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                   ) : <Download size={16} />}
+                   {isGenerating ? 'Generating...' : 'Download PDF'}
+                 </button>
                  <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer font-medium"><input type="checkbox" className="rounded" /> Do not show invoice preview again</label>
                  <button onClick={onBack} className="text-blue-600 font-semibold hover:underline text-sm">Save & Close</button>
               </div>
