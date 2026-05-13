@@ -23,9 +23,6 @@ export function DashboardModule({ sales, parties, items, onNavigate }: { sales: 
                 <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
                     <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>Total Sales (This Month)</div>
                     <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>Rs {totalSales.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
-                    <div style={{ marginTop: '12px', fontSize: '12px', color: '#10b981' }}>
-                        <i className="fa-solid fa-arrow-trend-up"></i> 12% vs last month
-                    </div>
                 </div>
                 
                 <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
@@ -45,7 +42,7 @@ export function DashboardModule({ sales, parties, items, onNavigate }: { sales: 
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
                 <div style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                     <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Recent Transactions</h3>
@@ -72,31 +69,6 @@ export function DashboardModule({ sales, parties, items, onNavigate }: { sales: 
                             )}
                         </tbody>
                     </table>
-                </div>
-
-                <div style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-                    <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb' }}>
-                        <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Cash & Bank</h3>
-                    </div>
-                    <div style={{ padding: '16px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <i className="fa-solid fa-money-bill-wave" style={{ color: '#10b981' }}></i>
-                                <span style={{ fontSize: '14px' }}>Cash in Hand</span>
-                            </div>
-                            <span style={{ fontSize: '14px', fontWeight: 600 }}>Rs 0.00</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <i className="fa-solid fa-building-columns" style={{ color: '#3b82f6' }}></i>
-                                <span style={{ fontSize: '14px' }}>Bank Accounts</span>
-                            </div>
-                            <span style={{ fontSize: '14px', fontWeight: 600 }}>Rs 0.00</span>
-                        </div>
-                        <button style={{ width: '100%', marginTop: '20px', padding: '8px', borderRadius: '4px', border: '1px solid #3b82f6', color: '#3b82f6', background: '#eff6ff', fontSize: '13px', cursor: 'pointer' }}>
-                            Add Bank Account
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
