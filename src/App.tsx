@@ -12,6 +12,7 @@ import { ItemsModule } from './ItemsModule';
 import { InvoiceView } from './InvoiceView';
 import { InvoiceForm } from './InvoiceForm';
 import { PartyFormModal } from './PartyFormModal';
+import { ItemFormModal } from './ItemFormModal';
 import { SettingsModule } from './SettingsModule';
 
 // Mock invoice generator (for PDF)
@@ -55,6 +56,8 @@ export default function App() {
   const [convertingEstimateId, setConvertingEstimateId] = useState<string | null>(null);
   const [showPartyModal, setShowPartyModal] = useState(false);
   const [editingParty, setEditingParty] = useState<Partial<Party> | null>(null);
+  const [showItemModal, setShowItemModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<Partial<InventoryItem> | null>(null);
 
   useEffect(() => {
     localStorage.setItem('vyapar_company', JSON.stringify(companyData));
@@ -83,7 +86,10 @@ export default function App() {
         setEditingParty({});
         setShowPartyModal(true);
     };
-    if (action === 'ADD_ITEM') alert('Add item - Coming soon!');
+    if (action === 'ADD_ITEM') {
+        setEditingItem({});
+        setShowItemModal(true);
+    };
     if (action === 'PROFILE_EDIT') setCurrentView('PROFILE_EDIT');
   };
 
@@ -112,6 +118,33 @@ export default function App() {
     setParties(prev => prev.filter(p => p.id !== id));
     setShowPartyModal(false);
     setEditingParty(null);
+  };
+
+  const handleEditItem = (item: InventoryItem) => {
+    setEditingItem(item);
+    setShowItemModal(true);
+  };
+
+  const handleSaveItem = (itemData: Partial<InventoryItem>) => {
+    if (itemData.id) {
+        setItems(prev => prev.map(i => i.id === itemData.id ? { ...i, ...itemData as InventoryItem } : i));
+    } else {
+        const newItem: InventoryItem = {
+            ...itemData as InventoryItem,
+            id: Date.now().toString(),
+            stock: itemData.stock || 0,
+            minStock: itemData.minStock || 0
+        };
+        setItems([...items, newItem]);
+    }
+    setShowItemModal(false);
+    setEditingItem(null);
+  };
+
+  const handleDeleteItem = (id: string | number) => {
+    setItems(prev => prev.filter(i => i.id !== id));
+    setShowItemModal(false);
+    setEditingItem(null);
   };
 
   const handleConvertToSale = (estimateId: string, type: 'SALE' | 'SALE_ORDER') => {
@@ -172,10 +205,11 @@ export default function App() {
                   updatedParties.push({
                       id: Date.now().toString() + "_party",
                       name: inv.customerName,
-                      phone: '',
+                      phone: customerPhone || '',
                       email: '',
-                      address: '',
-                      balance: isSale ? inv.totalAmount : 0
+                      address: billingAddress || '',
+                      balance: isSale ? inv.totalAmount : 0,
+                      type: 'receive'
                   });
               }
               setParties(updatedParties);
@@ -184,6 +218,31 @@ export default function App() {
                   inv.partyId = updatedParties[updatedParties.length - 1].id;
               } else {
                   inv.partyId = updatedParties[partyIndex].id;
+              }
+          }
+
+          // Automatic item management
+          if (inv.items && inv.items.length > 0) {
+              let updatedInventory = [...items];
+              let hasNewItems = false;
+              
+              inv.items.forEach(item => {
+                  const existingItem = updatedInventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+                  if (!existingItem && item.name.trim() !== '') {
+                      updatedInventory.push({
+                          id: Date.now().toString() + "_" + Math.random().toString(36).substr(2, 5),
+                          name: item.name,
+                          price: item.rate,
+                          unit: item.unit || 'PCS',
+                          stock: 0,
+                          minStock: 0
+                      });
+                      hasNewItems = true;
+                  }
+              });
+              
+              if (hasNewItems) {
+                  setItems(updatedInventory);
               }
           }
 
@@ -212,10 +271,10 @@ export default function App() {
           {currentView === 'HOME' && <DashboardModule sales={sales} parties={parties} items={items} onNavigate={setCurrentView} />}
           {currentView === 'SALE_LIST' && <HomeModule sales={sales} onAddSale={() => setCurrentView('SALE_FORM')} onEditSale={handleEditSale} onViewSale={handleViewInvoice} />}
           {currentView === 'PARTIES_LIST' && <PartiesModule parties={parties} sales={sales} estimates={estimates} onAddParty={() => { setEditingParty({}); setShowPartyModal(true); }} onEditParty={handleEditParty} />}
-          {currentView === 'ITEMS_LIST' && <ItemsModule items={items} onAddItem={() => {}} onEditItem={(item) => alert('Edit Item: ' + item.name)} />}
+          {currentView === 'ITEMS_LIST' && <ItemsModule items={items} onAddItem={() => { setEditingItem({}); setShowItemModal(true); }} onEditItem={handleEditItem} />}
           {currentView === 'ESTIMATE_LIST' && <EstimatesModule estimates={estimates} onAddEstimate={() => setCurrentView('ESTIMATE_FORM')} onConvertToSale={handleConvertToSale} onEditEstimate={handleEditEstimate} onViewEstimate={handleViewInvoice} />}
-          {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale, print) => handleSaveInvoice(sale, true, print)} onCancel={() => { setConvertingEstimateId(null); setEditingInvoice(null); setCurrentView('SALE_LIST'); }} initialData={editingInvoice || (convertingEstimateId ? estimates.find(e => e.id === convertingEstimateId) : undefined)} parties={parties} />}
-          {currentView === 'ESTIMATE_FORM' && <InvoiceForm isSale={false} onSave={(est, print) => handleSaveInvoice(est, false, print)} onCancel={() => { setEditingInvoice(null); setCurrentView('ESTIMATE_LIST'); }} initialData={editingInvoice || undefined} parties={parties} />}
+          {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale, print) => handleSaveInvoice(sale, true, print)} onCancel={() => { setConvertingEstimateId(null); setEditingInvoice(null); setCurrentView('SALE_LIST'); }} initialData={editingInvoice || (convertingEstimateId ? estimates.find(e => e.id === convertingEstimateId) : undefined)} parties={parties} items={items} />}
+          {currentView === 'ESTIMATE_FORM' && <InvoiceForm isSale={false} onSave={(est, print) => handleSaveInvoice(est, false, print)} onCancel={() => { setEditingInvoice(null); setCurrentView('ESTIMATE_LIST'); }} initialData={editingInvoice || undefined} parties={parties} items={items} />}
           {currentView === 'INVOICE_VIEW' && currentInvoice && (
              <InvoiceView 
                 estimate={currentInvoice} 
@@ -240,6 +299,14 @@ export default function App() {
             onSave={handleSaveParty}
             onCancel={() => { setShowPartyModal(false); setEditingParty(null); }}
             onDelete={handleDeleteParty}
+          />
+      )}
+      {showItemModal && editingItem && (
+          <ItemFormModal 
+            item={editingItem}
+            onSave={handleSaveItem}
+            onCancel={() => { setShowItemModal(false); setEditingItem(null); }}
+            onDelete={handleDeleteItem}
           />
       )}
     </div>

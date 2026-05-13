@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Estimate, InventoryItem } from './types';
 import { Settings, Share2, Plus, Minus, Trash2, Calendar, GripVertical, Search } from 'lucide-react';
 
-export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [] }: { isSale: boolean, onSave: (inv: Estimate, print: boolean) => void, onCancel: () => void, initialData?: Estimate, parties?: any[] }) {
+export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [], items = [] }: { isSale: boolean, onSave: (inv: Estimate, print: boolean) => void, onCancel: () => void, initialData?: Estimate, parties?: any[], items?: InventoryItem[] }) {
     const defaultRows = [{ id: '1', name: '', qty: 1, unit: 'PCS', price: 0 }];
     const mapItemsToRows = (items: any[]) => {
         return items.map((item, idx) => ({
@@ -25,6 +25,8 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
             p.name.toLowerCase().includes(party.toLowerCase()) || 
             (p.phone && p.phone.includes(party))
         );
+
+    const [focusedRowIdx, setFocusedRowIdx] = useState<number | null>(null);
 
     const [invoiceNo, setInvoiceNo] = useState(initialData && initialData.isSale === isSale ? Number(initialData.refNo) : 1);
     const [date, setDate] = useState(initialData ? initialData.date : new Date().toISOString().split('T')[0]);
@@ -227,8 +229,50 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
                                                     {idx + 1}
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '12px' }}>
-                                                <input type="text" placeholder="Item Name" value={row.name} onChange={e => updateRow(idx, 'name', e.target.value)} style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px' }} />
+                                            <td style={{ padding: '12px', position: 'relative' }}>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Item Name" 
+                                                    value={row.name} 
+                                                    onChange={e => updateRow(idx, 'name', e.target.value)} 
+                                                    onFocus={() => setFocusedRowIdx(idx)}
+                                                    onBlur={() => setTimeout(() => setFocusedRowIdx(null), 200)}
+                                                    style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px' }} 
+                                                />
+                                                {focusedRowIdx === idx && (
+                                                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #d1d5db', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px', borderTop: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', zIndex: 20, maxHeight: '200px', overflowY: 'auto' }}>
+                                                        {(row.name === '' ? items : items.filter(i => i.name.toLowerCase().includes(row.name.toLowerCase()))).map((item, i) => (
+                                                            <div 
+                                                                key={i} 
+                                                                style={{ padding: '10px 12px', fontSize: '14px', cursor: 'pointer', borderTop: '1px solid #f3f4f6' }}
+                                                                className="hover:bg-slate-50"
+                                                                onClick={() => {
+                                                                    const newRows = [...rows];
+                                                                    newRows[idx] = {
+                                                                        ...newRows[idx],
+                                                                        name: item.name,
+                                                                        price: item.price,
+                                                                        unit: item.unit || 'PCS'
+                                                                    };
+                                                                    setRows(newRows);
+                                                                    setFocusedRowIdx(null);
+                                                                }}
+                                                            >
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                    <span style={{ fontWeight: 500, color: '#374151' }}>{item.name}</span>
+                                                                    <span style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 600 }}>PRICE: Rs {item.price.toLocaleString('en-IN')}</span>
+                                                                </div>
+                                                                <div style={{ fontSize: '11px', color: '#9ca3af' }}>Stock: {item.stock} {item.unit}</div>
+                                                            </div>
+                                                        ))}
+                                                        <div 
+                                                            style={{ padding: '10px 12px', fontSize: '13px', color: '#3b82f6', cursor: 'pointer', borderTop: '1px solid #f3f4f6', fontWeight: 500 }}
+                                                            onClick={() => setFocusedRowIdx(null)}
+                                                        >
+                                                            + Add New Item "{row.name}"
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </td>
                                             <td style={{ padding: '12px' }}>
                                                 <input type="number" placeholder="1" value={row.qty} onChange={e => updateRow(idx, 'qty', Number(e.target.value))} style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px' }} />
@@ -236,16 +280,17 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
                                             <td style={{ padding: '12px' }}>
                                                 <select value={row.unit} onChange={e => updateRow(idx, 'unit', e.target.value)} style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px', backgroundColor: 'transparent', cursor: 'pointer' }}>
                                                     <option value="PCS">PCS</option>
+                                                    <option value="FT">FT</option>
+                                                    <option value="RFT">RFT</option>
+                                                    <option value="SQF">SQF</option>
+                                                    <option value="IN">IN</option>
+                                                    <option value="SET">SET</option>
+                                                    <option value="UNIT">UNIT</option>
                                                     <option value="KG">KG</option>
+                                                    <option value="MTR">MTR</option>
                                                     <option value="BOX">BOX</option>
                                                     <option value="LTR">LTR</option>
-                                                    <option value="MTR">MTR</option>
-                                                    <option value="NOS">NOS</option>
-                                                    <option value="QUINTAL">QUINTAL (QTL)</option>
-                                                    <option value="ROLLS">ROLLS (ROL)</option>
-                                                    <option value="SQ. FEET">SQ. FEET (SQF)</option>
-                                                    <option value="SQ. METERS">SQ. METERS (SQM)</option>
-                                                    <option value="TABLETS">TABLETS (TBS)</option>
+                                                    <option value="ROLLS">ROLLS</option>
                                                 </select>
                                             </td>
                                             <td style={{ padding: '12px', textAlign: 'right' }}>
