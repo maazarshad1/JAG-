@@ -24,11 +24,11 @@ export default function App() {
   const [companyData, setCompanyData] = useState<CompanyData>(() => {
     const saved = localStorage.getItem('vyapar_company');
     return saved ? JSON.parse(saved) : {
-      name: 'Business XYZ',
-      email: '',
-      phone: '',
-      address: '',
-      terms: 'Thank you for doing business with us.'
+      name: 'Jawad Aluminium and Glass Works',
+      email: 'jawadaluminium786@gmail.com',
+      phone: '03235528196',
+      address: 'Shop#1 Habib Plaza Near River Bridge Main Double Road Phase 5 Ghouri Town Islamabad',
+      terms: 'Thanks for doing business with us! Advance payment 90% After complation10%=Note This Quotation is vailid for only two days'
     };
   });
 

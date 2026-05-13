@@ -278,11 +278,11 @@ export function InvoiceView({
           <div style={{ border: '1px solid #000' }}>
             {/* Top Section */}
             <div style={{ display: 'flex', padding: '12px', borderBottom: '1px solid #000' }}>
-               <div style={{ width: '80px', height: '80px', border: '1px solid #d4d4d4', marginRight: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', overflow: 'hidden', backgroundColor: '#333', position: 'relative' }} className="group">
+               <div style={{ width: '80px', height: '80px', border: '1px solid #000', marginRight: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#fff', position: 'relative' }} className="group">
                   {companyData.logo ? (
                      <img src={companyData.logo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%' }} />
                   ) : (
-                     <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '24px', fontStyle: 'italic' }}>LOGO</div>
+                     <div style={{ color: '#000', fontWeight: '900', fontSize: '28px', border: '3px solid #000', borderRadius: '50%', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>JAG</div>
                   )}
                   <label className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white font-bold text-xs print:hidden">
                      <Edit2 size={16} className="mb-1" />
@@ -396,7 +396,10 @@ export function InvoiceView({
                      {companyData.signature ? (
                          <img src={companyData.signature} alt="Signature" style={{ maxHeight: '60px', marginBottom: '8px' }} />
                      ) : (
-                         <span style={{ fontSize: '32px', fontFamily: 'cursive', color: '#444', lineHeight: '1', marginBottom: '8px' }}>f</span>
+                         <div style={{ marginBottom: '8px', position: 'relative' }}>
+                           <span style={{ fontSize: '32px', fontFamily: '"Great Vibes", cursive', color: '#000', lineHeight: '1' }}>Jawad A.</span>
+                           <div style={{ position: 'absolute', bottom: '-4px', left: '0', right: '0', height: '1px', background: '#000', opacity: 0.5 }}></div>
+                         </div>
                      )}
                      <div style={{ fontSize: '13px', color: '#555' }}>Authorized Signatory</div>
                      

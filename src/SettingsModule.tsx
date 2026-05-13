@@ -87,10 +87,72 @@ export function SettingsModule({ companyData, onChange, onBack }: SettingsModule
                             <FileText size={20} color="#3b82f6" /> Document Settings
                         </h3>
                         
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#4b5563', marginBottom: '8px' }}>Business Logo</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <div style={{ width: '80px', height: '80px', border: '2px dashed #d1d5db', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', overflow: 'hidden' }}>
+                                        {companyData.logo ? (
+                                            <img src={companyData.logo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                                        ) : (
+                                            <Building size={32} color="#9ca3af" />
+                                        )}
+                                    </div>
+                                    <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        style={{ display: 'none' }} 
+                                        id="logo-upload"
+                                        onChange={e => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => onChange({...companyData, logo: reader.result as string});
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                    />
+                                    <label htmlFor="logo-upload" style={{ padding: '8px 16px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '13px', fontWeight: 500, color: '#4b5563', cursor: 'pointer' }}>
+                                        Change Logo
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#4b5563', marginBottom: '8px' }}>Authorized Signature</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <div style={{ width: '120px', height: '80px', border: '2px dashed #d1d5db', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', overflow: 'hidden' }}>
+                                        {companyData.signature ? (
+                                            <img src={companyData.signature} alt="Signature" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                                        ) : (
+                                            <FileText size={32} color="#9ca3af" />
+                                        )}
+                                    </div>
+                                    <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        style={{ display: 'none' }} 
+                                        id="sig-upload"
+                                        onChange={e => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => onChange({...companyData, signature: reader.result as string});
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                    />
+                                    <label htmlFor="sig-upload" style={{ padding: '8px 16px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '13px', fontWeight: 500, color: '#4b5563', cursor: 'pointer' }}>
+                                        Upload Signature
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
                         <div>
                             <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#4b5563', marginBottom: '8px' }}>Terms & Conditions</label>
                             <textarea 
-                                style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', outline: 'none', minHeight: '120px', resize: 'vertical' }} 
+                                style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', outline: 'none', minHeight: '100px', resize: 'vertical' }} 
                                 value={companyData.terms || ''} 
                                 onChange={e => onChange({...companyData, terms: e.target.value})}
                                 placeholder="These will appear at the bottom of your invoices and estimates"
