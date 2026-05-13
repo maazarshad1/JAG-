@@ -332,7 +332,7 @@ export function InvoiceView({
           `}} />
           
           <h2 style={{ textAlign: 'center', color: '#111827', fontSize: '28px', fontWeight: 'bold', margin: '0 0 20px 0' }}>
-            {estimate.isSale ? 'Tax Invoice' : 'Estimate'}
+            {estimate.isSale ? 'Invoice' : 'Estimate'}
           </h2>
  
           <div style={{ border: '2px solid #000', flex: 1, display: 'flex', flexDirection: 'column' }}>
