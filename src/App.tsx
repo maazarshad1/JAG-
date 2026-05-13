@@ -12,6 +12,7 @@ import { ItemsModule } from './ItemsModule';
 import { InvoiceView } from './InvoiceView';
 import { InvoiceForm } from './InvoiceForm';
 import { PartyFormModal } from './PartyFormModal';
+import { SettingsModule } from './SettingsModule';
 
 // Mock invoice generator (for PDF)
 import { X, Search } from 'lucide-react';
@@ -203,12 +204,12 @@ export default function App() {
 
   return (
     <div id="app-container">
-      <Sidebar currentView={currentView} setCurrentView={setCurrentView} onAction={handleAction} />
+      <Sidebar currentView={currentView} setCurrentView={setCurrentView} onAction={handleAction} companyData={companyData} />
       <main id="main-content">
         <TopHeader title={companyData.name} onAction={handleAction} />
         
         <div id="module-container">
-          {currentView === 'HOME' && <DashboardModule sales={sales} parties={parties} items={items} />}
+          {currentView === 'HOME' && <DashboardModule sales={sales} parties={parties} items={items} onNavigate={setCurrentView} />}
           {currentView === 'SALE_LIST' && <HomeModule sales={sales} onAddSale={() => setCurrentView('SALE_FORM')} onEditSale={handleEditSale} onViewSale={handleViewInvoice} />}
           {currentView === 'PARTIES_LIST' && <PartiesModule parties={parties} sales={sales} estimates={estimates} onAddParty={() => { setEditingParty({}); setShowPartyModal(true); }} onEditParty={handleEditParty} />}
           {currentView === 'ITEMS_LIST' && <ItemsModule items={items} onAddItem={() => {}} onEditItem={(item) => alert('Edit Item: ' + item.name)} />}
@@ -224,32 +225,11 @@ export default function App() {
              />
           )}
           {currentView === 'PROFILE_EDIT' && (
-             <div style={{ padding: '20px' }}>
-                <h2>Business Profile Settings</h2>
-                <div style={{ maxWidth: '400px', marginTop: '20px' }}>
-                    <div style={{ marginBottom: '15px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Business Name</label>
-                        <input className="form-control" value={companyData.name} onChange={e => setCompanyData({...companyData, name: e.target.value})} />
-                    </div>
-                    <div style={{ marginBottom: '15px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Email</label>
-                        <input className="form-control" value={companyData.email} onChange={e => setCompanyData({...companyData, email: e.target.value})} />
-                    </div>
-                    <div style={{ marginBottom: '15px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Phone</label>
-                        <input className="form-control" value={companyData.phone} onChange={e => setCompanyData({...companyData, phone: e.target.value})} />
-                    </div>
-                    <div style={{ marginBottom: '15px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Address</label>
-                        <textarea className="form-control" value={companyData.address} onChange={e => setCompanyData({...companyData, address: e.target.value})} />
-                    </div>
-                    <div style={{ marginBottom: '15px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Terms & Conditions</label>
-                        <textarea className="form-control" value={companyData.terms || ''} onChange={e => setCompanyData({...companyData, terms: e.target.value})} />
-                    </div>
-                </div>
-                <button className="btn btn-primary-blue" onClick={() => setCurrentView('HOME')}>Back to Home</button>
-             </div>
+             <SettingsModule 
+                companyData={companyData} 
+                onChange={setCompanyData} 
+                onBack={() => setCurrentView('HOME')} 
+             />
           )}
         </div>
       </main>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Estimate, Party, InventoryItem } from './types';
 
-export function DashboardModule({ sales, parties, items }: { sales: Estimate[], parties: Party[], items: InventoryItem[] }) {
+export function DashboardModule({ sales, parties, items, onNavigate }: { sales: Estimate[], parties: Party[], items: InventoryItem[], onNavigate?: (view: any) => void }) {
     const totalSales = sales.reduce((sum, s) => sum + s.totalAmount, 0);
     const totalPartiesBalance = parties.reduce((sum, p) => sum + (p.balance || 0), 0);
     const totalItems = items.length;
@@ -9,7 +9,15 @@ export function DashboardModule({ sales, parties, items }: { sales: Estimate[], 
 
     return (
         <div style={{ padding: '24px', backgroundColor: '#f3f4f6', height: '100%', overflowY: 'auto' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '20px' }}>Business Overview</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', margin: 0 }}>Business Overview</h2>
+                <button 
+                    onClick={() => onNavigate?.('PROFILE_EDIT')}
+                    style={{ padding: '8px 16px', background: '#fff', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '13px', fontWeight: 500, color: '#4b5563', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                    <i className="fa-solid fa-building"></i> Edit Company
+                </button>
+            </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '24px' }}>
                 <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>

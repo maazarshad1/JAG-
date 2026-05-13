@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { View } from './types';
+import { View, CompanyData } from './types';
 
-export function Sidebar({ currentView, setCurrentView, onAction }: { currentView: View, setCurrentView: (v: View) => void, onAction: (action: string) => void }) {
+export function Sidebar({ currentView, setCurrentView, onAction, companyData }: { 
+    currentView: View, 
+    setCurrentView: (v: View) => void, 
+    onAction: (action: string) => void,
+    companyData: CompanyData
+}) {
     const [saleGroupOpen, setSaleGroupOpen] = useState(true);
 
     return (
@@ -35,6 +40,14 @@ export function Sidebar({ currentView, setCurrentView, onAction }: { currentView
                 >
                     <i className="fa-solid fa-box"></i>
                     <span>Items</span>
+                </button>
+
+                <button 
+                  className={`nav-item ${currentView === 'PROFILE_EDIT' ? 'active' : ''} border-0 bg-transparent w-full text-left`} 
+                  onClick={() => setCurrentView('PROFILE_EDIT')}
+                >
+                    <i className="fa-solid fa-building"></i>
+                    <span>My Company</span>
                 </button>
                 
                 <div className="nav-group">
@@ -118,9 +131,9 @@ export function Sidebar({ currentView, setCurrentView, onAction }: { currentView
                 </div>
             </nav>
 
-            <div className="sidebar-footer">
-                <div className="company-logo">M</div>
-                <div className="company-name" onClick={() => setCurrentView('PROFILE_EDIT')}>My Company</div>
+            <div className="sidebar-footer" onClick={() => setCurrentView('PROFILE_EDIT')}>
+                <div className="company-logo">{companyData.name.charAt(0).toUpperCase()}</div>
+                <div className="company-name">My Company</div>
                 <i className="fa-solid fa-settings"></i>
             </div>
         </aside>
