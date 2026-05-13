@@ -270,7 +270,18 @@ export default function App() {
         <div id="module-container">
           {currentView === 'HOME' && <DashboardModule sales={sales} parties={parties} items={items} onNavigate={setCurrentView} />}
           {currentView === 'SALE_LIST' && <HomeModule sales={sales} onAddSale={() => setCurrentView('SALE_FORM')} onEditSale={handleEditSale} onViewSale={handleViewInvoice} />}
-          {currentView === 'PARTIES_LIST' && <PartiesModule parties={parties} sales={sales} estimates={estimates} onAddParty={() => { setEditingParty({}); setShowPartyModal(true); }} onEditParty={handleEditParty} />}
+          {currentView === 'PARTIES_LIST' && (
+            <PartiesModule 
+              parties={parties} 
+              sales={sales} 
+              estimates={estimates} 
+              onAddParty={() => { setEditingParty({}); setShowPartyModal(true); }} 
+              onEditParty={handleEditParty}
+              onEditSale={handleEditSale}
+              onEditEstimate={handleEditEstimate}
+              onViewTransaction={handleViewInvoice}
+            />
+          )}
           {currentView === 'ITEMS_LIST' && <ItemsModule items={items} onAddItem={() => { setEditingItem({}); setShowItemModal(true); }} onEditItem={handleEditItem} />}
           {currentView === 'ESTIMATE_LIST' && <EstimatesModule estimates={estimates} onAddEstimate={() => setCurrentView('ESTIMATE_FORM')} onConvertToSale={handleConvertToSale} onEditEstimate={handleEditEstimate} onViewEstimate={handleViewInvoice} />}
           {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale, print) => handleSaveInvoice(sale, true, print)} onCancel={() => { setConvertingEstimateId(null); setEditingInvoice(null); setCurrentView('SALE_LIST'); }} initialData={editingInvoice || (convertingEstimateId ? estimates.find(e => e.id === convertingEstimateId) : undefined)} parties={parties} items={items} />}
