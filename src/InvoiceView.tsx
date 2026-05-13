@@ -23,11 +23,26 @@ export function InvoiceView({
     if (!element) return;
     
     try {
+      // Create a style element that overrides the oklab/oklch colors for the capture
+      const style = document.createElement('style');
+      style.innerHTML = `
+        * { 
+          color-scheme: light !important;
+          animation: none !important;
+          transition: none !important;
+        }
+      `;
+      
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        onclone: (clonedDoc) => {
+          clonedDoc.head.appendChild(style);
+          // Manually fix potential oklab colors in the clone if needed
+          // but usually color-scheme: light helps fallback
+        }
       });
       
       const imgData = canvas.toDataURL('image/png');
@@ -40,8 +55,14 @@ export function InvoiceView({
       pdf.save(`${estimate.isSale ? 'Invoice' : 'Estimate'}_${estimate.refNo}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try printing to PDF instead.');
+      alert('Failed to generate PDF automatically. Please use "Print Invoice (Normal)" and select "Save as PDF" in the printer settings.');
     }
+  };
+
+  const handleShareWhatsApp = async () => {
+    const text = `Invoice from ${companyData.name}\nInvoice No: ${estimate.refNo}\nTotal Amount: Rs ${estimate.totalAmount}\nBalance: Rs ${estimate.balance}\n\nView here: ${window.location.href}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
   };
 
   const handlePrint = (type: 'normal' | 'thermal') => {
@@ -52,23 +73,48 @@ export function InvoiceView({
     }
 
     const invoiceContent = document.getElementById('invoice-paper')?.innerHTML;
-    const styles = document.head.innerHTML;
+    const styles = Array.from(document.styleSheets)
+      .map(styleSheet => {
+        try {
+          return Array.from(styleSheet.cssRules)
+            .map(rule => rule.cssText)
+            .join('\n');
+        } catch (e) {
+          // Skip cross-origin stylesheets
+          return '';
+        }
+      })
+      .join('\n');
 
     printWindow.document.write(`
       <html>
         <head>
-          ${styles}
           <style>
-            body { background: white !important; margin: 0; padding: 0; }
-            #invoice-paper { box-shadow: none !important; border: none !important; width: 100% !important; max-width: none !important; margin: 0 !important; transform: none !important; }
-            .print\\:hidden { display: none !important; }
-            @page { margin: 10mm; size: ${type === 'thermal' ? '80mm 200mm' : 'A4'}; }
-            ${type === 'thermal' ? `
-              #invoice-paper { width: 72mm !important; font-size: 10px !important; }
-              #invoice-paper h2 { font-size: 16px !important; }
-              #invoice-paper h1 { font-size: 14px !important; }
-              .repl-table { font-size: 9px !important; }
-            ` : ''}
+             ${styles}
+             body { background: white !important; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+             #invoice-paper { 
+               box-shadow: none !important; 
+               border: none !important; 
+               width: ${type === 'thermal' ? '72mm' : '100%'} !important; 
+               max-width: ${type === 'thermal' ? '72mm' : 'none'} !important; 
+               margin: 0 !important; 
+               transform: none !important;
+               background: white !important;
+               color: black !important;
+             }
+             .print\\:hidden { display: none !important; }
+             @page { 
+               margin: 0; 
+               size: ${type === 'thermal' ? '80mm auto' : 'A4'}; 
+             }
+             ${type === 'thermal' ? `
+               * { font-size: 10px !important; }
+               h2 { font-size: 14px !important; }
+               h1 { font-size: 12px !important; }
+               .repl-table { font-size: 9px !important; }
+               td, th { padding: 4px !important; }
+               .thermal-hide { display: none !important; }
+             ` : ''}
           </style>
         </head>
         <body>
@@ -77,8 +123,10 @@ export function InvoiceView({
           </div>
           <script>
             window.onload = () => {
-              window.print();
-              setTimeout(() => window.close(), 100);
+              setTimeout(() => {
+                window.print();
+                window.close();
+              }, 500);
             };
           </script>
         </body>
@@ -330,11 +378,11 @@ export function InvoiceView({
            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden sticky top-6">
               <div className="p-4 border-b border-slate-100"><h3 className="font-bold text-slate-800 text-lg">Share Invoice</h3></div>
               <div className="flex border-b border-slate-100">
-                 <button onClick={() => window.open(`https://wa.me/?text=Here is your invoice`, '_blank')} className="flex-1 py-4 flex flex-col items-center gap-2 hover:bg-slate-50 border-r border-slate-100 cursor-pointer">
+                 <button onClick={handleShareWhatsApp} className="flex-1 py-4 flex flex-col items-center gap-2 hover:bg-slate-50 border-r border-slate-100 cursor-pointer">
                     <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white"><i className="fa-brands fa-whatsapp text-2xl"></i></div>
                     <span className="text-sm font-medium text-slate-700">WhatsApp</span>
                  </button>
-                 <button className="flex-1 py-4 flex flex-col items-center gap-2 hover:bg-slate-50 cursor-pointer">
+                 <button onClick={() => window.open(`mailto:?subject=${estimate.isSale ? 'Invoice' : 'Estimate'} ${estimate.refNo}&body=Here is your ${estimate.isSale ? 'invoice' : 'estimate'}`, '_blank')} className="flex-1 py-4 flex flex-col items-center gap-2 hover:bg-slate-50 cursor-pointer">
                     <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center text-white"><i className="fa-solid fa-envelope text-xl"></i></div>
                     <span className="text-sm font-medium text-slate-700">Gmail</span>
                  </button>

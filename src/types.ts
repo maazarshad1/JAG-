@@ -18,6 +18,10 @@ export interface Party {
   balance: number;
   type: 'receive' | 'pay';
   phone: string;
+  email?: string;
+  billingAddress?: string;
+  shippingAddress?: string;
+  gstin?: string;
 }
 
 export interface Item {

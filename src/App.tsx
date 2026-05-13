@@ -11,6 +11,7 @@ import { PartiesModule } from './PartiesModule';
 import { ItemsModule } from './ItemsModule';
 import { InvoiceView } from './InvoiceView';
 import { InvoiceForm } from './InvoiceForm';
+import { PartyFormModal } from './PartyFormModal';
 
 // Mock invoice generator (for PDF)
 import { X, Search } from 'lucide-react';
@@ -51,6 +52,8 @@ export default function App() {
   });
 
   const [convertingEstimateId, setConvertingEstimateId] = useState<string | null>(null);
+  const [showPartyModal, setShowPartyModal] = useState(false);
+  const [editingParty, setEditingParty] = useState<Partial<Party> | null>(null);
 
   useEffect(() => {
     localStorage.setItem('vyapar_company', JSON.stringify(companyData));
@@ -75,9 +78,39 @@ export default function App() {
   const handleAction = (action: string) => {
     if (action === 'ADD_SALE') setCurrentView('SALE_FORM');
     if (action === 'ADD_ESTIMATE') setCurrentView('ESTIMATE_FORM');
-    if (action === 'ADD_PARTY') alert('Add party - Coming soon!');
+    if (action === 'ADD_PARTY') {
+        setEditingParty({});
+        setShowPartyModal(true);
+    };
     if (action === 'ADD_ITEM') alert('Add item - Coming soon!');
     if (action === 'PROFILE_EDIT') setCurrentView('PROFILE_EDIT');
+  };
+
+  const handleEditParty = (party: Party) => {
+    setEditingParty(party);
+    setShowPartyModal(true);
+  };
+
+  const handleSaveParty = (partyData: Partial<Party>) => {
+    if (partyData.id) {
+        setParties(prev => prev.map(p => p.id === partyData.id ? { ...p, ...partyData as Party } : p));
+    } else {
+        const newParty: Party = {
+            ...partyData as Party,
+            id: Date.now().toString(),
+            balance: partyData.balance || 0,
+            type: 'receive'
+        };
+        setParties([...parties, newParty]);
+    }
+    setShowPartyModal(false);
+    setEditingParty(null);
+  };
+
+  const handleDeleteParty = (id: string | number) => {
+    setParties(prev => prev.filter(p => p.id !== id));
+    setShowPartyModal(false);
+    setEditingParty(null);
   };
 
   const handleConvertToSale = (estimateId: string, type: 'SALE' | 'SALE_ORDER') => {
@@ -177,7 +210,7 @@ export default function App() {
         <div id="module-container">
           {currentView === 'HOME' && <DashboardModule sales={sales} parties={parties} items={items} />}
           {currentView === 'SALE_LIST' && <HomeModule sales={sales} onAddSale={() => setCurrentView('SALE_FORM')} onEditSale={handleEditSale} onViewSale={handleViewInvoice} />}
-          {currentView === 'PARTIES_LIST' && <PartiesModule parties={parties} sales={sales} estimates={estimates} onAddParty={() => {}} onEditParty={(p) => alert('Edit Party: ' + p.name)} />}
+          {currentView === 'PARTIES_LIST' && <PartiesModule parties={parties} sales={sales} estimates={estimates} onAddParty={() => { setEditingParty({}); setShowPartyModal(true); }} onEditParty={handleEditParty} />}
           {currentView === 'ITEMS_LIST' && <ItemsModule items={items} onAddItem={() => {}} onEditItem={(item) => alert('Edit Item: ' + item.name)} />}
           {currentView === 'ESTIMATE_LIST' && <EstimatesModule estimates={estimates} onAddEstimate={() => setCurrentView('ESTIMATE_FORM')} onConvertToSale={handleConvertToSale} onEditEstimate={handleEditEstimate} onViewEstimate={handleViewInvoice} />}
           {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale, print) => handleSaveInvoice(sale, true, print)} onCancel={() => { setConvertingEstimateId(null); setEditingInvoice(null); setCurrentView('SALE_LIST'); }} initialData={editingInvoice || (convertingEstimateId ? estimates.find(e => e.id === convertingEstimateId) : undefined)} parties={parties} />}
@@ -220,6 +253,15 @@ export default function App() {
           )}
         </div>
       </main>
+
+      {showPartyModal && editingParty && (
+          <PartyFormModal 
+            party={editingParty}
+            onSave={handleSaveParty}
+            onCancel={() => { setShowPartyModal(false); setEditingParty(null); }}
+            onDelete={handleDeleteParty}
+          />
+      )}
     </div>
   );
 }
