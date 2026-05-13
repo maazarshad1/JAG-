@@ -205,9 +205,9 @@ export default function App() {
                   updatedParties.push({
                       id: Date.now().toString() + "_party",
                       name: inv.customerName,
-                      phone: customerPhone || '',
+                      phone: inv.customerPhone || '',
                       email: '',
-                      address: billingAddress || '',
+                      address: inv.billingAddress || '',
                       balance: isSale ? inv.totalAmount : 0,
                       type: 'receive'
                   });

@@ -331,7 +331,7 @@ export function InvoiceView({
             #invoice-paper { padding: 40px !important; }
           `}} />
           
-          <h2 style={{ textAlign: 'center', color: '#111827', fontSize: '28px', fontWeight: 'bold', margin: '0 0 20px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          <h2 style={{ textAlign: 'center', color: '#111827', fontSize: '28px', fontWeight: 'bold', margin: '0 0 20px 0' }}>
             {estimate.isSale ? 'Tax Invoice' : 'Estimate'}
           </h2>
  
@@ -450,27 +450,25 @@ export function InvoiceView({
             </div>
  
             {/* Footer Signature Box */}
-            <div style={{ display: 'flex' }}>
+            <div style={{ display: 'flex', borderTop: 'none' }}>
                <div style={{ flex: 1, borderRight: '2px solid #000' }}></div>
                <div style={{ width: '350px' }}>
                   <div style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontSize: '14px', fontWeight: 'bold', background: '#f8fafc' }}>For {companyData.name || 'Business Name'}:</div>
-                  <div style={{ padding: '20px', textAlign: 'center', minHeight: '120px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  <div 
+                    style={{ padding: '20px', textAlign: 'center', minHeight: '120px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}
+                    className="cursor-pointer group"
+                    onClick={() => setShowSignatureModal(true)}
+                  >
                      {companyData.signature ? (
-                         <img src={companyData.signature} alt="Signature" style={{ maxHeight: '70px', maxWidth: '180px', objectFit: 'contain' }} />
+                         <img src={companyData.signature} alt="Signature" style={{ maxHeight: '80px', maxWidth: '240px', objectFit: 'contain' }} />
                      ) : (
-                         <div style={{ height: '60px', width: '120px', borderBottom: '1px dashed #ccc', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999', fontSize: '10px' }} className="print:hidden">
-                            Click to Sign
-                         </div>
+                         <div style={{ height: '60px' }}></div>
                      )}
                      <div style={{ fontSize: '12px', color: '#555', marginTop: '6px', fontWeight: 'bold' }}>Authorized Signatory</div>
                      
-                     <div 
-                       className="absolute inset-0 bg-indigo-600/5 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer print:hidden"
-                       onClick={() => setShowSignatureModal(true)}
-                     >
-                       <div className="bg-indigo-600 text-white rounded-full p-2 shadow-lg">
-                         <Edit2 size={16} />
-                       </div>
+                     <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/5 transition-colors print:hidden" />
+                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
+                        <Edit2 size={14} className="text-indigo-600" />
                      </div>
                   </div>
                </div>
