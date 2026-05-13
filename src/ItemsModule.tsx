@@ -37,7 +37,7 @@ export function ItemsModule({ items, onAddItem }: { items: InventoryItem[], onAd
                             onClick={() => setSelectedItem(item)}
                         >
                             <div>
-                                <div style={{ fontSize: '14px', fontWeight: 500, color: '#111827', marginBottom: '4px' }}>{item.name}</div>
+                                <div style={{ fontSize: '14px', fontWeight: 500, color: '#111827', marginBottom: '4px', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.name}>{item.name}</div>
                                 <div style={{ fontSize: '12px', color: '#6b7280' }}>Sales Price: Rs {item.price}</div>
                             </div>
                             <div style={{ textAlign: 'right' }}>

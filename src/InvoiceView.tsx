@@ -143,7 +143,7 @@ export function InvoiceView({
             <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
                <div style={{ flex: 1, borderRight: '1px solid #000' }}>
                   <div style={{ padding: '6px 12px', borderBottom: '1px solid #000', fontSize: '13px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice For:' : 'Estimate For:'}</div>
-                  <div style={{ padding: '12px', fontSize: '14px', fontWeight: 'bold', minHeight: '80px' }}>{estimate.customerName || 'M.r'}</div>
+                  <div style={{ padding: '12px', fontSize: '14px', fontWeight: 'bold', minHeight: '80px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{estimate.customerName || 'M.r'}</div>
                </div>
                <div style={{ flex: 1 }}>
                   <div style={{ padding: '6px 12px', borderBottom: '1px solid #000', fontSize: '13px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice Details:' : 'Estimate Details:'}</div>
@@ -156,13 +156,13 @@ export function InvoiceView({
             </div>
 
             {/* Table */}
-            <table className="repl-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
+             <table className="repl-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed', overflow: 'hidden' }}>
               <thead>
                 <tr style={{ background: '#f8fafc' }}>
-                  <th style={{ width: '30px', textAlign: 'left' }}>#</th>
-                  <th style={{ textAlign: 'left' }}>Item name</th>
-                  <th style={{ width: '70px', textAlign: 'right' }}>Quantity</th>
-                  <th style={{ width: '110px', textAlign: 'right' }}>Price/<br/>Unit (₨)</th>
+                  <th style={{ width: '35px', textAlign: 'left' }}>#</th>
+                  <th style={{ textAlign: 'left', width: 'auto' }}>Item name</th>
+                  <th style={{ width: '65px', textAlign: 'right' }}>Quantity</th>
+                  <th style={{ width: '100px', textAlign: 'right' }}>Price/<br/>Unit (₨)</th>
                   <th style={{ width: '120px', textAlign: 'right' }}>Amount(₨)</th>
                 </tr>
               </thead>
@@ -170,7 +170,7 @@ export function InvoiceView({
                 {estimate.items.map((item, index) => (
                    <tr key={index}>
                      <td style={{ verticalAlign: 'top', fontWeight: 'bold' }}>{index + 1}</td>
-                     <td style={{ verticalAlign: 'top', fontWeight: 'bold', color: '#333', wordBreak: 'break-word', whiteSpace: 'normal', paddingRight: '8px' }}>{item.name || 'Item Name'}</td>
+                     <td style={{ verticalAlign: 'top', fontWeight: 'bold', color: '#333', wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'normal', paddingRight: '8px' }}>{item.name || 'Item Name'}</td>
                      <td style={{ verticalAlign: 'top', textAlign: 'right' }}>{item.quantity}</td>
                      <td style={{ verticalAlign: 'top', textAlign: 'right' }}>₨ {item.rate.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                      <td style={{ verticalAlign: 'top', textAlign: 'right' }}>₨ {((item.quantity * item.rate) || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
@@ -250,16 +250,7 @@ export function InvoiceView({
 
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '16px', fontSize: '13px', color: '#0284c7', fontWeight: '500' }}>
-             <div>www.vyaparapp.in</div>
-             <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                <div style={{ background: '#e5e5e5', padding: '4px 8px', fontSize: '10px', color: '#666', borderTopLeftRadius: '4px', borderTopRightRadius: '4px' }}>Generated For Free On</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#d4d4d4', padding: '4px 8px', borderBottomLeftRadius: '4px', borderBottomRightRadius: '4px' }}>
-                    <div style={{ width: '16px', height: '16px', background: '#000', clipPath: 'polygon(50% 100%, 0 0, 100% 0)' }}></div>
-                    <span style={{ fontWeight: '900', fontSize: '18px', color: '#000', letterSpacing: '-0.5px' }}>Vyapar</span>
-                </div>
-             </div>
-          </div>
+
 
         </div>
       </div>

@@ -44,7 +44,7 @@ export function PartiesModule({ parties, sales, estimates, onAddParty }: { parti
                             }}
                             onClick={() => setSelectedParty(party)}
                         >
-                            <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', textTransform: 'uppercase' }}>
+                            <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', textTransform: 'uppercase', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={party.name}>
                                 {party.name}
                             </div>
                             <div style={{ fontSize: '14px', color: party.balance >= 0 ? '#10b981' : '#ef4444', fontWeight: 500 }}>
@@ -70,7 +70,7 @@ export function PartiesModule({ parties, sales, estimates, onAddParty }: { parti
                     <>
                         <div style={{ padding: '16px 24px', background: '#fff', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#111827', textTransform: 'uppercase', margin: 0 }}>{selectedParty.name}</h2>
+                                <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#111827', textTransform: 'uppercase', margin: 0, maxWidth: '400px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={selectedParty.name}>{selectedParty.name}</h2>
                                 <i className="fa-solid fa-pen-to-square" style={{ color: '#3b82f6', fontSize: '14px', cursor: 'pointer' }}></i>
                             </div>
                             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>

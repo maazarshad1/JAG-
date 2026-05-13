@@ -50,6 +50,8 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [convertingEstimateId, setConvertingEstimateId] = useState<string | null>(null);
+
   useEffect(() => {
     localStorage.setItem('vyapar_company', JSON.stringify(companyData));
   }, [companyData]);
@@ -78,16 +80,22 @@ export default function App() {
     if (action === 'PROFILE_EDIT') setCurrentView('PROFILE_EDIT');
   };
 
-  const handleConvertToSale = (estimateId: string) => {
-    setEstimates(prev => prev.map(e => e.id === estimateId ? { ...e, status: 'Converted' } : e));
-    const estimate = estimates.find(e => e.id === estimateId);
-    if (estimate) {
-        setSales(prev => [...prev, { ...estimate, id: Date.now().toString(), status: 'CLOSED', isSale: true }]);
-        setCurrentView('SALE_LIST');
+  const handleConvertToSale = (estimateId: string, type: 'SALE' | 'SALE_ORDER') => {
+    if (type === 'SALE') {
+        setConvertingEstimateId(estimateId);
+        setCurrentView('SALE_FORM');
+    } else {
+        setEstimates(prev => prev.map(e => e.id === estimateId ? { ...e, status: 'Converted' } : e));
     }
   };
 
   const handleSaveInvoice = (inv: Estimate, isSale: boolean, printAndPreview: boolean) => {
+      // Check if it's a conversion from an estimate
+      if (isSale && convertingEstimateId) {
+          setEstimates(prev => prev.map(e => e.id === convertingEstimateId ? { ...e, status: 'Converted' } : e));
+          setConvertingEstimateId(null);
+      }
+      
       // Automatic party management
       if (inv.customerName && inv.customerName !== 'Walk-in Customer') {
           let updatedParties = [...parties];
@@ -144,7 +152,7 @@ export default function App() {
           {currentView === 'PARTIES_LIST' && <PartiesModule parties={parties} sales={sales} estimates={estimates} onAddParty={() => {}} />}
           {currentView === 'ITEMS_LIST' && <ItemsModule items={items} onAddItem={() => {}} />}
           {currentView === 'ESTIMATE_LIST' && <EstimatesModule estimates={estimates} onAddEstimate={() => setCurrentView('ESTIMATE_FORM')} onConvertToSale={handleConvertToSale} />}
-          {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale, print) => handleSaveInvoice(sale, true, print)} onCancel={() => setCurrentView('SALE_LIST')} />}
+          {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale, print) => handleSaveInvoice(sale, true, print)} onCancel={() => { setConvertingEstimateId(null); setCurrentView('SALE_LIST'); }} initialData={convertingEstimateId ? estimates.find(e => e.id === convertingEstimateId) : undefined} />}
           {currentView === 'ESTIMATE_FORM' && <InvoiceForm isSale={false} onSave={(est, print) => handleSaveInvoice(est, false, print)} onCancel={() => setCurrentView('ESTIMATE_LIST')} />}
           {currentView === 'INVOICE_VIEW' && currentInvoice && (
              <InvoiceView 

@@ -2,11 +2,21 @@ import React, { useState } from 'react';
 import { Estimate, InventoryItem } from './types';
 import { Settings, Share2, Plus, Minus, Trash2, Calendar, GripVertical, Search } from 'lucide-react';
 
-export function InvoiceForm({ isSale, onSave, onCancel }: { isSale: boolean, onSave: (inv: Estimate, print: boolean) => void, onCancel: () => void }) {
-    const [rows, setRows] = useState([{ id: '1', name: '', qty: 1, unit: 'PCS', price: 0 }]);
-    const [party, setParty] = useState('');
-    const [invoiceNo, setInvoiceNo] = useState(1);
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+export function InvoiceForm({ isSale, onSave, onCancel, initialData }: { isSale: boolean, onSave: (inv: Estimate, print: boolean) => void, onCancel: () => void, initialData?: Estimate }) {
+    const defaultRows = [{ id: '1', name: '', qty: 1, unit: 'PCS', price: 0 }];
+    const mapItemsToRows = (items: any[]) => {
+        return items.map((item, idx) => ({
+            id: Date.now().toString() + idx,
+            name: item.name,
+            qty: item.quantity,
+            unit: item.unit || 'PCS',
+            price: item.rate
+        }));
+    };
+    const [rows, setRows] = useState(initialData && initialData.items && initialData.items.length > 0 ? mapItemsToRows(initialData.items) : defaultRows);
+    const [party, setParty] = useState(initialData ? initialData.customerName : '');
+    const [invoiceNo, setInvoiceNo] = useState(initialData && initialData.isSale === isSale ? Number(initialData.refNo) : 1);
+    const [date, setDate] = useState(initialData ? initialData.date : new Date().toISOString().split('T')[0]);
     const [discountValue, setDiscountValue] = useState(0);
     const [discountPercent, setDiscountPercent] = useState(0);
 
