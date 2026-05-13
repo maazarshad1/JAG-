@@ -283,6 +283,7 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
                                                     <option value="FT">FT</option>
                                                     <option value="RFT">RFT</option>
                                                     <option value="SQF">SQF</option>
+                                                    <option value="SQM">SQM</option>
                                                     <option value="IN">IN</option>
                                                     <option value="SET">SET</option>
                                                     <option value="UNIT">UNIT</option>
