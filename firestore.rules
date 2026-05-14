@@ -27,6 +27,11 @@ service cloud.firestore {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
+    // 0.1 Test Connection
+    match /test/connection {
+      allow read: if isSignedIn();
+    }
+
     // 1. User Profile Settings
     match /users/{userId}/settings/profile {
       function isValidProfile(data) {
@@ -50,12 +55,10 @@ service cloud.firestore {
                data.balance is number;
       }
 
-      allow list: if isEmailVerified() && resource.data.userId == request.auth.uid;
-      allow get: if isEmailVerified() && resource.data.userId == request.auth.uid;
-      allow create: if userIdMatches() && isValidParty(request.resource.data);
-      allow update: if existingUserIdMatches() && userIdMatches() && isValidParty(request.resource.data) &&
-                      request.resource.data.name == resource.data.name; // Name change allowed? maybe not.
-      allow delete: if existingUserIdMatches();
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId && isValidParty(request.resource.data);
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid && isValidParty(request.resource.data);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // 3. Inventory Items
@@ -66,11 +69,10 @@ service cloud.firestore {
                data.name is string && data.name.size() <= 100;
       }
 
-      allow list: if isEmailVerified() && resource.data.userId == request.auth.uid;
-      allow get: if isEmailVerified() && resource.data.userId == request.auth.uid;
-      allow create: if userIdMatches() && isValidItem(request.resource.data);
-      allow update: if existingUserIdMatches() && userIdMatches() && isValidItem(request.resource.data);
-      allow delete: if existingUserIdMatches();
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId && isValidItem(request.resource.data);
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid && isValidItem(request.resource.data);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // 4. Transactions (Sales and Estimates)
@@ -84,12 +86,10 @@ service cloud.firestore {
                data.totalAmount is number;
       }
 
-      allow list: if isEmailVerified() && resource.data.userId == request.auth.uid;
-      allow get: if isEmailVerified() && resource.data.userId == request.auth.uid;
-      allow create: if userIdMatches() && isValidTransaction(request.resource.data);
-      allow update: if existingUserIdMatches() && userIdMatches() && isValidTransaction(request.resource.data) &&
-                      request.resource.data.refNo == resource.data.refNo;
-      allow delete: if existingUserIdMatches();
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId && isValidTransaction(request.resource.data);
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid && isValidTransaction(request.resource.data);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
   }
 }
