@@ -207,9 +207,13 @@ export default function App() {
       await batch.commit();
       alert("Backup to Cloud successful!");
       // Clear local storage to avoid confusion? Better keep for offline.
-    } catch (error) {
-      console.error("Migration failed", error);
-      alert("Backup failed. Check console.");
+    } catch (error: any) {
+      console.error("Migration failed detailed error:", error);
+      if (error.code === 'permission-denied') {
+        alert("Backup failed: Permission Denied. Please check your Firestore rules.");
+      } else {
+        alert(`Backup failed: ${error.message || 'Unknown error'}. Check console for details.`);
+      }
     } finally {
       setDataSyncing(false);
     }
