@@ -68,7 +68,9 @@ export function DashboardModule({ sales, onNavigate, onEditSale, onDeleteSale, o
                                             {sale.refNo || '---'}
                                         </td>
                                         <td className="px-6 py-4 text-sm font-bold text-slate-900">
-                                            {sale.customerName}
+                                            <div className="max-w-[120px] sm:max-w-[150px] truncate" title={sale.customerName}>
+                                                {sale.customerName}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tight ${sale.isSale ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>

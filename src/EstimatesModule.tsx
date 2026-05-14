@@ -77,7 +77,11 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
                                         <tr key={est.id} style={{ borderBottom: '1px solid #E5E7EB', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors" onClick={() => onViewEstimate(est)}>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{est.date}</td>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{est.refNo}</td>
-                                            <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', fontWeight: 500, maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{est.customerName}</td>
+                                            <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', fontWeight: 500 }}>
+                                                <div style={{ maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={est.customerName}>
+                                                    {est.customerName}
+                                                </div>
+                                            </td>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', textAlign: 'right' }}>Rs {est.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', textAlign: 'right' }}>Rs {est.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', textAlign: 'center' }}>

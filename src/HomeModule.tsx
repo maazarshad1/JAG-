@@ -73,7 +73,11 @@ export function HomeModule({ sales, onAddSale, onEditSale, onViewSale, onDeleteS
                                 <tr key={inv.id} style={{ borderBottom: '1px solid #f3f4f6', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors" onClick={() => onViewSale(inv)}>
                                     <td style={{ padding: '12px 16px', fontSize: '13px' }}>{inv.date}</td>
                                     <td style={{ padding: '12px 16px', fontSize: '13px' }}>{inv.refNo}</td>
-                                    <td style={{ padding: '12px 16px', fontSize: '13px', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={inv.customerName}>{inv.customerName}</td>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px' }}>
+                                        <div style={{ maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={inv.customerName}>
+                                            {inv.customerName}
+                                        </div>
+                                    </td>
                                     <td style={{ padding: '12px 16px', fontSize: '13px' }}>Sale</td>
                                     <td style={{ padding: '12px 16px', fontSize: '13px' }}>{inv.paymentType || 'Cash'}</td>
                                     <td style={{ padding: '12px 16px', fontSize: '13px', textAlign: 'right', fontWeight: 500 }}>Rs {inv.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
