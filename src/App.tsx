@@ -85,27 +85,29 @@ export default function App() {
     // Subscribe to collections
     setDataSyncing(true);
     
-    // 1. Settings
-    const profileRef = doc(db, 'users', user.uid, 'settings', 'profile');
-    const unsubProfile = onSnapshot(profileRef, (snap) => {
-      if (snap.exists()) setCompanyData(snap.data() as CompanyData);
-    }, (err) => handleFirestoreError(err, OperationType.GET, `users/${user.uid}/settings/profile`));
+    // 1. Shared Business Profile
+    const companyProfileRef = doc(db, 'settings', 'company');
+    const unsubCompanyProfile = onSnapshot(companyProfileRef, async (snap) => {
+      if (snap.exists()) {
+        setCompanyData(snap.data() as CompanyData);
+      } else {
+        // Initialize shared profile if it doesn't exist
+        await setDoc(companyProfileRef, companyData);
+      }
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'settings/company'));
 
-    // 2. Parties
-    const partiesQuery = query(collection(db, 'parties'), where('userId', '==', user.uid));
-    const unsubParties = onSnapshot(partiesQuery, (snap) => {
+    // 2. Shared Parties
+    const unsubParties = onSnapshot(collection(db, 'parties'), (snap) => {
       setParties(snap.docs.map(d => ({ ...d.data(), id: d.id }) as Party));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'parties'));
 
-    // 3. Items
-    const itemsQuery = query(collection(db, 'inventory'), where('userId', '==', user.uid));
-    const unsubItems = onSnapshot(itemsQuery, (snap) => {
+    // 3. Shared Items
+    const unsubItems = onSnapshot(collection(db, 'inventory'), (snap) => {
       setItems(snap.docs.map(d => ({ ...d.data(), id: d.id }) as InventoryItem));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'inventory'));
 
-    // 4. Transactions
-    const txnsQuery = query(collection(db, 'transactions'), where('userId', '==', user.uid));
-    const unsubTxns = onSnapshot(txnsQuery, (snap) => {
+    // 4. Shared Transactions
+    const unsubTxns = onSnapshot(collection(db, 'transactions'), (snap) => {
       const allTxns = snap.docs.map(d => ({ ...d.data(), id: d.id }) as Estimate);
       setSales(allTxns.filter(t => t.isSale));
       setEstimates(allTxns.filter(t => !t.isSale));
@@ -113,7 +115,7 @@ export default function App() {
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'transactions'));
 
     return () => {
-      unsubProfile();
+      unsubCompanyProfile();
       unsubParties();
       unsubItems();
       unsubTxns();
@@ -144,12 +146,7 @@ export default function App() {
       const batch = writeBatch(db);
       
       // Migrate Company
-      const savedCompany = localStorage.getItem('vyapar_company');
-      if (savedCompany) {
-        batch.set(doc(db, 'users', user.uid, 'settings', 'profile'), { ...JSON.parse(savedCompany), userId: user.uid });
-      } else {
-        batch.set(doc(db, 'users', user.uid, 'settings', 'profile'), { ...companyData, userId: user.uid });
-      }
+      batch.set(doc(db, 'settings', 'company'), companyData);
 
       // Migrate Parties
       const savedParties = localStorage.getItem('vyapar_parties');
@@ -157,7 +154,7 @@ export default function App() {
         const pList = JSON.parse(savedParties) as Party[];
         pList.forEach(p => {
           const ref = doc(collection(db, 'parties'));
-          batch.set(ref, { ...p, userId: user.uid, id: ref.id });
+          batch.set(ref, { ...p, id: ref.id });
         });
       }
 
@@ -167,7 +164,7 @@ export default function App() {
         const iList = JSON.parse(savedItems) as InventoryItem[];
         iList.forEach(i => {
           const ref = doc(collection(db, 'inventory'));
-          batch.set(ref, { ...i, userId: user.uid, id: ref.id });
+          batch.set(ref, { ...i, id: ref.id });
         });
       }
 
@@ -177,7 +174,7 @@ export default function App() {
         const sList = JSON.parse(savedSales) as Estimate[];
         sList.forEach(s => {
           const ref = doc(collection(db, 'transactions'));
-          batch.set(ref, { ...s, userId: user.uid, id: ref.id, isSale: true });
+          batch.set(ref, { ...s, id: ref.id, isSale: true });
         });
       }
 
@@ -187,18 +184,13 @@ export default function App() {
         const eList = JSON.parse(savedEstimates) as Estimate[];
         eList.forEach(e => {
           const ref = doc(collection(db, 'transactions'));
-          batch.set(ref, { ...e, userId: user.uid, id: ref.id, isSale: false });
+          batch.set(ref, { ...e, id: ref.id, isSale: false });
         });
       }
 
       await batch.commit();
       console.log("Migration successful");
-      // Clear local storage after successful migration to avoid duplicates
-      localStorage.removeItem('vyapar_company');
-      localStorage.removeItem('vyapar_sales');
-      localStorage.removeItem('vyapar_parties');
-      localStorage.removeItem('vyapar_items');
-      localStorage.removeItem('vyapar_estimates');
+      localStorage.clear();
     } catch (error: any) {
       console.error("Migration failed detailed error:", error);
     } finally {
@@ -275,13 +267,12 @@ export default function App() {
       try {
         if (partyData.id) {
           const ref = doc(db, 'parties', partyData.id as string);
-          await updateDoc(ref, { ...partyData, userId: user.uid });
+          await updateDoc(ref, { ...partyData });
         } else {
           const ref = doc(collection(db, 'parties'));
           await setDoc(ref, { 
             ...partyData, 
             id: ref.id, 
-            userId: user.uid,
             balance: partyData.balance || 0,
             type: 'receive'
           });
@@ -325,13 +316,12 @@ export default function App() {
     if (user) {
       try {
         if (itemData.id) {
-          await updateDoc(doc(db, 'inventory', itemData.id as string), { ...itemData, userId: user.uid });
+          await updateDoc(doc(db, 'inventory', itemData.id as string), { ...itemData });
         } else {
           const ref = doc(collection(db, 'inventory'));
           await setDoc(ref, { 
             ...itemData, 
             id: ref.id, 
-            userId: user.uid,
             stock: itemData.stock || 0,
             minStock: itemData.minStock || 0
           });
@@ -395,7 +385,6 @@ export default function App() {
 
   const handleSaveInvoice = async (inv: Estimate, isSale: boolean, printAndPreview: boolean) => {
       if (user) {
-        inv.userId = user.uid;
         inv.isSale = isSale;
         try {
           if (editingInvoice) {
@@ -421,7 +410,6 @@ export default function App() {
                 const partyRef = doc(collection(db, 'parties'));
                 const newParty = {
                   id: partyRef.id,
-                  userId: user.uid,
                   name: inv.customerName,
                   phone: inv.customerPhone || '',
                   email: '',
@@ -494,8 +482,8 @@ export default function App() {
   const handleUpdateCompanyData = async (newData: CompanyData) => {
     if (user) {
       try {
-        await setDoc(doc(db, 'users', user.uid, 'settings', 'profile'), { ...newData, userId: user.uid });
-      } catch (err) { handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/settings/profile`); }
+        await setDoc(doc(db, 'settings', 'company'), newData, { merge: true });
+      } catch (err) { handleFirestoreError(err, OperationType.WRITE, 'settings/company'); }
     } else {
       setCompanyData(newData);
     }
