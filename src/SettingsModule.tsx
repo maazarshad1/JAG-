@@ -182,6 +182,21 @@ export function SettingsModule({ companyData, onChange, onBack }: SettingsModule
                         >
                             <Save size={18} /> Save Settings
                         </button>
+                        <div style={{ marginTop: '20px', borderTop: '1px solid #f3f4f6', paddingTop: '20px' }}>
+                            <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#ef4444', marginBottom: '8px' }}>Danger Zone</h3>
+                            <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>This will permanently clear all your locally stored data. Cloud data must be managed via the dashboard.</p>
+                            <button 
+                                onClick={() => {
+                                    if(confirm("Are you sure you want to clear all data? This cannot be undone.")) {
+                                        localStorage.clear();
+                                        window.location.reload();
+                                    }
+                                }}
+                                style={{ padding: '8px 16px', backgroundColor: '#fee2e2', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+                            >
+                                Reset All Local Data
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

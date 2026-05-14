@@ -38,11 +38,11 @@ export default function App() {
   const [currentInvoice, setCurrentInvoice] = useState<Estimate | null>(null);
   
   const [companyData, setCompanyData] = useState<CompanyData>({
-    name: 'Jawad Aluminium and Glass Works',
-    email: 'jawadaluminium786@gmail.com',
-    phone: '03235528196',
-    address: 'Shop#1 Habib Plaza Near River Bridge Main Double Road Phase 5 Ghouri Town Islamabad',
-    terms: 'Thanks for doing business with us! Advance payment 90% After complation10%=Note This Quotation is vailid for only two days'
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    terms: ''
   });
 
   const [sales, setSales] = useState<Estimate[]>([]);
@@ -325,17 +325,14 @@ export default function App() {
   };
 
   const handleConvertToSale = async (estimateId: string, type: 'SALE' | 'SALE_ORDER') => {
-    if (type === 'SALE') {
-        setConvertingEstimateId(estimateId);
-        setCurrentView('SALE_FORM');
-    } else {
-      if (user) {
-        try { await updateDoc(doc(db, 'transactions', estimateId), { status: 'Closed' }); }
-        catch (err) { handleFirestoreError(err, OperationType.UPDATE, `transactions/${estimateId}`); }
-      } else {
-        setEstimates(prev => prev.map(e => e.id === estimateId ? { ...e, status: 'Closed' } : e));
-      }
-    }
+    // Both SALE and SALE_ORDER conversions should open the Sale Form with estimate data
+    setConvertingEstimateId(estimateId);
+    setCurrentView('SALE_FORM');
+    
+    // Optionally mark it as closed if it's a one-way conversion, 
+    // but typically we wait for the sale to be saved.
+    // However, the original code for SALE_ORDER was closing it immediately.
+    // Let's stick to opening the form for both as requested.
   };
 
   const [editingInvoice, setEditingInvoice] = useState<Estimate | null>(null);

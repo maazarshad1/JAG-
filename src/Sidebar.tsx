@@ -89,7 +89,10 @@ export function Sidebar({ currentView, setCurrentView, onAction, companyData, is
                                 <i className="fa-solid fa-money-bill-transfer" style={{ width: '16px', marginRight: '8px' }}></i>
                                 <span>Payment-In</span>
                             </button>
-                            <button className="nav-subitem border-0 bg-transparent w-full text-left">
+                            <button 
+                                className="nav-subitem border-0 bg-transparent w-full text-left"
+                                onClick={() => setCurrentView('SALE_FORM')}
+                            >
                                 <i className="fa-solid fa-cart-flatbed" style={{ width: '16px', marginRight: '8px' }}></i>
                                 <span>Sale Order</span>
                             </button>
