@@ -15,19 +15,20 @@ import { PartyFormModal } from './PartyFormModal';
 import { ItemFormModal } from './ItemFormModal';
 import { SettingsModule } from './SettingsModule';
 import { 
-  auth, db, googleProvider, 
+  auth, db, 
   handleFirestoreError, OperationType, 
   testConnection 
 } from './firebase';
 import { 
-  signInWithPopup, onAuthStateChanged, User, signOut 
+  signInAnonymously, onAuthStateChanged, User 
 } from 'firebase/auth';
 import { 
   doc, setDoc, getDoc, getDocs, 
   collection, query, where, onSnapshot, 
   writeBatch, deleteDoc, updateDoc 
 } from 'firebase/firestore';
-import { LogIn, LogOut, Cloud, CloudOff, RefreshCw } from 'lucide-react';
+import { RefreshCw, FileDown, ExternalLink, Settings } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -56,10 +57,18 @@ export default function App() {
   const [showItemModal, setShowItemModal] = useState(false);
   const [editingItem, setEditingItem] = useState<Partial<InventoryItem> | null>(null);
 
-  // Initialize Firebase Connection test
+  // Initialize Firebase Connection test and Silent Auth
   useEffect(() => {
     testConnection();
     
+    // Silent anonymous auth for backup without login
+    if (!auth.currentUser) {
+      signInAnonymously(auth).catch(err => {
+        console.error("Silent sign-in failed", err);
+        setAuthError("Failed to connect to backup server. Real-time sync disabled.");
+      });
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setAuthLoading(false);
@@ -67,26 +76,18 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Sync data with Firestore when user is logged in
+  // Sync data with Firestore
   useEffect(() => {
-    if (!user) {
-      // Load from localStorage if not logged in (fallback/preview mode)
-      const savedCompany = localStorage.getItem('vyapar_company');
-      if (savedCompany) setCompanyData(JSON.parse(savedCompany));
-      
-      const savedSales = localStorage.getItem('vyapar_sales');
-      if (savedSales) setSales(JSON.parse(savedSales));
-      
-      const savedEstimates = localStorage.getItem('vyapar_estimates');
-      if (savedEstimates) setEstimates(JSON.parse(savedEstimates));
-      
-      const savedParties = localStorage.getItem('vyapar_parties');
-      if (savedParties) setParties(JSON.parse(savedParties));
-      
-      const savedItems = localStorage.getItem('vyapar_items');
-      if (savedItems) setItems(JSON.parse(savedItems));
-      
-      return;
+    if (!user) return;
+
+    // Check for local data migration on first sync
+    const hasLocalData = localStorage.getItem('vyapar_company') || 
+                        localStorage.getItem('vyapar_sales') || 
+                        localStorage.getItem('vyapar_items');
+    
+    if (hasLocalData) {
+      console.log("Local data found, initiating silent migration...");
+      migrateToCloud();
     }
 
     // Subscribe to collections
@@ -127,28 +128,7 @@ export default function App() {
     };
   }, [user]);
 
-  const handleSignIn = async () => {
-    setAuthError(null);
-    try {
-      googleProvider.setCustomParameters({ prompt: 'select_account' });
-      await signInWithPopup(auth, googleProvider);
-    } catch (error: any) {
-      console.error("Sign in failed", error);
-      if (error.code === 'auth/popup-closed-by-user') {
-        setAuthError("Sign-in window was closed by the user or a browser extension. If you saw a 'Domain not authorized' error inside the popup, please add this domain to your Firebase Authorized Domains.");
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        setAuthError("Sign-in attempt was interrupted. Please retry.");
-      } else if (error.code === 'auth/popup-blocked') {
-        setAuthError("Popup blocked! Enable popups in your browser and try again.");
-      } else if (error.code === 'auth/unauthorized-domain') {
-        setAuthError(`Domain ${window.location.hostname} is not authorized. Please copy this EXACT domain and add it to "Authorized Domains" in your Firebase Auth console (Settings > Authorized Domains).`);
-      } else {
-        setAuthError(`Sign-in failed: ${error.message || 'Please check for popup blockers or network issues.'}`);
-      }
-    }
-  };
-
-  const handleSignOut = () => signOut(auth);
+  const handleSignOut = () => {}; // Removed
 
   const migrateToCloud = async () => {
     if (!user) return;
@@ -205,18 +185,63 @@ export default function App() {
       }
 
       await batch.commit();
-      alert("Backup to Cloud successful!");
-      // Clear local storage to avoid confusion? Better keep for offline.
+      console.log("Migration successful");
+      // Clear local storage after successful migration to avoid duplicates
+      localStorage.removeItem('vyapar_company');
+      localStorage.removeItem('vyapar_sales');
+      localStorage.removeItem('vyapar_parties');
+      localStorage.removeItem('vyapar_items');
+      localStorage.removeItem('vyapar_estimates');
     } catch (error: any) {
       console.error("Migration failed detailed error:", error);
-      if (error.code === 'permission-denied') {
-        alert("Backup failed: Permission Denied. Please check your Firestore rules.");
-      } else {
-        alert(`Backup failed: ${error.message || 'Unknown error'}. Check console for details.`);
-      }
     } finally {
       setDataSyncing(false);
     }
+  };
+
+  const exportToExcel = () => {
+    const wb = XLSX.utils.book_new();
+    
+    // Sales Sheet
+    const salesData = sales.map(s => ({
+        'Ref No': s.refNo,
+        'Type': s.isSale ? 'Sale' : 'Estimate',
+        'Date': s.date,
+        'Customer': s.customerName,
+        'Phone': s.customerPhone || '',
+        'Total Amount': s.totalAmount,
+        'Amount Received': s.amountReceived,
+        'Balance Due': s.totalAmount - s.amountReceived,
+        'Status': s.status
+    }));
+    const wsSales = XLSX.utils.json_to_sheet(salesData);
+    XLSX.utils.book_append_sheet(wb, wsSales, "Transactions");
+
+    // Parties Sheet
+    const partiesData = parties.map(p => ({
+        'Name': p.name,
+        'Phone': p.phone,
+        'Email': p.email || '',
+        'Address': p.billingAddress || '',
+        'Balance': p.balance,
+        'Type': p.type
+    }));
+    const wsParties = XLSX.utils.json_to_sheet(partiesData);
+    XLSX.utils.book_append_sheet(wb, wsParties, "Parties");
+
+    // Inventory Sheet
+    const inventoryData = items.map(i => ({
+        'Item Name': i.name,
+        'Stock': i.stock,
+        'Unit': i.unit,
+        'Sale Price': i.price,
+        'Purchase Price': i.purchasePrice || 0,
+        'Category': i.category || ''
+    }));
+    const wsInventory = XLSX.utils.json_to_sheet(inventoryData);
+    XLSX.utils.book_append_sheet(wb, wsInventory, "Inventory");
+
+    XLSX.writeFile(wb, `BusinessData_${companyData.name || 'Export'}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const handleAction = (action: string) => {
@@ -482,60 +507,8 @@ export default function App() {
       <main id="main-content">
         <TopHeader title={companyData.name} onAction={handleAction} />
         
-        {/* Auth Banner */}
-        <div className="bg-white border-b border-slate-200 px-6 py-2 flex justify-between items-center text-sm">
-          <div className="flex items-center gap-2">
-            {user ? (
-              <>
-                <Cloud size={16} className="text-green-500" />
-                <span className="text-slate-600">Cloud Sync Active ({user.email})</span>
-              </>
-            ) : (
-              <>
-                <CloudOff size={16} className="text-slate-400" />
-                <span className="text-slate-600">
-                  {authError ? (
-                    <span className="text-red-500 font-medium">{authError}</span>
-                  ) : (
-                    "Local Data Only. Sign in to back up."
-                  )}
-                </span>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-4">
-            {user ? (
-              <>
-                <button 
-                  onClick={migrateToCloud}
-                  className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
-                  disabled={dataSyncing}
-                >
-                  <RefreshCw size={14} className={dataSyncing ? 'animate-spin' : ''} />
-                  Backup Now
-                </button>
-                <button 
-                  onClick={handleSignOut}
-                  className="flex items-center gap-1 text-slate-600 hover:text-slate-900 font-medium"
-                >
-                  <LogOut size={14} />
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <button 
-                onClick={handleSignIn}
-                className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium"
-              >
-                <LogIn size={14} />
-                Sign In with Google
-              </button>
-            )}
-          </div>
-        </div>
-
         <div id="module-container">
-          {currentView === 'HOME' && <DashboardModule sales={sales} parties={parties} items={items} onNavigate={setCurrentView} />}
+          {currentView === 'HOME' && <DashboardModule sales={sales} parties={parties} items={items} onNavigate={setCurrentView} onExportExcel={exportToExcel} />}
           {currentView === 'SALE_LIST' && <HomeModule sales={sales} onAddSale={() => setCurrentView('SALE_FORM')} onEditSale={handleEditSale} onViewSale={handleViewInvoice} />}
           {currentView === 'PARTIES_LIST' && (
             <PartiesModule 
