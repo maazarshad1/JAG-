@@ -13,15 +13,9 @@ export function Sidebar({ currentView, setCurrentView, onAction, companyData, is
 
     return (
         <aside id="sidebar" className={isCollapsed ? 'collapsed' : ''}>
-            <div className="sidebar-toggle-btn" onClick={() => setIsCollapsed(!isCollapsed)}>
-                <i className={`fa-solid ${isCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'}`}></i>
-            </div>
-            
-            <div className="sidebar-search">
-                <div className="search-box">
-                    <i className="fa-solid fa-search" style={{ marginRight: isCollapsed ? '0' : '8px' }}></i>
-                    {!isCollapsed && <span>Open Anything (Ctrl+F)</span>}
-                </div>
+            <div className="sidebar-header" onClick={() => setIsCollapsed(!isCollapsed)}>
+                <i className="fa-solid fa-ellipsis-vertical"></i>
+                {!isCollapsed && <span>Navigation</span>}
             </div>
             
             <nav className="sidebar-nav">
@@ -144,7 +138,6 @@ export function Sidebar({ currentView, setCurrentView, onAction, companyData, is
             <div className="sidebar-footer" onClick={() => setCurrentView('PROFILE_EDIT')}>
                 <div className="company-logo">{companyData.name.charAt(0).toUpperCase()}</div>
                 <div className="company-name">My Company</div>
-                <i className="fa-solid fa-settings"></i>
             </div>
         </aside>
     );

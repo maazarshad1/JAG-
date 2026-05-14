@@ -82,7 +82,6 @@ body, html {
     width: var(--sidebar-collapsed-width);
 }
 
-#sidebar.collapsed .sidebar-search span,
 #sidebar.collapsed .nav-item span,
 #sidebar.collapsed .nav-item .right-icon,
 #sidebar.collapsed .nav-group .group-toggle,
@@ -90,15 +89,6 @@ body, html {
 #sidebar.collapsed .company-name,
 #sidebar.collapsed .sidebar-footer i:last-child {
     display: none;
-}
-
-#sidebar.collapsed .search-box {
-    justify-content: center;
-    padding: 8px 0;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    margin: 0 auto;
 }
 
 #sidebar.collapsed .nav-item {
@@ -116,43 +106,42 @@ body, html {
     margin-right: 0;
 }
 
-.sidebar-toggle-btn {
-    position: absolute;
-    right: -12px;
-    top: 65px;
-    width: 24px;
-    height: 24px;
-    background-color: var(--bg-active);
-    color: var(--text-light);
-    border-radius: 50%;
+.sidebar-header {
+    padding: 20px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 12px;
     cursor: pointer;
-    z-index: 20;
-    border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.sidebar-toggle-btn:hover {
-    background-color: var(--bg-darker);
-}
-
-.sidebar-search {
-    padding: 16px;
     border-bottom: 1px solid rgba(255,255,255,0.05);
+    color: var(--text-muted);
+    transition: background-color 0.2s;
 }
 
-.search-box {
-    background-color: rgba(255,255,255,0.1);
-    border-radius: 20px;
-    padding: 8px 16px;
-    font-size: 13px;
-    color: var(--text-muted);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    border: 1px solid rgba(255,255,255,0.1);
+.sidebar-header:hover {
+    background-color: var(--bg-darker);
+    color: var(--text-light);
+}
+
+.sidebar-header i {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+}
+
+.sidebar-header span {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+#sidebar.collapsed .sidebar-header {
+    justify-content: center;
+    padding: 20px 0;
+}
+
+.sidebar-toggle-btn {
+    display: none;
 }
 
 .sidebar-nav {
