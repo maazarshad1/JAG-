@@ -15,19 +15,19 @@ import { PartyFormModal } from './PartyFormModal';
 import { ItemFormModal } from './ItemFormModal';
 import { SettingsModule } from './SettingsModule';
 import { 
-  auth, db, 
+  auth, db, googleProvider, 
   handleFirestoreError, OperationType, 
   testConnection 
 } from './firebase';
 import { 
-  signInAnonymously, onAuthStateChanged, User 
+  signInWithPopup, onAuthStateChanged, User, signOut 
 } from 'firebase/auth';
 import { 
   doc, setDoc, getDoc, getDocs, 
   collection, query, where, onSnapshot, 
   writeBatch, deleteDoc, updateDoc 
 } from 'firebase/firestore';
-import { RefreshCw, FileDown, ExternalLink, Settings } from 'lucide-react';
+import { LogIn, LogOut, Cloud, CloudOff, RefreshCw, FileDown, ExternalLink, Settings } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 export default function App() {
@@ -57,18 +57,10 @@ export default function App() {
   const [showItemModal, setShowItemModal] = useState(false);
   const [editingItem, setEditingItem] = useState<Partial<InventoryItem> | null>(null);
 
-  // Initialize Firebase Connection test and Silent Auth
+  // Initialize Firebase Connection test
   useEffect(() => {
     testConnection();
     
-    // Silent anonymous auth for backup without login
-    if (!auth.currentUser) {
-      signInAnonymously(auth).catch(err => {
-        console.error("Silent sign-in failed", err);
-        setAuthError("Failed to connect to backup server. Real-time sync disabled.");
-      });
-    }
-
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setAuthLoading(false);
@@ -128,7 +120,22 @@ export default function App() {
     };
   }, [user]);
 
-  const handleSignOut = () => {}; // Removed
+  const handleSignIn = async () => {
+    setAuthError(null);
+    try {
+      googleProvider.setCustomParameters({ prompt: 'select_account' });
+      await signInWithPopup(auth, googleProvider);
+    } catch (error: any) {
+      console.error("Sign in failed", error);
+      if (error.code === 'auth/unauthorized-domain') {
+        setAuthError(`Domain ${window.location.hostname} is not authorized. Please add it to Firebase Console.`);
+      } else {
+        setAuthError(`Sign-in failed: ${error.message}`);
+      }
+    }
+  };
+
+  const handleSignOut = () => signOut(auth);
 
   const migrateToCloud = async () => {
     if (!user) return;
@@ -506,6 +513,55 @@ export default function App() {
       />
       <main id="main-content">
         <TopHeader title={companyData.name} onAction={handleAction} />
+        
+        {/* Backup Status Bar */}
+        <div className="bg-white border-b border-slate-200 px-6 py-2 flex justify-between items-center text-sm">
+          <div className="flex items-center gap-2">
+            {user ? (
+              <>
+                <Cloud size={16} className="text-green-500" />
+                <div className="flex flex-col">
+                  <span className="text-slate-600 font-medium">Real-time Backup is ON ({user.email})</span>
+                  <a 
+                    href={`https://console.firebase.google.com/project/${auth.app.options.projectId}/firestore/databases/(default)/data`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] text-indigo-500 hover:underline flex items-center gap-1"
+                  >
+                    View my Firestore Backup <ExternalLink size={8} />
+                  </a>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <CloudOff size={16} className="text-slate-400" />
+                <span className="text-slate-600">Off-line Mode (No Backup)</span>
+                {authError && <span className="text-red-500 text-xs ml-2">{authError}</span>}
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <>
+                <button 
+                  onClick={handleSignOut}
+                  className="flex items-center gap-1 text-slate-600 hover:text-slate-900 font-medium"
+                >
+                  <LogOut size={14} />
+                  Stop Backup
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={handleSignIn}
+                className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium"
+              >
+                <LogIn size={14} />
+                Enable Cloud Backup
+              </button>
+            )}
+          </div>
+        </div>
         
         <div id="module-container">
           {currentView === 'HOME' && <DashboardModule sales={sales} parties={parties} items={items} onNavigate={setCurrentView} onExportExcel={exportToExcel} />}
