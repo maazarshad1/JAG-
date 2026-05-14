@@ -367,7 +367,7 @@ export default function App() {
             }
             
             // Party management
-            if (inv.customerName && inv.customerName !== 'Walk-in Customer') {
+            if (inv.customerName) {
               const partyIndex = parties.findIndex(p => p.name.toLowerCase() === inv.customerName.toLowerCase());
               if (partyIndex >= 0) {
                 if (isSale) {
@@ -414,7 +414,7 @@ export default function App() {
                 setConvertingEstimateId(null);
             }
             
-            if (inv.customerName && inv.customerName !== 'Walk-in Customer') {
+            if (inv.customerName) {
                 let updatedParties = [...parties];
                 let partyIndex = updatedParties.findIndex(p => p.name.toLowerCase() === inv.customerName.toLowerCase());
                 if (partyIndex >= 0) {

@@ -66,7 +66,7 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
             id: Date.now().toString(),
             refNo: invoiceNo,
             date,
-            customerName: party || 'Walk-in Customer',
+            customerName: party,
             customerPhone,
             billingAddress,
             partyId: party, 
@@ -278,7 +278,7 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
                                                 )}
                                             </td>
                                             <td style={{ padding: '12px' }}>
-                                                <input type="number" placeholder="1" value={row.qty} onChange={e => updateRow(idx, 'qty', Number(e.target.value))} style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px' }} />
+                                                <input type="number" placeholder="1" value={row.qty === 0 ? '' : row.qty} onChange={e => updateRow(idx, 'qty', e.target.value === '' ? 0 : Number(e.target.value))} style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px' }} />
                                             </td>
                                             <td style={{ padding: '12px' }}>
                                                 <select value={row.unit} onChange={e => updateRow(idx, 'unit', e.target.value)} style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px', backgroundColor: 'transparent', cursor: 'pointer' }}>
@@ -298,7 +298,7 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
                                                 </select>
                                             </td>
                                             <td style={{ padding: '12px', textAlign: 'right' }}>
-                                                <input type="number" placeholder="0" value={row.price} onChange={e => updateRow(idx, 'price', Number(e.target.value))} style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px', textAlign: 'right' }} />
+                                                <input type="number" placeholder="0" value={row.price === 0 ? '' : row.price} onChange={e => updateRow(idx, 'price', e.target.value === '' ? 0 : Number(e.target.value))} style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px', textAlign: 'right' }} />
                                             </td>
                                             <td style={{ padding: '12px', textAlign: 'right', fontWeight: 500 }}>
                                                 {((row.qty || 0) * (row.price || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}
@@ -336,12 +336,12 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
                                     <span style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>Discount</span>
                                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                         <div style={{ position: 'relative', width: '80px' }}>
-                                            <input type="number" style={{ width: '100%', padding: '6px 24px 6px 8px', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'right', outline: 'none' }} value={discountPercent} onChange={e => handleDiscountPercentChange(Number(e.target.value))} />
+                                            <input type="number" style={{ width: '100%', padding: '6px 24px 6px 8px', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'right', outline: 'none' }} value={discountPercent === 0 ? '' : discountPercent} onChange={e => handleDiscountPercentChange(e.target.value === '' ? 0 : Number(e.target.value))} />
                                             <span style={{ position: 'absolute', right: '8px', top: '8px', color: '#9ca3af', fontSize: '12px' }}>%</span>
                                         </div>
                                         <div style={{ position: 'relative', width: '100px' }}>
                                             <span style={{ position: 'absolute', left: '8px', top: '8px', color: '#9ca3af', fontSize: '12px' }}>Rs</span>
-                                            <input type="number" style={{ width: '100%', padding: '6px 8px 6px 28px', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'right', outline: 'none' }} value={discountValue} onChange={e => handleDiscountValueChange(Number(e.target.value))} />
+                                            <input type="number" style={{ width: '100%', padding: '6px 8px 6px 28px', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'right', outline: 'none' }} value={discountValue === 0 ? '' : discountValue} onChange={e => handleDiscountValueChange(e.target.value === '' ? 0 : Number(e.target.value))} />
                                         </div>
                                     </div>
                                 </div>
@@ -368,8 +368,8 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
                                         <input 
                                             type="number" 
                                             style={{ width: '100%', padding: '6px 8px 6px 28px', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'right', outline: 'none' }} 
-                                            value={receivedAmount} 
-                                            onChange={e => setReceivedAmount(Number(e.target.value))} 
+                                            value={receivedAmount === 0 ? '' : receivedAmount} 
+                                            onChange={e => setReceivedAmount(e.target.value === '' ? 0 : Number(e.target.value))} 
                                         />
                                     </div>
                                 </div>

@@ -364,7 +364,7 @@ export function InvoiceView({
                <div style={{ flex: 1, borderRight: '2px solid #000' }}>
                   <div style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontSize: '14px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice For:' : 'Estimate For:'}</div>
                   <div style={{ padding: '15px', fontSize: '15px', fontWeight: 'bold', minHeight: '80px', wordBreak: 'break-word' }}>
-                    <div style={{ marginBottom: '6px' }}>{estimate.customerName || 'Walk-in Customer'}</div>
+                    <div style={{ marginBottom: '6px' }}>{estimate.customerName}</div>
                     {estimate.customerPhone && <div style={{ fontWeight: 'normal', fontSize: '14px' }}>Phone: <span style={{ fontWeight: 'bold' }}>{estimate.customerPhone}</span></div>}
                     {estimate.billingAddress && <div style={{ fontWeight: 'normal', fontSize: '13px', whiteSpace: 'pre-wrap', color: '#374151', marginTop: '4px' }}>{estimate.billingAddress}</div>}
                   </div>
