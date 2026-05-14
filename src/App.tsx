@@ -22,7 +22,7 @@ import {
   testConnection 
 } from './firebase';
 import { 
-  signInWithPopup, onAuthStateChanged, User, signOut 
+  signInWithPopup, signInAnonymously, onAuthStateChanged, User, signOut 
 } from 'firebase/auth';
 import { 
   doc, setDoc, getDoc, getDocs, 
@@ -65,8 +65,13 @@ export default function App() {
     testConnection();
     
     const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setAuthLoading(false);
+      if (u) {
+        setUser(u);
+        setAuthLoading(false);
+      } else {
+        // Sign in anonymously so everyone can access shared Firestore database
+        signInAnonymously(auth).catch((error) => console.error("Anonymous auth failed", error));
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -181,8 +186,8 @@ export default function App() {
       if (savedParties) {
         const pList = JSON.parse(savedParties) as Party[];
         pList.forEach(p => {
-          const ref = doc(collection(db, 'parties'));
-          batch.set(ref, { ...p, id: ref.id });
+          const ref = doc(db, 'parties', String(p.id!));
+          batch.set(ref, p);
         });
       }
 
@@ -191,8 +196,8 @@ export default function App() {
       if (savedItems) {
         const iList = JSON.parse(savedItems) as InventoryItem[];
         iList.forEach(i => {
-          const ref = doc(collection(db, 'inventory'));
-          batch.set(ref, { ...i, id: ref.id });
+          const ref = doc(db, 'inventory', String(i.id!));
+          batch.set(ref, i);
         });
       }
 
@@ -201,8 +206,8 @@ export default function App() {
       if (savedSales) {
         const sList = JSON.parse(savedSales) as Estimate[];
         sList.forEach(s => {
-          const ref = doc(collection(db, 'transactions'));
-          batch.set(ref, { ...s, id: ref.id, isSale: true });
+          const ref = doc(db, 'transactions', s.id);
+          batch.set(ref, { ...s, isSale: true });
         });
       }
 
@@ -211,8 +216,8 @@ export default function App() {
       if (savedEstimates) {
         const eList = JSON.parse(savedEstimates) as Estimate[];
         eList.forEach(e => {
-          const ref = doc(collection(db, 'transactions'));
-          batch.set(ref, { ...e, id: ref.id, isSale: false });
+          const ref = doc(db, 'transactions', e.id);
+          batch.set(ref, { ...e, isSale: false });
         });
       }
 
