@@ -135,13 +135,13 @@ export default function App() {
     } catch (error: any) {
       console.error("Sign in failed", error);
       if (error.code === 'auth/popup-closed-by-user') {
-        setAuthError("Sign-in window was closed. Try again.");
+        setAuthError("Sign-in window was closed by the user or a browser extension. If you saw a 'Domain not authorized' error inside the popup, please add this domain to your Firebase Authorized Domains.");
       } else if (error.code === 'auth/cancelled-popup-request') {
-        setAuthError("Sign-in attempt was interrupted.");
+        setAuthError("Sign-in attempt was interrupted. Please retry.");
       } else if (error.code === 'auth/popup-blocked') {
         setAuthError("Popup blocked! Enable popups in your browser and try again.");
       } else if (error.code === 'auth/unauthorized-domain') {
-        setAuthError("Domain not authorized. Check Firebase console settings.");
+        setAuthError(`Domain ${window.location.hostname} is not authorized. Please add it to Authorized Domains in the Firebase Auth console.`);
       } else {
         setAuthError(`Sign-in failed: ${error.message || 'Please check for popup blockers or network issues.'}`);
       }
