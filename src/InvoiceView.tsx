@@ -428,6 +428,20 @@ export function InvoiceView({
                         <td style={{ padding: '8px 10px', borderBottom: '1px solid #000', textAlign: 'center', fontWeight: 'bold' }}>:</td>
                         <td style={{ padding: '8px 15px', borderBottom: '1px solid #000', textAlign: 'right', fontWeight: 'bold', fontSize: '16px' }}>₨ {estimate.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
+                      {estimate.isSale && (
+                        <>
+                          <tr>
+                            <td style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontWeight: '500' }}>Received Amount</td>
+                            <td style={{ padding: '8px 10px', borderBottom: '1px solid #000', textAlign: 'center', width: '20px' }}>:</td>
+                            <td style={{ padding: '8px 15px', borderBottom: '1px solid #000', textAlign: 'right', fontWeight: 'bold' }}>₨ {(estimate.receivedAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                          </tr>
+                          <tr>
+                            <td style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontWeight: 'bold', color: '#b91c1c' }}>Due Amount</td>
+                            <td style={{ padding: '8px 10px', borderBottom: '1px solid #000', textAlign: 'center', fontWeight: 'bold', color: '#b91c1c' }}>:</td>
+                            <td style={{ padding: '8px 15px', borderBottom: '1px solid #000', textAlign: 'right', fontWeight: 'bold', fontSize: '16px', color: '#b91c1c' }}>₨ {(estimate.balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                          </tr>
+                        </>
+                      )}
                       <tr>
                         <td colSpan={3} style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice' : 'Estimate'} Amount In Words :</td>
                       </tr>

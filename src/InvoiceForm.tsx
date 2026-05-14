@@ -32,6 +32,7 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
     const [date, setDate] = useState(initialData ? initialData.date : new Date().toISOString().split('T')[0]);
     const [discountValue, setDiscountValue] = useState(0);
     const [discountPercent, setDiscountPercent] = useState(0);
+    const [receivedAmount, setReceivedAmount] = useState(initialData ? (initialData.receivedAmount || 0) : 0);
 
     const addRow = () => setRows([...rows, { id: Date.now().toString(), name: '', qty: 1, unit: 'PCS', price: 0 }]);
     
@@ -48,6 +49,7 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
 
     const subTotal = rows.reduce((sum, r) => sum + ((r.qty || 0) * (r.price || 0)), 0);
     const total = subTotal - discountValue;
+    const dueAmount = total - receivedAmount;
 
     const handleDiscountPercentChange = (val: number) => {
         setDiscountPercent(val);
@@ -83,7 +85,8 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
             taxType: 'none',
             description: '',
             totalAmount: total,
-            balance: total,
+            receivedAmount,
+            balance: dueAmount,
             isSale
         }, print);
     };
@@ -354,9 +357,25 @@ export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [
                                     </label>
                                     <input type="number" defaultValue="0" style={{ width: '80px', padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'right', outline: 'none' }} />
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                                     <span style={{ fontWeight: 700, fontSize: '18px', color: '#111827' }}>Total</span>
-                                    <span style={{ fontWeight: 700, fontSize: '24px', color: '#111827' }}>Rs {total.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                                    <span style={{ fontWeight: 700, fontSize: '18px', color: '#111827' }}>Rs {total.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>Received Amount</span>
+                                    <div style={{ position: 'relative', width: '150px' }}>
+                                        <span style={{ position: 'absolute', left: '8px', top: '8px', color: '#9ca3af', fontSize: '12px' }}>Rs</span>
+                                        <input 
+                                            type="number" 
+                                            style={{ width: '100%', padding: '6px 8px 6px 28px', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'right', outline: 'none' }} 
+                                            value={receivedAmount} 
+                                            onChange={e => setReceivedAmount(Number(e.target.value))} 
+                                        />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fef2f2', padding: '10px', borderRadius: '6px', border: '1px solid #fee2e2' }}>
+                                    <span style={{ fontWeight: 700, fontSize: '16px', color: '#b91c1c' }}>Due Amount</span>
+                                    <span style={{ fontWeight: 700, fontSize: '20px', color: '#b91c1c' }}>Rs {dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                                 </div>
                             </div>
                         </div>
