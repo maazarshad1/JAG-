@@ -5,6 +5,7 @@ export enum EstimateStatus {
 
 export interface InventoryItem {
   id: string | number;
+  userId?: string;
   name: string;
   unit: string;
   price: number;
@@ -14,6 +15,7 @@ export interface InventoryItem {
 
 export interface Party {
   id: string | number;
+  userId?: string;
   name: string;
   balance: number;
   type: 'receive' | 'pay';
@@ -36,6 +38,7 @@ export interface Item {
 
 export interface Estimate {
   id: string;
+  userId?: string;
   refNo: number;
   date: string;
   customerName: string;
@@ -56,6 +59,7 @@ export interface Estimate {
 }
 
 export interface CompanyData {
+  userId?: string;
   name: string;
   email: string;
   phone: string;

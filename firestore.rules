@@ -1,0 +1,95 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // common helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function userIdMatches() {
+      return isEmailVerified() && request.auth.uid == request.resource.data.userId;
+    }
+
+    function existingUserIdMatches() {
+      return isEmailVerified() && request.auth.uid == resource.data.userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // 1. User Profile Settings
+    match /users/{userId}/settings/profile {
+      function isValidProfile(data) {
+        return data.keys().hasAll(['userId', 'name']) &&
+               data.userId == userId &&
+               data.name is string && data.name.size() <= 100;
+      }
+      
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isEmailVerified() && request.auth.uid == userId && isValidProfile(request.resource.data);
+      allow update: if isEmailVerified() && request.auth.uid == userId && isValidProfile(request.resource.data) &&
+                      request.resource.data.userId == resource.data.userId;
+    }
+
+    // 2. Parties
+    match /parties/{partyId} {
+      function isValidParty(data) {
+        return data.keys().hasAll(['userId', 'name', 'balance']) &&
+               data.userId is string &&
+               data.name is string && data.name.size() <= 100 &&
+               data.balance is number;
+      }
+
+      allow list: if isEmailVerified() && resource.data.userId == request.auth.uid;
+      allow get: if isEmailVerified() && resource.data.userId == request.auth.uid;
+      allow create: if userIdMatches() && isValidParty(request.resource.data);
+      allow update: if existingUserIdMatches() && userIdMatches() && isValidParty(request.resource.data) &&
+                      request.resource.data.name == resource.data.name; // Name change allowed? maybe not.
+      allow delete: if existingUserIdMatches();
+    }
+
+    // 3. Inventory Items
+    match /inventory/{itemId} {
+      function isValidItem(data) {
+        return data.keys().hasAll(['userId', 'name']) &&
+               data.userId is string &&
+               data.name is string && data.name.size() <= 100;
+      }
+
+      allow list: if isEmailVerified() && resource.data.userId == request.auth.uid;
+      allow get: if isEmailVerified() && resource.data.userId == request.auth.uid;
+      allow create: if userIdMatches() && isValidItem(request.resource.data);
+      allow update: if existingUserIdMatches() && userIdMatches() && isValidItem(request.resource.data);
+      allow delete: if existingUserIdMatches();
+    }
+
+    // 4. Transactions (Sales and Estimates)
+    match /transactions/{txnId} {
+      function isValidTransaction(data) {
+        return data.keys().hasAll(['userId', 'refNo', 'date', 'customerName', 'totalAmount']) &&
+               data.userId is string &&
+               data.refNo is number &&
+               data.date is string &&
+               data.customerName is string && data.customerName.size() <= 200 &&
+               data.totalAmount is number;
+      }
+
+      allow list: if isEmailVerified() && resource.data.userId == request.auth.uid;
+      allow get: if isEmailVerified() && resource.data.userId == request.auth.uid;
+      allow create: if userIdMatches() && isValidTransaction(request.resource.data);
+      allow update: if existingUserIdMatches() && userIdMatches() && isValidTransaction(request.resource.data) &&
+                      request.resource.data.refNo == resource.data.refNo;
+      allow delete: if existingUserIdMatches();
+    }
+  }
+}

@@ -14,44 +14,41 @@ import { InvoiceForm } from './InvoiceForm';
 import { PartyFormModal } from './PartyFormModal';
 import { ItemFormModal } from './ItemFormModal';
 import { SettingsModule } from './SettingsModule';
-
-// Mock invoice generator (for PDF)
-import { X, Search } from 'lucide-react';
+import { 
+  auth, db, googleProvider, 
+  handleFirestoreError, OperationType, 
+  testConnection 
+} from './firebase';
+import { 
+  signInWithPopup, onAuthStateChanged, User, signOut 
+} from 'firebase/auth';
+import { 
+  doc, setDoc, getDoc, getDocs, 
+  collection, query, where, onSnapshot, 
+  writeBatch, deleteDoc, updateDoc 
+} from 'firebase/firestore';
+import { LogIn, LogOut, Cloud, CloudOff, RefreshCw } from 'lucide-react';
 
 export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [dataSyncing, setDataSyncing] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<View>('HOME');
   const [currentInvoice, setCurrentInvoice] = useState<Estimate | null>(null);
   
-  const [companyData, setCompanyData] = useState<CompanyData>(() => {
-    const saved = localStorage.getItem('vyapar_company');
-    return saved ? JSON.parse(saved) : {
-      name: 'Jawad Aluminium and Glass Works',
-      email: 'jawadaluminium786@gmail.com',
-      phone: '03235528196',
-      address: 'Shop#1 Habib Plaza Near River Bridge Main Double Road Phase 5 Ghouri Town Islamabad',
-      terms: 'Thanks for doing business with us! Advance payment 90% After complation10%=Note This Quotation is vailid for only two days'
-    };
+  const [companyData, setCompanyData] = useState<CompanyData>({
+    name: 'Jawad Aluminium and Glass Works',
+    email: 'jawadaluminium786@gmail.com',
+    phone: '03235528196',
+    address: 'Shop#1 Habib Plaza Near River Bridge Main Double Road Phase 5 Ghouri Town Islamabad',
+    terms: 'Thanks for doing business with us! Advance payment 90% After complation10%=Note This Quotation is vailid for only two days'
   });
 
-  const [sales, setSales] = useState<Estimate[]>(() => {
-    const saved = localStorage.getItem('vyapar_sales');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [estimates, setEstimates] = useState<Estimate[]>(() => {
-    const saved = localStorage.getItem('vyapar_estimates');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [parties, setParties] = useState<Party[]>(() => {
-    const saved = localStorage.getItem('vyapar_parties');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [items, setItems] = useState<InventoryItem[]>(() => {
-    const saved = localStorage.getItem('vyapar_items');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [sales, setSales] = useState<Estimate[]>([]);
+  const [estimates, setEstimates] = useState<Estimate[]>([]);
+  const [parties, setParties] = useState<Party[]>([]);
+  const [items, setItems] = useState<InventoryItem[]>([]);
 
   const [convertingEstimateId, setConvertingEstimateId] = useState<string | null>(null);
   const [showPartyModal, setShowPartyModal] = useState(false);
@@ -59,25 +56,159 @@ export default function App() {
   const [showItemModal, setShowItemModal] = useState(false);
   const [editingItem, setEditingItem] = useState<Partial<InventoryItem> | null>(null);
 
+  // Initialize Firebase Connection test
   useEffect(() => {
-    localStorage.setItem('vyapar_company', JSON.stringify(companyData));
-  }, [companyData]);
+    testConnection();
+    
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
+  // Sync data with Firestore when user is logged in
   useEffect(() => {
-    localStorage.setItem('vyapar_sales', JSON.stringify(sales));
-  }, [sales]);
+    if (!user) {
+      // Load from localStorage if not logged in (fallback/preview mode)
+      const savedCompany = localStorage.getItem('vyapar_company');
+      if (savedCompany) setCompanyData(JSON.parse(savedCompany));
+      
+      const savedSales = localStorage.getItem('vyapar_sales');
+      if (savedSales) setSales(JSON.parse(savedSales));
+      
+      const savedEstimates = localStorage.getItem('vyapar_estimates');
+      if (savedEstimates) setEstimates(JSON.parse(savedEstimates));
+      
+      const savedParties = localStorage.getItem('vyapar_parties');
+      if (savedParties) setParties(JSON.parse(savedParties));
+      
+      const savedItems = localStorage.getItem('vyapar_items');
+      if (savedItems) setItems(JSON.parse(savedItems));
+      
+      return;
+    }
 
-  useEffect(() => {
-    localStorage.setItem('vyapar_estimates', JSON.stringify(estimates));
-  }, [estimates]);
+    // Subscribe to collections
+    setDataSyncing(true);
+    
+    // 1. Settings
+    const profileRef = doc(db, 'users', user.uid, 'settings', 'profile');
+    const unsubProfile = onSnapshot(profileRef, (snap) => {
+      if (snap.exists()) setCompanyData(snap.data() as CompanyData);
+    }, (err) => handleFirestoreError(err, OperationType.GET, `users/${user.uid}/settings/profile`));
 
-  useEffect(() => {
-    localStorage.setItem('vyapar_parties', JSON.stringify(parties));
-  }, [parties]);
+    // 2. Parties
+    const partiesQuery = query(collection(db, 'parties'), where('userId', '==', user.uid));
+    const unsubParties = onSnapshot(partiesQuery, (snap) => {
+      setParties(snap.docs.map(d => ({ ...d.data(), id: d.id }) as Party));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'parties'));
 
-  useEffect(() => {
-    localStorage.setItem('vyapar_items', JSON.stringify(items));
-  }, [items]);
+    // 3. Items
+    const itemsQuery = query(collection(db, 'inventory'), where('userId', '==', user.uid));
+    const unsubItems = onSnapshot(itemsQuery, (snap) => {
+      setItems(snap.docs.map(d => ({ ...d.data(), id: d.id }) as InventoryItem));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'inventory'));
+
+    // 4. Transactions
+    const txnsQuery = query(collection(db, 'transactions'), where('userId', '==', user.uid));
+    const unsubTxns = onSnapshot(txnsQuery, (snap) => {
+      const allTxns = snap.docs.map(d => ({ ...d.data(), id: d.id }) as Estimate);
+      setSales(allTxns.filter(t => t.isSale));
+      setEstimates(allTxns.filter(t => !t.isSale));
+      setDataSyncing(false);
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'transactions'));
+
+    return () => {
+      unsubProfile();
+      unsubParties();
+      unsubItems();
+      unsubTxns();
+    };
+  }, [user]);
+
+  const handleSignIn = async () => {
+    setAuthError(null);
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        setAuthError("Sign-in window closed. Please try again.");
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        setAuthError("Login interrupted. Please retry.");
+      } else {
+        setAuthError("Login failed. Check popup blockers.");
+      }
+      console.error("Sign in failed", error);
+    }
+  };
+
+  const handleSignOut = () => signOut(auth);
+
+  const migrateToCloud = async () => {
+    if (!user) return;
+    setDataSyncing(true);
+    try {
+      const batch = writeBatch(db);
+      
+      // Migrate Company
+      const savedCompany = localStorage.getItem('vyapar_company');
+      if (savedCompany) {
+        batch.set(doc(db, 'users', user.uid, 'settings', 'profile'), { ...JSON.parse(savedCompany), userId: user.uid });
+      } else {
+        batch.set(doc(db, 'users', user.uid, 'settings', 'profile'), { ...companyData, userId: user.uid });
+      }
+
+      // Migrate Parties
+      const savedParties = localStorage.getItem('vyapar_parties');
+      if (savedParties) {
+        const pList = JSON.parse(savedParties) as Party[];
+        pList.forEach(p => {
+          const ref = doc(collection(db, 'parties'));
+          batch.set(ref, { ...p, userId: user.uid, id: ref.id });
+        });
+      }
+
+      // Migrate Items
+      const savedItems = localStorage.getItem('vyapar_items');
+      if (savedItems) {
+        const iList = JSON.parse(savedItems) as InventoryItem[];
+        iList.forEach(i => {
+          const ref = doc(collection(db, 'inventory'));
+          batch.set(ref, { ...i, userId: user.uid, id: ref.id });
+        });
+      }
+
+      // Migrate Sales
+      const savedSales = localStorage.getItem('vyapar_sales');
+      if (savedSales) {
+        const sList = JSON.parse(savedSales) as Estimate[];
+        sList.forEach(s => {
+          const ref = doc(collection(db, 'transactions'));
+          batch.set(ref, { ...s, userId: user.uid, id: ref.id, isSale: true });
+        });
+      }
+
+      // Migrate Estimates
+      const savedEstimates = localStorage.getItem('vyapar_estimates');
+      if (savedEstimates) {
+        const eList = JSON.parse(savedEstimates) as Estimate[];
+        eList.forEach(e => {
+          const ref = doc(collection(db, 'transactions'));
+          batch.set(ref, { ...e, userId: user.uid, id: ref.id, isSale: false });
+        });
+      }
+
+      await batch.commit();
+      alert("Backup to Cloud successful!");
+      // Clear local storage to avoid confusion? Better keep for offline.
+    } catch (error) {
+      console.error("Migration failed", error);
+      alert("Backup failed. Check console.");
+    } finally {
+      setDataSyncing(false);
+    }
+  };
 
   const handleAction = (action: string) => {
     if (action === 'ADD_SALE') setCurrentView('SALE_FORM');
@@ -98,24 +229,48 @@ export default function App() {
     setShowPartyModal(true);
   };
 
-  const handleSaveParty = (partyData: Partial<Party>) => {
-    if (partyData.id) {
-        setParties(prev => prev.map(p => p.id === partyData.id ? { ...p, ...partyData as Party } : p));
-    } else {
-        const newParty: Party = {
-            ...partyData as Party,
-            id: Date.now().toString(),
+  const handleSaveParty = async (partyData: Partial<Party>) => {
+    if (user) {
+      try {
+        if (partyData.id) {
+          const ref = doc(db, 'parties', partyData.id as string);
+          await updateDoc(ref, { ...partyData, userId: user.uid });
+        } else {
+          const ref = doc(collection(db, 'parties'));
+          await setDoc(ref, { 
+            ...partyData, 
+            id: ref.id, 
+            userId: user.uid,
             balance: partyData.balance || 0,
             type: 'receive'
-        };
-        setParties([...parties, newParty]);
+          });
+        }
+      } catch (err) { handleFirestoreError(err, OperationType.WRITE, 'parties'); }
+    } else {
+      // Local fallback
+      if (partyData.id) {
+          setParties(prev => prev.map(p => p.id === partyData.id ? { ...p, ...partyData as Party } : p));
+      } else {
+          const newParty: Party = {
+              ...partyData as Party,
+              id: Date.now().toString(),
+              balance: partyData.balance || 0,
+              type: 'receive'
+          };
+          setParties([...parties, newParty]);
+      }
     }
     setShowPartyModal(false);
     setEditingParty(null);
   };
 
-  const handleDeleteParty = (id: string | number) => {
-    setParties(prev => prev.filter(p => p.id !== id));
+  const handleDeleteParty = async (id: string | number) => {
+    if (user) {
+      try { await deleteDoc(doc(db, 'parties', id as string)); }
+      catch (err) { handleFirestoreError(err, OperationType.DELETE, `parties/${id}`); }
+    } else {
+      setParties(prev => prev.filter(p => p.id !== id));
+    }
     setShowPartyModal(false);
     setEditingParty(null);
   };
@@ -125,34 +280,61 @@ export default function App() {
     setShowItemModal(true);
   };
 
-  const handleSaveItem = (itemData: Partial<InventoryItem>) => {
-    if (itemData.id) {
-        setItems(prev => prev.map(i => i.id === itemData.id ? { ...i, ...itemData as InventoryItem } : i));
-    } else {
-        const newItem: InventoryItem = {
-            ...itemData as InventoryItem,
-            id: Date.now().toString(),
+  const handleSaveItem = async (itemData: Partial<InventoryItem>) => {
+    if (user) {
+      try {
+        if (itemData.id) {
+          await updateDoc(doc(db, 'inventory', itemData.id as string), { ...itemData, userId: user.uid });
+        } else {
+          const ref = doc(collection(db, 'inventory'));
+          await setDoc(ref, { 
+            ...itemData, 
+            id: ref.id, 
+            userId: user.uid,
             stock: itemData.stock || 0,
             minStock: itemData.minStock || 0
-        };
-        setItems([...items, newItem]);
+          });
+        }
+      } catch (err) { handleFirestoreError(err, OperationType.WRITE, 'inventory'); }
+    } else {
+      if (itemData.id) {
+          setItems(prev => prev.map(i => i.id === itemData.id ? { ...i, ...itemData as InventoryItem } : i));
+      } else {
+          const newItem: InventoryItem = {
+              ...itemData as InventoryItem,
+              id: Date.now().toString(),
+              stock: itemData.stock || 0,
+              minStock: itemData.minStock || 0
+          };
+          setItems([...items, newItem]);
+      }
     }
     setShowItemModal(false);
     setEditingItem(null);
   };
 
-  const handleDeleteItem = (id: string | number) => {
-    setItems(prev => prev.filter(i => i.id !== id));
+  const handleDeleteItem = async (id: string | number) => {
+    if (user) {
+      try { await deleteDoc(doc(db, 'inventory', id as string)); }
+      catch (err) { handleFirestoreError(err, OperationType.DELETE, `inventory/${id}`); }
+    } else {
+      setItems(prev => prev.filter(i => i.id !== id));
+    }
     setShowItemModal(false);
     setEditingItem(null);
   };
 
-  const handleConvertToSale = (estimateId: string, type: 'SALE' | 'SALE_ORDER') => {
+  const handleConvertToSale = async (estimateId: string, type: 'SALE' | 'SALE_ORDER') => {
     if (type === 'SALE') {
         setConvertingEstimateId(estimateId);
         setCurrentView('SALE_FORM');
     } else {
+      if (user) {
+        try { await updateDoc(doc(db, 'transactions', estimateId), { status: 'Closed' }); }
+        catch (err) { handleFirestoreError(err, OperationType.UPDATE, `transactions/${estimateId}`); }
+      } else {
         setEstimates(prev => prev.map(e => e.id === estimateId ? { ...e, status: 'Closed' } : e));
+      }
     }
   };
 
@@ -173,84 +355,84 @@ export default function App() {
     setCurrentView('INVOICE_VIEW');
   };
 
-  const handleSaveInvoice = (inv: Estimate, isSale: boolean, printAndPreview: boolean) => {
-      // Check if it's an update
-      if (editingInvoice) {
-          if (isSale) {
-              setSales(prev => prev.map(s => s.id === editingInvoice.id ? { ...inv, id: editingInvoice.id } : s));
+  const handleSaveInvoice = async (inv: Estimate, isSale: boolean, printAndPreview: boolean) => {
+      if (user) {
+        inv.userId = user.uid;
+        inv.isSale = isSale;
+        try {
+          if (editingInvoice) {
+            await updateDoc(doc(db, 'transactions', editingInvoice.id), { ...inv });
+            setEditingInvoice(null);
           } else {
-              setEstimates(prev => prev.map(e => e.id === editingInvoice.id ? { ...inv, id: editingInvoice.id } : e));
-          }
-          setEditingInvoice(null);
-      } else {
-          // Check if it's a conversion from an estimate
-          if (isSale && convertingEstimateId) {
-              setEstimates(prev => prev.map(e => e.id === convertingEstimateId ? { ...e, status: 'Closed' } : e));
+            if (isSale && convertingEstimateId) {
+              await updateDoc(doc(db, 'transactions', convertingEstimateId), { status: 'Closed' });
               setConvertingEstimateId(null);
-          }
-          
-          // Automatic party management
-          if (inv.customerName && inv.customerName !== 'Walk-in Customer') {
-              let updatedParties = [...parties];
-              let partyIndex = updatedParties.findIndex(p => p.name.toLowerCase() === inv.customerName.toLowerCase());
-              
+            }
+            
+            // Party management
+            if (inv.customerName && inv.customerName !== 'Walk-in Customer') {
+              const partyIndex = parties.findIndex(p => p.name.toLowerCase() === inv.customerName.toLowerCase());
               if (partyIndex >= 0) {
-                  if (isSale) {
-                      updatedParties[partyIndex] = {
-                          ...updatedParties[partyIndex],
-                          balance: (updatedParties[partyIndex].balance || 0) + inv.totalAmount
-                      };
-                  }
-              } else {
-                  updatedParties.push({
-                      id: Date.now().toString() + "_party",
-                      name: inv.customerName,
-                      phone: inv.customerPhone || '',
-                      email: '',
-                      address: inv.billingAddress || '',
-                      balance: isSale ? inv.totalAmount : 0,
-                      type: 'receive'
+                if (isSale) {
+                  await updateDoc(doc(db, 'parties', parties[partyIndex].id as string), {
+                    balance: (parties[partyIndex].balance || 0) + inv.totalAmount
                   });
-              }
-              setParties(updatedParties);
-              
-              if (partyIndex === -1) {
-                  inv.partyId = updatedParties[updatedParties.length - 1].id;
+                }
+                inv.partyId = parties[partyIndex].id;
               } else {
-                  inv.partyId = updatedParties[partyIndex].id;
+                const partyRef = doc(collection(db, 'parties'));
+                const newParty = {
+                  id: partyRef.id,
+                  userId: user.uid,
+                  name: inv.customerName,
+                  phone: inv.customerPhone || '',
+                  email: '',
+                  billingAddress: inv.billingAddress || '',
+                  balance: isSale ? inv.totalAmount : 0,
+                  type: 'receive'
+                };
+                await setDoc(partyRef, newParty);
+                inv.partyId = partyRef.id;
               }
+            }
+            
+            // Transaction save
+            const txnRef = doc(collection(db, 'transactions'));
+            inv.id = txnRef.id;
+            await setDoc(txnRef, inv);
           }
-
-          // Automatic item management
-          if (inv.items && inv.items.length > 0) {
-              let updatedInventory = [...items];
-              let hasNewItems = false;
-              
-              inv.items.forEach(item => {
-                  const existingItem = updatedInventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
-                  if (!existingItem && item.name.trim() !== '') {
-                      updatedInventory.push({
-                          id: Date.now().toString() + "_" + Math.random().toString(36).substr(2, 5),
-                          name: item.name,
-                          price: item.rate,
-                          unit: item.unit || 'PCS',
-                          stock: 0,
-                          minStock: 0
-                      });
-                      hasNewItems = true;
-                  }
-              });
-              
-              if (hasNewItems) {
-                  setItems(updatedInventory);
-              }
-          }
-
-          if (isSale) {
-              setSales([...sales, inv]);
-          } else {
-              setEstimates([...estimates, inv]);
-          }
+        } catch (err) { handleFirestoreError(err, OperationType.WRITE, 'transactions'); }
+      } else {
+        // LOCAL FALLBACK
+        if (editingInvoice) {
+            if (isSale) {
+                setSales(prev => prev.map(s => s.id === editingInvoice.id ? { ...inv, id: editingInvoice.id } : s));
+            } else {
+                setEstimates(prev => prev.map(e => e.id === editingInvoice.id ? { ...inv, id: editingInvoice.id } : e));
+            }
+            setEditingInvoice(null);
+        } else {
+            if (isSale && convertingEstimateId) {
+                setEstimates(prev => prev.map(e => e.id === convertingEstimateId ? { ...e, status: 'Closed' } : e));
+                setConvertingEstimateId(null);
+            }
+            
+            if (inv.customerName && inv.customerName !== 'Walk-in Customer') {
+                let updatedParties = [...parties];
+                let partyIndex = updatedParties.findIndex(p => p.name.toLowerCase() === inv.customerName.toLowerCase());
+                if (partyIndex >= 0) {
+                    if (isSale) updatedParties[partyIndex] = { ...updatedParties[partyIndex], balance: (updatedParties[partyIndex].balance || 0) + inv.totalAmount };
+                } else {
+                    const newParty: Party = { id: Date.now().toString() + "_party", name: inv.customerName, phone: inv.customerPhone || '', email: '', billingAddress: inv.billingAddress || '', balance: isSale ? inv.totalAmount : 0, type: 'receive' };
+                    updatedParties.push(newParty);
+                    inv.partyId = newParty.id;
+                }
+                setParties(updatedParties);
+            }
+            
+            if (isSale) setSales([...sales, inv]);
+            else setEstimates([...estimates, inv]);
+        }
       }
 
       if (printAndPreview) {
@@ -262,6 +444,24 @@ export default function App() {
   };
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  if (authLoading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
+        <RefreshCw size={40} className="text-indigo-600 animate-spin" />
+      </div>
+    );
+  }
+
+  const handleUpdateCompanyData = async (newData: CompanyData) => {
+    if (user) {
+      try {
+        await setDoc(doc(db, 'users', user.uid, 'settings', 'profile'), { ...newData, userId: user.uid });
+      } catch (err) { handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/settings/profile`); }
+    } else {
+      setCompanyData(newData);
+    }
+  };
 
   return (
     <div id="app-container">
@@ -276,6 +476,58 @@ export default function App() {
       <main id="main-content">
         <TopHeader title={companyData.name} onAction={handleAction} />
         
+        {/* Auth Banner */}
+        <div className="bg-white border-b border-slate-200 px-6 py-2 flex justify-between items-center text-sm">
+          <div className="flex items-center gap-2">
+            {user ? (
+              <>
+                <Cloud size={16} className="text-green-500" />
+                <span className="text-slate-600">Cloud Sync Active ({user.email})</span>
+              </>
+            ) : (
+              <>
+                <CloudOff size={16} className="text-slate-400" />
+                <span className="text-slate-600">
+                  {authError ? (
+                    <span className="text-red-500 font-medium">{authError}</span>
+                  ) : (
+                    "Local Data Only. Sign in to back up."
+                  )}
+                </span>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <>
+                <button 
+                  onClick={migrateToCloud}
+                  className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+                  disabled={dataSyncing}
+                >
+                  <RefreshCw size={14} className={dataSyncing ? 'animate-spin' : ''} />
+                  Backup Now
+                </button>
+                <button 
+                  onClick={handleSignOut}
+                  className="flex items-center gap-1 text-slate-600 hover:text-slate-900 font-medium"
+                >
+                  <LogOut size={14} />
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={handleSignIn}
+                className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium"
+              >
+                <LogIn size={14} />
+                Sign In with Google
+              </button>
+            )}
+          </div>
+        </div>
+
         <div id="module-container">
           {currentView === 'HOME' && <DashboardModule sales={sales} parties={parties} items={items} onNavigate={setCurrentView} />}
           {currentView === 'SALE_LIST' && <HomeModule sales={sales} onAddSale={() => setCurrentView('SALE_FORM')} onEditSale={handleEditSale} onViewSale={handleViewInvoice} />}
@@ -299,14 +551,14 @@ export default function App() {
              <InvoiceView 
                 estimate={currentInvoice} 
                 companyData={companyData} 
-                setCompanyData={setCompanyData} 
+                setCompanyData={handleUpdateCompanyData} 
                 onBack={() => setCurrentView(currentInvoice.isSale ? 'SALE_LIST' : 'ESTIMATE_LIST')} 
              />
           )}
           {currentView === 'PROFILE_EDIT' && (
              <SettingsModule 
                 companyData={companyData} 
-                onChange={setCompanyData} 
+                onChange={handleUpdateCompanyData} 
                 onBack={() => setCurrentView('HOME')} 
              />
           )}
@@ -332,4 +584,5 @@ export default function App() {
     </div>
   );
 }
+
 
