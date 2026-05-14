@@ -130,16 +130,21 @@ export default function App() {
   const handleSignIn = async () => {
     setAuthError(null);
     try {
+      googleProvider.setCustomParameters({ prompt: 'select_account' });
       await signInWithPopup(auth, googleProvider);
     } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
-        setAuthError("Sign-in window closed. Please try again.");
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        setAuthError("Login interrupted. Please retry.");
-      } else {
-        setAuthError("Login failed. Check popup blockers.");
-      }
       console.error("Sign in failed", error);
+      if (error.code === 'auth/popup-closed-by-user') {
+        setAuthError("Sign-in window was closed. Try again.");
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        setAuthError("Sign-in attempt was interrupted.");
+      } else if (error.code === 'auth/popup-blocked') {
+        setAuthError("Popup blocked! Enable popups in your browser and try again.");
+      } else if (error.code === 'auth/unauthorized-domain') {
+        setAuthError("Domain not authorized. Check Firebase console settings.");
+      } else {
+        setAuthError(`Sign-in failed: ${error.message || 'Please check for popup blockers or network issues.'}`);
+      }
     }
   };
 
