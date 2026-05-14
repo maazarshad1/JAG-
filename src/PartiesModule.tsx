@@ -1,199 +1,271 @@
 import React, { useState } from 'react';
 import { Party, Estimate } from './types';
 
-export function PartiesModule({ parties, sales, estimates, onAddParty, onEditParty, onEditSale, onEditEstimate, onViewTransaction }: { 
+export function PartiesModule({ 
+    parties, 
+    sales,
+    estimates,
+    onAddParty,
+    onEditParty,
+    onViewTransaction,
+    onEditSale,
+    onEditEstimate
+}: { 
     parties: Party[], 
-    sales: Estimate[], 
-    estimates: Estimate[], 
-    onAddParty: () => void, 
+    sales: Estimate[],
+    estimates: Estimate[],
+    onAddParty: () => void,
     onEditParty: (party: Party) => void,
-    onEditSale: (sale: Estimate) => void,
-    onEditEstimate: (estimate: Estimate) => void,
-    onViewTransaction: (txn: Estimate) => void
+    onViewTransaction: (txn: Estimate) => void,
+    onEditSale?: (txn: Estimate) => void,
+    onEditEstimate?: (txn: Estimate) => void
 }) {
-    const [selectedParty, setSelectedParty] = useState<Party | null>(parties[0] || null);
+    const [selectedParty, setSelectedParty] = useState<Party | null>(null);
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-    
-    // Derived transactions for selected party
-    const partySales = sales.filter(s => s.partyId === selectedParty?.id || s.customerName === selectedParty?.name).map(s => ({...s, txnType: 'Sale'}));
-    const partyEstimates = estimates.filter(e => e.partyId === selectedParty?.id || e.customerName === selectedParty?.name).map(e => ({...e, txnType: 'Estimate'}));
-    const partyTransactions = [...partySales, ...partyEstimates].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    const handleEditTxn = (txn: any) => {
-        if (txn.txnType === 'Sale') {
+    const transactions = [...sales, ...estimates];
+    const partyTransactions = transactions.filter(t => t.partyId === selectedParty?.id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const handleEditTxn = (txn: Estimate) => {
+        setMenuOpenId(null);
+        if (txn.isSale && onEditSale) {
             onEditSale(txn);
-        } else {
+        } else if (!txn.isSale && onEditEstimate) {
             onEditEstimate(txn);
         }
-        setMenuOpenId(null);
     };
 
-    return (
-        <div style={{ flex: 1, display: 'flex', backgroundColor: '#f3f4f6' }} onClick={() => setMenuOpenId(null)}>
-            {/* Left Sidebar */}
-            <div style={{ width: '320px', backgroundColor: '#fff', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ position: 'relative', flex: 1 }}>
-                        <i className="fa-solid fa-search" style={{ position: 'absolute', left: '12px', top: '10px', color: '#9ca3af', fontSize: '14px' }}></i>
-                        <input 
-                            type="text" 
-                            placeholder="Search Party Name" 
-                            style={{ width: '100%', padding: '8px 12px 8px 36px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '13px', outline: 'none' }} 
-                        />
+    const totalBalance = parties.reduce((sum, party) => sum + party.balance, 0);
+    const totalReceivable = parties.filter(p => p.balance > 0).reduce((sum, party) => sum + party.balance, 0);
+    const totalPayable = parties.filter(p => p.balance < 0).reduce((sum, party) => sum + Math.abs(party.balance), 0);
+
+    if (selectedParty) {
+        return (
+            <div style={{ flex: 1, backgroundColor: 'var(--bg-main)', display: 'flex', flexDirection: 'column' }} onClick={() => setMenuOpenId(null)}>
+                <div className="module-header" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <button onClick={() => setSelectedParty(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#6b7280' }}>
+                            <i className="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <h2 className="module-title" style={{ fontSize: '20px', fontWeight: 600, color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' }} title={selectedParty.name}>{selectedParty.name}</h2>
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <button className="btn" onClick={() => onEditParty(selectedParty)} style={{ backgroundColor: '#fff', color: '#374151', border: '1px solid #d1d5db', padding: '10px 20px', borderRadius: '24px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                            <i className="fa-solid fa-pen-to-square"></i> Edit
+                        </button>
                     </div>
                 </div>
-                
-                <div style={{ padding: '8px 16px', backgroundColor: '#f9fafb', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', fontWeight: 600, borderBottom: '1px solid #e5e7eb' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Party Name <i className="fa-solid fa-filter" style={{ color: '#ef4444', fontSize: '10px' }}></i></div>
-                    <div>Amount</div>
-                </div>
-                
-                <div style={{ flex: 1, overflowY: 'auto' }}>
-                    {parties.map(party => (
-                        <div 
-                            key={party.id} 
-                            style={{ 
-                                padding: '16px', 
-                                borderBottom: '1px solid #e5e7eb', 
-                                display: 'flex', 
-                                justifyContent: 'space-between', 
-                                alignItems: 'center',
-                                cursor: 'pointer',
-                                background: selectedParty?.id === party.id ? '#e0f2fe' : '#fff'
-                            }}
-                            onClick={() => setSelectedParty(party)}
-                        >
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', textTransform: 'uppercase', maxWidth: '180px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={party.name}>
-                                    {party.name}
+
+                <div style={{ padding: '0 24px 24px 24px' }}>
+                    <div className="summary-cards" style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+                        <div style={{ flex: 1, backgroundColor: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                <div className="card-title" style={{ fontSize: '13px', color: '#6b7280', fontWeight: 500 }}>Party Balance</div>
+                                <div style={{ background: selectedParty.balance >= 0 ? '#d1fae5' : '#fee2e2', color: selectedParty.balance >= 0 ? '#10b981' : '#ef4444', padding: '4px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold' }}>
+                                    {selectedParty.balance >= 0 ? 'RECEIVABLE' : 'PAYABLE'}
                                 </div>
-                                <div style={{ fontSize: '12px', color: '#6b7280' }}>{party.phone || 'No phone'}</div>
                             </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '14px', color: party.balance >= 0 ? '#10b981' : '#ef4444', fontWeight: 500 }}>
-                                    {Math.abs(party.balance).toLocaleString('en-IN', {minimumFractionDigits: 2})}
-                                </div>
-                                <div style={{ fontSize: '10px', color: '#9ca3af' }}>{party.balance >= 0 ? 'Receivable' : 'Payable'}</div>
+                            <div className="card-amount" style={{ fontSize: '24px', fontWeight: 700, color: selectedParty.balance >= 0 ? '#10b981' : '#ef4444' }}>
+                                Rs {Math.abs(selectedParty.balance).toLocaleString('en-IN', {minimumFractionDigits: 2})}
                             </div>
                         </div>
-                    ))}
-                    {parties.length === 0 && <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af', fontSize: '13px' }}>No parties added yet</div>}
-                </div>
-                
-                <div style={{ padding: '16px', borderTop: '1px solid #e5e7eb', backgroundColor: '#ecfdf5', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <i className="fa-regular fa-address-book" style={{ color: '#10b981', fontSize: '20px' }}></i>
-                        <span style={{ fontSize: '13px', color: '#374151', lineHeight: 1.2 }}>Use contacts from your Phone or<br/>Gmail to <b>quickly create parties</b></span>
-                     </div>
-                     <i className="fa-solid fa-chevron-right" style={{ color: '#10b981', fontSize: '12px' }}></i>
-                </div>
-            </div>
-            
-            {/* Right Content */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                {selectedParty ? (
-                    <>
-                        <div style={{ padding: '16px 24px', background: '#fff', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <div style={{ width: '40px', height: '40px', backgroundColor: '#3b82f6', color: '#fff', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 'bold' }}>
-                                    {selectedParty.name.charAt(0).toUpperCase()}
-                                </div>
-                                <div>
-                                    <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', textTransform: 'uppercase', margin: 0, maxWidth: '400px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={selectedParty.name}>{selectedParty.name}</h2>
-                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '2px' }}>
-                                        <span style={{ fontSize: '12px', color: '#6b7280' }}>Phone: <b>{selectedParty.phone || 'NA'}</b></span>
-                                        <i className="fa-solid fa-pen-to-square" style={{ color: '#3b82f6', fontSize: '12px', cursor: 'pointer' }} onClick={() => onEditParty(selectedParty)}></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                                <div style={{ textAlign: 'right', marginRight: '16px' }}>
-                                    <div style={{ fontSize: '12px', color: '#6b7280' }}>Current Balance</div>
-                                    <div style={{ fontSize: '16px', fontWeight: 'bold', color: selectedParty.balance >= 0 ? '#10b981' : '#ef4444' }}>
-                                        Rs {Math.abs(selectedParty.balance).toLocaleString('en-IN', {minimumFractionDigits: 2})}
-                                        <span style={{ fontSize: '12px', fontWeight: 'normal', marginLeft: '4px' }}>{selectedParty.balance >= 0 ? '(Cr)' : '(Dr)'}</span>
-                                    </div>
-                                </div>
-                                <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', fontSize: '24px', cursor: 'pointer' }}></i>
-                                <i className="fa-solid fa-file-pdf" style={{ color: '#ef4444', fontSize: '24px', cursor: 'pointer' }}></i>
+
+                        <div style={{ flex: 1, backgroundColor: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                            <div className="card-title" style={{ fontSize: '13px', color: '#6b7280', fontWeight: 500, marginBottom: '12px' }}>Contact Details</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: '#4b5563' }}>
+                                <div><i className="fa-solid fa-phone" style={{ width: '20px', color: '#9ca3af' }}></i> {selectedParty.phone || 'No phone provided'}</div>
+                                <div><i className="fa-solid fa-location-dot" style={{ width: '20px', color: '#9ca3af' }}></i> {selectedParty.billingAddress || 'No address provided'}</div>
                             </div>
                         </div>
-                        
-                        <div style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
-                             <div style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-                                <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#374151', margin: 0 }}>Transactions</h3>
-                                    <div style={{ display: 'flex', gap: '16px', color: '#6b7280' }}>
-                                        <i className="fa-solid fa-magnifying-glass" style={{ cursor: 'pointer' }}></i>
-                                        <i className="fa-solid fa-print" style={{ cursor: 'pointer' }}></i>
-                                        <i className="fa-solid fa-file-excel" style={{ color: '#10b981', cursor: 'pointer' }}></i>
-                                    </div>
-                                </div>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
-                                            <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280' }}>Type <i className="fa-solid fa-filter" style={{ fontSize: '10px', marginLeft: '4px' }}></i></th>
-                                            <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280' }}>Number <i className="fa-solid fa-filter" style={{ fontSize: '10px', marginLeft: '4px' }}></i></th>
-                                            <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280' }}>Date <i className="fa-solid fa-filter" style={{ fontSize: '10px', marginLeft: '4px' }}></i></th>
-                                            <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textAlign: 'right' }}>Total <i className="fa-solid fa-filter" style={{ fontSize: '10px', marginLeft: '4px' }}></i></th>
-                                            <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textAlign: 'right' }}>Balance <i className="fa-solid fa-filter" style={{ fontSize: '10px', marginLeft: '4px' }}></i></th>
-                                            <th style={{ width: '60px' }}></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {partyTransactions.map(txn => (
-                                            <tr key={txn.id} style={{ borderBottom: '1px solid #e5e7eb' }} className="hover:bg-slate-50">
-                                                <td style={{ padding: '12px 16px', fontSize: '13px', color: '#374151' }} onClick={() => onViewTransaction(txn)}>{txn.txnType}</td>
-                                                <td style={{ padding: '12px 16px', fontSize: '13px', color: '#374151' }} onClick={() => onViewTransaction(txn)}>{txn.refNo}</td>
-                                                <td style={{ padding: '12px 16px', fontSize: '13px', color: '#374151' }} onClick={() => onViewTransaction(txn)}>{txn.date}</td>
-                                                <td style={{ padding: '12px 16px', fontSize: '13px', color: '#374151', textAlign: 'right' }} onClick={() => onViewTransaction(txn)}>Rs {txn.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                                                <td style={{ padding: '12px 16px', fontSize: '13px', color: '#374151', textAlign: 'right' }} onClick={() => onViewTransaction(txn)}>Rs {(txn.txnType === 'Sale' ? txn.balance : 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                                                <td style={{ padding: '12px 16px', textAlign: 'center', position: 'relative' }}>
-                                                    <i 
-                                                        className="fa-solid fa-ellipsis-vertical cursor-pointer p-2 hover:bg-slate-200 rounded-full" 
-                                                        style={{ color: '#9ca3af' }}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setMenuOpenId(menuOpenId === txn.id ? null : txn.id);
-                                                        }}
-                                                    ></i>
-                                                    {menuOpenId === txn.id && (
-                                                        <div style={{ position: 'absolute', right: '10px', top: '35px', backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '4px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', zIndex: 10, width: '120px' }}>
-                                                            <div 
-                                                                style={{ padding: '8px 12px', fontSize: '13px', textAlign: 'left', cursor: 'pointer' }}
-                                                                className="hover:bg-slate-100"
+
+                        <div style={{ flex: 1, backgroundColor: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                            <div className="card-title" style={{ fontSize: '13px', color: '#6b7280', fontWeight: 500, marginBottom: '4px' }}>Total Transactions</div>
+                            <div className="card-amount" style={{ fontSize: '24px', fontWeight: 700, color: '#111827' }}>
+                                {partyTransactions.length}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '8px' }}>Amounting to Rs {partyTransactions.reduce((sum, t) => sum + t.totalAmount, 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
+                        </div>
+                    </div>
+
+                    <div className="table-container" style={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                        <div style={{ padding: '16px', borderBottom: '1px solid #E5E7EB', backgroundColor: '#F9FAFB', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>
+                            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '500px' }}>Transactions with {selectedParty.name}</h3>
+                        </div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid #E5E7EB', backgroundColor: '#F9FAFB' }}>
+                                    <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Type</th>
+                                    <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Number</th>
+                                    <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Date</th>
+                                    <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Total</th>
+                                    <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Balance</th>
+                                    <th style={{ padding: '12px 16px', width: '100px', textAlign: 'right', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {partyTransactions.map(txn => (
+                                    <tr key={txn.id} style={{ borderBottom: '1px solid #E5E7EB', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors" onClick={() => onViewTransaction(txn)}>
+                                        <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', fontWeight: 500 }}>{txn.isSale ? 'Sale' : 'Estimate'}</td>
+                                        <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{txn.refNo}</td>
+                                        <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{txn.date}</td>
+                                        <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', textAlign: 'right' }}>Rs {txn.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                                        <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', textAlign: 'right' }}>Rs {(txn.isSale ? txn.balance : 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                                            <div className="relative inline-block text-left" style={{ position: 'relative' }}>
+                                                <button 
+                                                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setMenuOpenId(menuOpenId === txn.id ? null : txn.id);
+                                                    }}
+                                                >
+                                                    <i className="fa-solid fa-ellipsis-vertical px-1"></i>
+                                                </button>
+                                                {menuOpenId === txn.id && (
+                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 ring-1 ring-black ring-opacity-5 z-10 transition-all font-sans text-left">
+                                                        <div className="py-1">
+                                                            <button 
+                                                                className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
                                                                 onClick={(e) => { e.stopPropagation(); onViewTransaction(txn); setMenuOpenId(null); }}
                                                             >
-                                                                <i className="fa-solid fa-eye" style={{ marginRight: '8px', color: '#6b7280' }}></i> View
-                                                            </div>
-                                                            <div 
-                                                                style={{ padding: '8px 12px', fontSize: '13px', textAlign: 'left', cursor: 'pointer', borderTop: '1px solid #f3f4f6' }}
-                                                                className="hover:bg-slate-100"
+                                                                <i className="fa-solid fa-eye w-5"></i> View Details
+                                                            </button>
+                                                            <button 
+                                                                className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
                                                                 onClick={(e) => { e.stopPropagation(); handleEditTxn(txn); }}
                                                             >
-                                                                <i className="fa-solid fa-pen" style={{ marginRight: '8px', color: '#3b82f6' }}></i> Edit
-                                                            </div>
+                                                                <i className="fa-solid fa-pen-to-square w-5"></i> Edit
+                                                            </button>
                                                         </div>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {partyTransactions.length === 0 && (
-                                            <tr>
-                                                <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#9ca3af', fontSize: '14px' }}>No transactions found for this party</td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
-                        <i className="fa-solid fa-users" style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.2 }}></i>
-                        <p>Select a party to view details</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {partyTransactions.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: '#9ca3af' }}>
+                                            <div style={{ marginBottom: '12px', fontSize: '24px' }}><i className="fa-solid fa-file-invoice"></i></div>
+                                            <div>No transactions added for this party yet</div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
-                )}
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ flex: 1, backgroundColor: 'var(--bg-main)', display: 'flex', flexDirection: 'column' }} onClick={() => setMenuOpenId(null)}>
+            <div className="module-header" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 className="module-title" style={{ fontSize: '20px', fontWeight: 600, color: '#111827', margin: 0 }}>Parties <i className="fa-solid fa-chevron-down" style={{ fontSize: '12px', marginLeft: '8px', color: '#6b7280' }}></i></h2>
+                <button className="btn btn-primary-red" onClick={onAddParty} style={{ backgroundColor: 'var(--accent-red)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '24px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                    <i className="fa-solid fa-plus"></i> Add Party
+                </button>
+            </div>
+            
+            <div style={{ padding: '0 24px 24px 24px' }}>
+                <div className="filters-bar" style={{ display: 'flex', gap: '16px', alignItems: 'center', backgroundColor: '#fff', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e5e7eb', marginBottom: '24px' }}>
+                    <span style={{ fontSize: '13px', color: '#6b7280', fontWeight: 500 }}>Filter by:</span>
+                    <select className="filter-dropdown" style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '6px 12px', fontSize: '13px', outline: 'none' }}><option>All Groups</option></select>
+                    <div className="filter-dropdown" style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '6px 12px', fontSize: '13px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <i className="fa-solid fa-search" style={{ color: '#6b7280' }}></i> <input type="text" placeholder="Search Party" style={{ border: 'none', outline: 'none', background: 'transparent' }} />
+                    </div>
+                </div>
+
+                <div className="summary-cards" style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+                    <div style={{ flex: 1, backgroundColor: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                        <div className="card-title" style={{ fontSize: '13px', color: '#6b7280', fontWeight: 500, marginBottom: '4px' }}>Total Balance</div>
+                        <div className="card-amount" style={{ fontSize: '24px', fontWeight: 700, color: '#111827' }}>Rs {Math.abs(totalBalance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
+                        <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '8px' }}>Across {parties.length} total parties</div>
+                    </div>
+                    <div style={{ flex: 1, backgroundColor: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                        <div className="card-title" style={{ fontSize: '13px', color: '#6b7280', fontWeight: 500, marginBottom: '4px' }}>Receivable</div>
+                        <div className="card-amount" style={{ fontSize: '24px', fontWeight: 700, color: '#10b981' }}>Rs {totalReceivable.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
+                        <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '8px' }}>To receive from customers</div>
+                    </div>
+                    <div style={{ flex: 1, backgroundColor: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                        <div className="card-title" style={{ fontSize: '13px', color: '#6b7280', fontWeight: 500, marginBottom: '4px' }}>Payable</div>
+                        <div className="card-amount" style={{ fontSize: '24px', fontWeight: 700, color: '#ef4444' }}>Rs {totalPayable.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
+                        <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '8px' }}>To pay to suppliers</div>
+                    </div>
+                </div>
+
+                <div className="table-container" style={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <thead>
+                            <tr style={{ borderBottom: '1px solid #E5E7EB', backgroundColor: '#F9FAFB' }}>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Ref No.</th>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Party Name</th>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Phone Number</th>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Billing Address</th>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Balance</th>
+                                <th style={{ padding: '12px 16px', width: '100px', textAlign: 'right', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {parties.map(party => (
+                                <tr key={party.id} style={{ borderBottom: '1px solid #E5E7EB', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors" onClick={() => setSelectedParty(party)}>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', fontWeight: 500 }}>{party.customerRefNo || '-'}</td>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', fontWeight: 500 }}>
+                                        <div style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={party.name}>
+                                            {party.name}
+                                        </div>
+                                    </td>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{party.phone || 'NA'}</td>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{party.billingAddress || 'NA'}</td>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: party.balance >= 0 ? '#10b981' : '#ef4444', textAlign: 'right', fontWeight: 500 }}>
+                                        Rs {Math.abs(party.balance).toLocaleString('en-IN', {minimumFractionDigits: 2})} 
+                                        <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#6b7280', marginLeft: '4px' }}>{party.balance >= 0 ? 'Receivable' : 'Payable'}</span>
+                                    </td>
+                                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                                        <div className="relative inline-block text-left" style={{ position: 'relative' }}>
+                                            <button 
+                                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setMenuOpenId(menuOpenId === party.id ? null : party.id);
+                                                }}
+                                            >
+                                                <i className="fa-solid fa-ellipsis-vertical px-1"></i>
+                                            </button>
+                                            {menuOpenId === party.id && (
+                                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 ring-1 ring-black ring-opacity-5 z-10 transition-all font-sans text-left">
+                                                    <div className="py-1">
+                                                        <button 
+                                                            className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
+                                                            onClick={(e) => { e.stopPropagation(); onEditParty(party); setMenuOpenId(null); }}
+                                                        >
+                                                            <i className="fa-solid fa-pen-to-square w-5"></i> Edit Party
+                                                        </button>
+                                                        <button 
+                                                            className="group flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-slate-100 mt-1 pt-1.5"
+                                                            onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); }}
+                                                        >
+                                                            <i className="fa-solid fa-trash w-5"></i> Delete
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {parties.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} style={{ padding: '48px', textAlign: 'center', color: '#9ca3af' }}>
+                                        <div style={{ marginBottom: '12px', fontSize: '24px' }}><i className="fa-solid fa-users"></i></div>
+                                        <div>No parties added yet</div>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

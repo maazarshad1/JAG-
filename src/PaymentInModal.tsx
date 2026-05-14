@@ -1,0 +1,138 @@
+import React, { useState } from 'react';
+import { Party, Item, Estimate } from './types';
+
+export function PaymentInModal({ 
+  parties, 
+  onSave, 
+  onClose,
+  initialData
+}: { 
+  parties: Party[], 
+  onSave: (payment: any) => void, 
+  onClose: () => void,
+  initialData?: Partial<Estimate>
+}) {
+  const [selectedPartyId, setSelectedPartyId] = useState(initialData?.partyId || '');
+  const [amount, setAmount] = useState(initialData?.receivedAmount?.toString() || '');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [description, setDescription] = useState('');
+  const [paymentType, setPaymentType] = useState('Cash');
+
+  const selectedParty = parties.find(p => p.id === selectedPartyId);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPartyId || !amount) return;
+
+    onSave({
+      partyId: selectedPartyId,
+      customerName: selectedParty?.name || 'Unknown',
+      receivedAmount: parseFloat(amount),
+      totalAmount: parseFloat(amount),
+      balance: 0,
+      date,
+      description,
+      paymentType,
+      items: [],
+      isSale: true,
+      txnType: 'Payment-In'
+    });
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ backgroundColor: '#fff', width: '500px', borderRadius: '8px', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f9fafb' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', margin: 0 }}> <span style={{ color: '#22c55e' }}>●</span> Payment-In</h2>
+          <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#6b7280', fontSize: '18px' }}><i className="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Party Name *</label>
+            <select 
+              value={selectedPartyId} 
+              onChange={e => setSelectedPartyId(e.target.value)}
+              required
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '4px', outline: 'none' }}
+            >
+              <option value="">Select Party</option>
+              {parties.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            {selectedParty && (
+              <div style={{ marginTop: '4px', fontSize: '12px', color: '#6b7280' }}>
+                Current Balance: <span style={{ color: selectedParty.balance >= 0 ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>Rs {Math.abs(selectedParty.balance).toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Amount *</label>
+              <input 
+                type="number" 
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                required
+                placeholder="0.00"
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '4px', outline: 'none' }} 
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Date</label>
+              <input 
+                type="date" 
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '4px', outline: 'none' }} 
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Payment Type</label>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+                <input type="radio" name="paymentType" value="Cash" checked={paymentType === 'Cash'} onChange={e => setPaymentType(e.target.value)} /> Cash
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+                <input type="radio" name="paymentType" value="Cheque" checked={paymentType === 'Cheque'} onChange={e => setPaymentType(e.target.value)} /> Cheque
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+                <input type="radio" name="paymentType" value="Online" checked={paymentType === 'Online'} onChange={e => setPaymentType(e.target.value)} /> Online
+              </label>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Description (Optional)</label>
+            <textarea 
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="Enter payment details..."
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '4px', outline: 'none', height: '80px', resize: 'none' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+            <button 
+              type="button" 
+              onClick={onClose}
+              style={{ padding: '8px 24px', border: '1px solid #e5e7eb', borderRadius: '4px', background: '#fff', color: '#374151', cursor: 'pointer', fontWeight: 500 }}
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              style={{ padding: '8px 24px', border: 'none', borderRadius: '4px', background: '#4f46e5', color: '#fff', cursor: 'pointer', fontWeight: 500 }}
+            >
+              Save Payment
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

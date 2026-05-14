@@ -79,7 +79,10 @@ export function Sidebar({ currentView, setCurrentView, onAction, companyData, is
                                 <i className="fa-solid fa-file-circle-check" style={{ width: '16px', marginRight: '8px' }}></i>
                                 <span>Proforma Invoice</span>
                             </button>
-                            <button className="nav-subitem border-0 bg-transparent w-full text-left">
+                            <button 
+                                className={`nav-subitem ${currentView === 'PAYMENT_IN_LIST' ? 'active' : ''} border-0 bg-transparent w-full text-left`}
+                                onClick={() => setCurrentView('PAYMENT_IN_LIST')}
+                            >
                                 <i className="fa-solid fa-money-bill-transfer" style={{ width: '16px', marginRight: '8px' }}></i>
                                 <span>Payment-In</span>
                             </button>

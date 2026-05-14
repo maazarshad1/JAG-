@@ -1,396 +1,254 @@
-import React, { useState } from 'react';
-import { Estimate, InventoryItem } from './types';
-import { Settings, Share2, Plus, Minus, Trash2, Calendar, GripVertical, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Party, InventoryItem, Item, Estimate } from './types';
+import { UNIT_SUGGESTIONS } from './constants';
 
-export function InvoiceForm({ isSale, onSave, onCancel, initialData, parties = [], items = [] }: { isSale: boolean, onSave: (inv: Estimate, print: boolean) => void, onCancel: () => void, initialData?: Estimate, parties?: any[], items?: InventoryItem[] }) {
-    const defaultRows = [{ id: '1', name: '', qty: 1, unit: 'PCS', price: 0 }];
-    const mapItemsToRows = (items: any[]) => {
-        return items.map((item, idx) => ({
-            id: Date.now().toString() + idx,
-            name: item.name,
-            qty: item.quantity,
-            unit: item.unit || 'PCS',
-            price: item.rate
-        }));
-    };
-    const [rows, setRows] = useState(initialData && initialData.items && initialData.items.length > 0 ? mapItemsToRows(initialData.items) : defaultRows);
-    const [party, setParty] = useState(initialData ? initialData.customerName : '');
-    const [customerPhone, setCustomerPhone] = useState(initialData ? (initialData.customerPhone || '') : '');
-    const [billingAddress, setBillingAddress] = useState(initialData ? (initialData.billingAddress || '') : '');
-    
-    const [showPartySuggestions, setShowPartySuggestions] = useState(false);
-    const filteredParties = party === '' 
-        ? parties 
-        : parties.filter(p => 
-            p.name.toLowerCase().includes(party.toLowerCase()) || 
-            (p.phone && p.phone.includes(party))
-        );
+export function InvoiceForm({ 
+  parties, 
+  inventoryItems, 
+  isSale = true,
+  onSave, 
+  onCancel,
+  initialData 
+}: { 
+  parties: Party[], 
+  inventoryItems: InventoryItem[],
+  isSale?: boolean,
+  onSave: (estimate: Estimate) => void, 
+  onCancel: () => void,
+  initialData?: Estimate
+}) {
+  const [customerName, setCustomerName] = useState(initialData?.customerName || '');
+  const [date, setDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
+  const [refNo, setRefNo] = useState(initialData?.refNo || (isSale ? 'SALE-001' : 'EST-001'));
+  const [status, setStatus] = useState<'Open'|'Closed'>(initialData?.status as any || 'Open');
+  const [items, setItems] = useState<Item[]>(initialData?.items || []);
+  const [receivedAmount, setReceivedAmount] = useState(initialData?.receivedAmount || 0);
+  const [paymentType, setPaymentType] = useState(initialData?.paymentType || 'Cash');
 
-    const [focusedRowIdx, setFocusedRowIdx] = useState<number | null>(null);
+  const selectedParty = parties.find(p => p.name.toLowerCase() === customerName.toLowerCase());
+  
+  const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+  const balance = totalAmount - receivedAmount;
 
-    const [invoiceNo, setInvoiceNo] = useState(initialData && initialData.isSale === isSale ? Number(initialData.refNo) : 1);
-    const [date, setDate] = useState(initialData ? initialData.date : new Date().toISOString().split('T')[0]);
-    const [discountValue, setDiscountValue] = useState(0);
-    const [discountPercent, setDiscountPercent] = useState(0);
-    const [receivedAmount, setReceivedAmount] = useState(initialData ? (initialData.receivedAmount || 0) : 0);
+  const addItem = () => {
+    setItems([...items, { id: Date.now().toString(), name: '', quantity: 1, rate: 0, unit: 'pcs', tax: 0, discount: 0 }]);
+  };
 
-    const addRow = () => setRows([...rows, { id: Date.now().toString(), name: '', qty: 1, unit: 'PCS', price: 0 }]);
-    
-    const updateRow = (index: number, field: string, value: any) => {
-        const newRows = [...rows];
-        newRows[index] = { ...newRows[index], [field]: value };
-        setRows(newRows);
-    };
+  const updateItem = (index: number, field: keyof Item, value: string | number) => {
+    const newItems = [...items];
+    if (field === 'name') {
+       const invItem = inventoryItems.find(i => i.name === value);
+       if (invItem) {
+          newItems[index] = { ...newItems[index], name: invItem.name, rate: invItem.price };
+       } else {
+          newItems[index] = { ...newItems[index], name: value as string };
+       }
+    } else {
+       newItems[index] = { ...newItems[index], [field]: value } as Item;
+    }
+    setItems(newItems);
+  };
 
-    const removeRow = (index: number) => {
-        if (rows.length === 1) return;
-        setRows(rows.filter((_, i) => i !== index));
-    };
+  const removeItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
 
-    const subTotal = rows.reduce((sum, r) => sum + ((r.qty || 0) * (r.price || 0)), 0);
-    const total = subTotal - discountValue;
-    const dueAmount = total - receivedAmount;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const selectedParty = parties.find(p => p.name === customerName);
+    onSave({
+      id: initialData?.id || Date.now().toString(),
+      customerName,
+      partyId: selectedParty?.id || '',
+      date,
+      refNo: refNo as any,
+      status,
+      items,
+      totalAmount,
+      receivedAmount,
+      balance,
+      isSale,
+      paymentType: paymentType as any,
+      discountValue: initialData?.discountValue || 0,
+      discountType: initialData?.discountType || 'fixed',
+      taxType: initialData?.taxType || 'none',
+      description: initialData?.description || ''
+    });
+  };
 
-    const handleDiscountPercentChange = (val: number) => {
-        setDiscountPercent(val);
-        setDiscountValue((val / 100) * subTotal);
-    };
-
-    const handleDiscountValueChange = (val: number) => {
-        setDiscountValue(val);
-        if (subTotal > 0) setDiscountPercent((val / subTotal) * 100);
-    };
-
-    const handleSave = (print: boolean) => {
-        onSave({
-            id: Date.now().toString(),
-            refNo: invoiceNo,
-            date,
-            customerName: party,
-            customerPhone,
-            billingAddress,
-            partyId: party, 
-            items: rows.map((r, i) => ({
-                id: i.toString(),
-                name: r.name,
-                quantity: r.qty,
-                unit: r.unit,
-                rate: r.price,
-                tax: 0,
-                discount: 0
-            })),
-            status: isSale ? 'CLOSED' : 'Open',
-            discountValue: discountValue,
-            discountType: 'fixed',
-            taxType: 'none',
-            description: '',
-            totalAmount: total,
-            receivedAmount,
-            balance: dueAmount,
-            isSale
-        }, print);
-    };
-
-    return (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: '#f8fafc', zIndex: 100, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ backgroundColor: '#fff', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', height: '40px', fontSize: '13px', color: '#4b5563', padding: '0 20px', gap: '24px' }}>
-                <span style={{ cursor: 'pointer' }}>Company</span>
-                <span style={{ cursor: 'pointer' }}>Help</span>
-                <span style={{ cursor: 'pointer' }}>Versions</span>
-                <span style={{ cursor: 'pointer' }}>Shortcuts</span>
-            </div>
-            
-            <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-                <div style={{ maxWidth: '1200px', margin: '0 auto', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ padding: '16px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <button onClick={onCancel} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '16px' }}><i className="fa-solid fa-arrow-left"></i></button>
-                            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827' }}>{isSale ? 'Sale Invoice' : 'Estimate/Quotation'} ({isSale ? 'Credit' : 'Cash'})</h2>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <Settings size={20} className="text-gray-500 cursor-pointer" />
-                        </div>
-                    </div>
-
-                    <div style={{ padding: '24px', flex: 1 }}>
-                        <div style={{ display: 'flex', gap: '32px', marginBottom: '32px' }}>
-                            <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                <div style={{ display: 'flex', gap: '16px' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>Customer <span style={{ color: '#ef4444' }}>*</span></label>
-                                        <div style={{ position: 'relative' }}>
-                                            <Search size={16} className="absolute left-3 top-3 text-gray-400" />
-                                            <input 
-                                                type="text" 
-                                                style={{ width: '100%', padding: '10px 36px 10px 36px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
-                                                placeholder="Search by Name/Phone *" 
-                                                value={party} 
-                                                onChange={e => {
-                                                    setParty(e.target.value);
-                                                    setShowPartySuggestions(true);
-                                                }}
-                                                onFocus={() => setShowPartySuggestions(true)}
-                                                onBlur={() => setTimeout(() => setShowPartySuggestions(false), 200)}
-                                            />
-                                            {showPartySuggestions && filteredParties.length > 0 && (
-                                                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #d1d5db', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px', borderTop: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', zIndex: 10, maxHeight: '200px', overflowY: 'auto' }}>
-                                                    {filteredParties.map((p, i) => (
-                                                        <div 
-                                                            key={i} 
-                                                            style={{ padding: '10px 12px', fontSize: '14px', cursor: 'pointer', borderTop: '1px solid #f3f4f6' }}
-                                                            className="hover:bg-slate-50"
-                                                            onClick={() => {
-                                                                setParty(p.name);
-                                                                setCustomerPhone(p.phone || '');
-                                                                setBillingAddress(p.billingAddress || '');
-                                                                setShowPartySuggestions(false);
-                                                            }}
-                                                        >
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                <span style={{ fontWeight: 500, color: '#374151' }}>{p.name}</span>
-                                                                <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 600 }}>BAL: {p.balance?.toLocaleString('en-IN')}</span>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div style={{ width: '200px' }}>
-                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>Phone No.</label>
-                                        <input 
-                                            type="text" 
-                                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
-                                            placeholder="Phone No." 
-                                            value={customerPhone} 
-                                            onChange={e => setCustomerPhone(e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>Billing Address</label>
-                                    <textarea 
-                                        style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none', minHeight: '80px', resize: 'vertical' }} 
-                                        placeholder="Billing Address"
-                                        value={billingAddress}
-                                        onChange={e => setBillingAddress(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                <div style={{ display: 'flex', gap: '16px' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>Ref No</label>
-                                        <input 
-                                            type="number" 
-                                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none' }} 
-                                            value={invoiceNo} 
-                                            onChange={e => setInvoiceNo(Number(e.target.value))} 
-                                        />
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>Invoice Date</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <Calendar size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
-                                            <input 
-                                                type="date" 
-                                                style={{ width: '100%', padding: '10px 36px 10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', outline: 'none', appearance: 'none' }} 
-                                                value={date} 
-                                                onChange={e => setDate(e.target.value)} 
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                {party && (
-                                    <div style={{ fontSize: '14px', color: '#10b981', fontWeight: 700, padding: '10px', backgroundColor: '#f0fdf4', borderRadius: '6px', border: '1px solid #bcf0da', width: 'fit-content' }}>
-                                        BAL: {parties.find(p => p.name.toLowerCase() === party.toLowerCase())?.balance?.toLocaleString('en-IN') || '0.00'}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', marginBottom: '24px' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                <thead>
-                                    <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                                        <th style={{ width: '40px', padding: '12px', fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>#</th>
-                                        <th style={{ padding: '12px', fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>ITEM</th>
-                                        <th style={{ width: '100px', padding: '12px', fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>QTY</th>
-                                        <th style={{ width: '140px', padding: '12px', fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>UNIT</th>
-                                        <th style={{ width: '150px', padding: '12px', fontSize: '12px', fontWeight: 600, color: '#6b7280', textAlign: 'right' }}>PRICE/UNIT</th>
-                                        <th style={{ width: '150px', padding: '12px', fontSize: '12px', fontWeight: 600, color: '#6b7280', textAlign: 'right' }}>AMOUNT</th>
-                                        <th style={{ width: '40px', padding: '12px' }}></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {rows.map((row, idx) => (
-                                        <tr key={row.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                                            <td style={{ padding: '12px', color: '#9ca3af', textAlign: 'center' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    <GripVertical size={14} className="cursor-grab text-gray-400" />
-                                                    {idx + 1}
-                                                </div>
-                                            </td>
-                                            <td style={{ padding: '12px', position: 'relative' }}>
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="Item Name" 
-                                                    value={row.name} 
-                                                    onChange={e => updateRow(idx, 'name', e.target.value)} 
-                                                    onFocus={() => setFocusedRowIdx(idx)}
-                                                    onBlur={() => setTimeout(() => setFocusedRowIdx(null), 200)}
-                                                    style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px' }} 
-                                                />
-                                                {focusedRowIdx === idx && (
-                                                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', border: '1px solid #d1d5db', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px', borderTop: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', zIndex: 20, maxHeight: '200px', overflowY: 'auto' }}>
-                                                        {(row.name === '' ? items : items.filter(i => i.name.toLowerCase().includes(row.name.toLowerCase()))).map((item, i) => (
-                                                            <div 
-                                                                key={i} 
-                                                                style={{ padding: '10px 12px', fontSize: '14px', cursor: 'pointer', borderTop: '1px solid #f3f4f6' }}
-                                                                className="hover:bg-slate-50"
-                                                                onClick={() => {
-                                                                    const newRows = [...rows];
-                                                                    newRows[idx] = {
-                                                                        ...newRows[idx],
-                                                                        name: item.name,
-                                                                        price: item.price,
-                                                                        unit: item.unit || 'PCS'
-                                                                    };
-                                                                    setRows(newRows);
-                                                                    setFocusedRowIdx(null);
-                                                                }}
-                                                            >
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                    <span style={{ fontWeight: 500, color: '#374151' }}>{item.name}</span>
-                                                                    <span style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 600 }}>PRICE: Rs {item.price.toLocaleString('en-IN')}</span>
-                                                                </div>
-                                                                <div style={{ fontSize: '11px', color: '#9ca3af' }}>Stock: {item.stock} {item.unit}</div>
-                                                            </div>
-                                                        ))}
-                                                        <div 
-                                                            style={{ padding: '10px 12px', fontSize: '13px', color: '#3b82f6', cursor: 'pointer', borderTop: '1px solid #f3f4f6', fontWeight: 500 }}
-                                                            onClick={() => setFocusedRowIdx(null)}
-                                                        >
-                                                            + Add New Item "{row.name}"
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td style={{ padding: '12px' }}>
-                                                <input type="number" placeholder="1" value={row.qty === 0 ? '' : row.qty} onChange={e => updateRow(idx, 'qty', e.target.value === '' ? 0 : Number(e.target.value))} style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px' }} />
-                                            </td>
-                                            <td style={{ padding: '12px' }}>
-                                                <select value={row.unit} onChange={e => updateRow(idx, 'unit', e.target.value)} style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px', backgroundColor: 'transparent', cursor: 'pointer' }}>
-                                                    <option value="PCS">PCS</option>
-                                                    <option value="FT">FT</option>
-                                                    <option value="RFT">RFT</option>
-                                                    <option value="SQF">SQF</option>
-                                                    <option value="SQM">SQM</option>
-                                                    <option value="IN">IN</option>
-                                                    <option value="SET">SET</option>
-                                                    <option value="UNIT">UNIT</option>
-                                                    <option value="KG">KG</option>
-                                                    <option value="MTR">MTR</option>
-                                                    <option value="BOX">BOX</option>
-                                                    <option value="LTR">LTR</option>
-                                                    <option value="ROLLS">ROLLS</option>
-                                                </select>
-                                            </td>
-                                            <td style={{ padding: '12px', textAlign: 'right' }}>
-                                                <input type="number" placeholder="0" value={row.price === 0 ? '' : row.price} onChange={e => updateRow(idx, 'price', e.target.value === '' ? 0 : Number(e.target.value))} style={{ width: '100%', border: 'none', outline: 'none', fontSize: '14px', textAlign: 'right' }} />
-                                            </td>
-                                            <td style={{ padding: '12px', textAlign: 'right', fontWeight: 500 }}>
-                                                {((row.qty || 0) * (row.price || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}
-                                            </td>
-                                            <td style={{ padding: '12px', textAlign: 'center' }}>
-                                                <Trash2 size={16} className="text-gray-400 cursor-pointer hover:text-red-500" onClick={() => removeRow(idx)} />
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            <div style={{ padding: '12px', backgroundColor: '#f9fafb', display: 'flex', gap: '16px' }}>
-                                <button onClick={addRow} style={{ background: 'transparent', border: 'none', color: '#3b82f6', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <Plus size={16} /> ADD ROW
-                                </button>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div style={{ display: 'flex', gap: '16px' }}>
-                                <button style={{ background: 'transparent', border: 'none', color: '#3b82f6', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <Plus size={16} /> ADD DESCRIPTION
-                                </button>
-                                <button style={{ background: 'transparent', border: 'none', color: '#3b82f6', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <Plus size={16} /> ADD IMAGE
-                                </button>
-                            </div>
-
-                            <div style={{ width: '400px', backgroundColor: '#f9fafb', borderRadius: '8px', padding: '20px', border: '1px solid #e5e7eb' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '14px' }}>
-                                    <span style={{ fontWeight: 500, color: '#374151' }}>SUBTOTAL</span>
-                                    <span>Rs {subTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>Discount</span>
-                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                        <div style={{ position: 'relative', width: '80px' }}>
-                                            <input type="number" style={{ width: '100%', padding: '6px 24px 6px 8px', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'right', outline: 'none' }} value={discountPercent === 0 ? '' : discountPercent} onChange={e => handleDiscountPercentChange(e.target.value === '' ? 0 : Number(e.target.value))} />
-                                            <span style={{ position: 'absolute', right: '8px', top: '8px', color: '#9ca3af', fontSize: '12px' }}>%</span>
-                                        </div>
-                                        <div style={{ position: 'relative', width: '100px' }}>
-                                            <span style={{ position: 'absolute', left: '8px', top: '8px', color: '#9ca3af', fontSize: '12px' }}>Rs</span>
-                                            <input type="number" style={{ width: '100%', padding: '6px 8px 6px 28px', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'right', outline: 'none' }} value={discountValue === 0 ? '' : discountValue} onChange={e => handleDiscountValueChange(e.target.value === '' ? 0 : Number(e.target.value))} />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>Tax</span>
-                                    <select style={{ width: '188px', padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: '4px', outline: 'none' }}>
-                                        <option>NONE</option>
-                                    </select>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid #e5e7eb' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 500, color: '#374151', cursor: 'pointer' }}>
-                                        <input type="checkbox" defaultChecked /> Round Off
-                                    </label>
-                                    <input type="number" defaultValue="0" style={{ width: '80px', padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'right', outline: 'none' }} />
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                    <span style={{ fontWeight: 700, fontSize: '18px', color: '#111827' }}>Total</span>
-                                    <span style={{ fontWeight: 700, fontSize: '18px', color: '#111827' }}>Rs {total.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>Received Amount</span>
-                                    <div style={{ position: 'relative', width: '150px' }}>
-                                        <span style={{ position: 'absolute', left: '8px', top: '8px', color: '#9ca3af', fontSize: '12px' }}>Rs</span>
-                                        <input 
-                                            type="number" 
-                                            style={{ width: '100%', padding: '6px 8px 6px 28px', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'right', outline: 'none' }} 
-                                            value={receivedAmount === 0 ? '' : receivedAmount} 
-                                            onChange={e => setReceivedAmount(e.target.value === '' ? 0 : Number(e.target.value))} 
-                                        />
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fef2f2', padding: '10px', borderRadius: '6px', border: '1px solid #fee2e2' }}>
-                                    <span style={{ fontWeight: 700, fontSize: '16px', color: '#b91c1c' }}>Due Amount</span>
-                                    <span style={{ fontWeight: 700, fontSize: '20px', color: '#b91c1c' }}>Rs {dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div style={{ backgroundColor: '#fff', borderTop: '1px solid #e5e7eb', padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', gap: '16px', alignItems: 'center' }}>
-                <button style={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', padding: '10px 20px', borderRadius: '4px', fontWeight: 600, color: '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    Share <i className="fa-solid fa-chevron-down" style={{ fontSize: '10px' }}></i>
-                </button>
-                <button onClick={() => handleSave(true)} style={{ backgroundColor: '#3b82f6', color: '#fff', border: 'none', padding: '10px 32px', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}>
-                    Save
-                </button>
-            </div>
+  return (
+    <div style={{ flex: 1, backgroundColor: '#f3f4f6', overflowY: 'auto' }}>
+      <div style={{ padding: '16px 24px', backgroundColor: '#fff', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', margin: 0 }}>{initialData ? 'Edit' : 'Add'} {isSale ? 'Sale' : 'Estimate'}</h2>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button type="button" onClick={onCancel} className="btn-secondary" style={{ padding: '8px 16px', borderRadius: '4px', border: '1px solid #e5e7eb', backgroundColor: '#fff', cursor: 'pointer' }}>Cancel</button>
+          <button type="submit" onClick={handleSubmit} className="btn-primary" style={{ padding: '8px 24px', borderRadius: '4px', border: 'none', backgroundColor: '#3b82f6', color: '#fff', cursor: 'pointer' }}>Save</button>
         </div>
-    );
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px', marginBottom: '32px', padding: '24px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Customer Name</label>
+            <input 
+              list="parties-list"
+              value={customerName} 
+              onChange={e => setCustomerName(e.target.value)}
+              className="input-field" 
+              style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+            />
+            <datalist id="parties-list">
+              {parties.map(p => <option key={p.id} value={p.name}>{`#${p.customerRefNo || 'N/A'} - Bal: ${p.balance}`}</option>)}
+            </datalist>
+            {selectedParty && (
+              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                Ref: #{selectedParty.customerRefNo || 'N/A'} | Balance: Rs {selectedParty.balance.toLocaleString()}
+              </div>
+            )}
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Date</label>
+            <input 
+              type="date" 
+              value={date} 
+              onChange={e => setDate(e.target.value)}
+              className="input-field" 
+              style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Invoice No.</label>
+            <input 
+              value={refNo} 
+              readOnly
+              className="input-field" 
+              style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '4px', backgroundColor: '#f9fafb' }}
+            />
+          </div>
+          {!isSale && (
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Status</label>
+              <select 
+                value={status} 
+                onChange={e => setStatus(e.target.value as any)}
+                className="input-field" 
+                style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '4px', backgroundColor: '#fff' }}
+              >
+                <option value="Open">Open</option>
+                <option value="Closed">Closed</option>
+              </select>
+            </div>
+          )}
+        </div>
+
+        <div style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden', marginBottom: '32px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+              <tr>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px' }}>#</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px' }}>Item</th>
+                <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, fontSize: '13px' }}>Qty</th>
+                <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, fontSize: '13px' }}>Unit</th>
+                <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, fontSize: '13px' }}>Price/Unit</th>
+                <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, fontSize: '13px' }}>Amount</th>
+                <th style={{ padding: '12px 16px', width: '50px' }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, index) => (
+                <tr key={index} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                  <td style={{ padding: '12px 16px', fontSize: '13px' }}>{index + 1}</td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <input 
+                      list="items-list"
+                      value={item.name} 
+                      onChange={e => updateItem(index, 'name', e.target.value)}
+                      style={{ width: '100%', padding: '6px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+                    />
+                    <datalist id="items-list">
+                      {inventoryItems.map(i => <option key={i.id} value={i.name} />)}
+                    </datalist>
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <input 
+                      type="number" 
+                      value={item.quantity} 
+                      onChange={e => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                      style={{ width: '80px', padding: '6px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
+                    />
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <select 
+                      value={item.unit} 
+                      onChange={e => updateItem(index, 'unit', e.target.value)}
+                      style={{ width: '80px', padding: '6px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'center' }}
+                    >
+                      {UNIT_SUGGESTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <input 
+                      type="number" 
+                      value={item.rate} 
+                      onChange={e => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                      style={{ width: '120px', padding: '6px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
+                    />
+                  </td>
+                  <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500 }}>
+                    Rs {(item.quantity * item.rate).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                  </td>
+                  <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                    <button type="button" onClick={() => removeItem(index)} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fa-solid fa-trash"></i></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ padding: '16px' }}>
+            <button type="button" onClick={addItem} style={{ border: '1px dashed #3b82f6', color: '#3b82f6', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer', background: '#eff6ff' }}>Add Item</button>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px' }}>
+          <div style={{ padding: '24px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '12px' }}>Payment Type</label>
+            <div style={{ display: 'flex', gap: '16px' }}>
+               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                  <input type="radio" checked={paymentType === 'Cash'} onChange={() => setPaymentType('Cash')} /> Cash
+               </label>
+               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                  <input type="radio" checked={paymentType === 'Cheque'} onChange={() => setPaymentType('Cheque')} /> Cheque
+               </label>
+               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                  <input type="radio" checked={paymentType === 'Online'} onChange={() => setPaymentType('Online')} /> Online
+               </label>
+            </div>
+          </div>
+          <div style={{ padding: '24px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <span style={{ color: '#6b7280' }}>Total Amount</span>
+              <span style={{ fontWeight: 'bold' }}>Rs {totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+            </div>
+            {(isSale || status === 'Closed') && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <span style={{ color: '#6b7280' }}>Received Amount</span>
+                  <input 
+                    type="number" 
+                    value={receivedAmount} 
+                    onChange={e => setReceivedAmount(parseFloat(e.target.value) || 0)}
+                    style={{ width: '100px', padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid #f3f4f6' }}>
+                  <span style={{ fontWeight: 'bold' }}>Balance Due</span>
+                  <span style={{ fontWeight: 'bold', color: '#ef4444' }}>Rs {balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </form>
+    </div>
+  );
 }

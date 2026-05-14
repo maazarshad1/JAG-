@@ -1,102 +1,149 @@
 import React from 'react';
 import { Estimate } from './types';
 
-export function HomeModule({ sales, onAddSale, onEditSale, onViewSale, onDeleteSale }: { sales: Estimate[], onAddSale: () => void, onEditSale: (inv: Estimate) => void, onViewSale: (inv: Estimate) => void, onDeleteSale?: (id: string) => void }) {
+export function HomeModule({ 
+    sales, 
+    onAddSale, 
+    onEditSale, 
+    onViewSale,
+    onDeleteSale,
+    onMoneyIn
+}: { 
+    sales: Estimate[], 
+    onAddSale: () => void, 
+    onEditSale: (sale: Estimate) => void, 
+    onViewSale: (sale: Estimate) => void,
+    onDeleteSale?: (id: string) => void,
+    onMoneyIn?: (sale: Estimate) => void
+}) {
     const totalSales = sales.reduce((sum, inv) => sum + inv.totalAmount, 0);
-    const received = sales.reduce((sum, inv) => sum + (inv.receivedAmount || 0), 0);
     const balance = sales.reduce((sum, inv) => sum + inv.balance, 0);
+    const received = sales.reduce((sum, inv) => sum + (inv.receivedAmount || 0), 0);
+    const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
 
     return (
-        <div style={{ backgroundColor: '#fff', height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div className="module-header" style={{ padding: '16px 20px', backgroundColor: '#fff', borderBottom: '1px solid #e5e7eb' }}>
-                <h2 className="module-title" style={{ fontSize: '18px', fontWeight: 600, color: '#111827', margin: 0 }}>Sale Invoices <i className="fa-solid fa-chevron-down" style={{ fontSize: '10px', verticalAlign: 'middle' }}></i></h2>
-                <button className="btn btn-primary-red" onClick={onAddSale} style={{ backgroundColor: '#EF4444', color: '#fff', padding: '8px 20px', borderRadius: '20px', fontSize: '14px', border: 'none', cursor: 'pointer', fontWeight: 500 }}><i className="fa-solid fa-plus"></i> Add Sale</button>
+        <div style={{ flex: 1, backgroundColor: 'var(--bg-main)', display: 'flex', flexDirection: 'column' }} onClick={() => setOpenMenuId(null)}>
+            <div className="module-header" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 className="module-title" style={{ fontSize: '20px', fontWeight: 600, color: '#111827', margin: 0 }}>Sale Invoices <i className="fa-solid fa-chevron-down" style={{ fontSize: '12px', marginLeft: '8px', color: '#6b7280' }}></i></h2>
+                <button className="btn btn-primary-red" onClick={onAddSale} style={{ backgroundColor: 'var(--accent-red)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '24px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                    <i className="fa-solid fa-plus"></i> Add Sale
+                </button>
             </div>
             
-            <div className="filters-bar" style={{ padding: '12px 20px', borderBottom: '1px solid #e5e7eb', display: 'flex', gap: '16px', fontSize: '13px', alignItems: 'center' }}>
-                <span style={{ color: '#6b7280' }}>Filter by :</span>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                    <select className="filter-dropdown" style={{ padding: '4px 12px', border: '1px solid #e5e7eb', borderRadius: '4px', backgroundColor: '#f9fafb' }}>
-                        <option>This Month</option>
-                    </select>
-                    <div style={{ padding: '4px 12px', border: '1px solid #e5e7eb', borderRadius: '4px', backgroundColor: '#f9fafb', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <i className="fa-regular fa-calendar" style={{ fontSize: '14px' }}></i> 01/05/2026 To 31/05/2026
+            <div style={{ padding: '0 24px 24px 24px' }}>
+                <div className="filters-bar" style={{ display: 'flex', gap: '16px', alignItems: 'center', backgroundColor: '#fff', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e5e7eb', marginBottom: '24px' }}>
+                    <span style={{ fontSize: '13px', color: '#6b7280', fontWeight: 500 }}>Filter by:</span>
+                    <select className="filter-dropdown" style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '6px 12px', fontSize: '13px', outline: 'none' }}><option>This Month</option></select>
+                    <div className="filter-dropdown" style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '6px 12px', fontSize: '13px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <i className="fa-regular fa-calendar" style={{ color: '#6b7280' }}></i> 01/05/2026 To 31/05/2026
                     </div>
+                    <select className="filter-dropdown" style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '6px 12px', fontSize: '13px', outline: 'none' }}><option>All Firms</option></select>
                 </div>
-            </div>
 
-            <div style={{ padding: '20px' }}>
-                <div className="summary-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', padding: 0 }}>
-                    <div className="card" style={{ width: 'auto', border: '1px solid #e8e8fb', borderRadius: '8px', padding: '16px', boxShadow: 'none' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <div>
-                                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Total Sales (This Month)</div>
-                                <div style={{ fontSize: '20px', fontWeight: 'bold' }}>Rs {totalSales.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
-                            </div>
-                            <div style={{ backgroundColor: '#e0f2fe', color: '#3b82f6', padding: '4px 10px', borderRadius: '12px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '10px', fontWeight: 'bold' }}>100% <i className="fa-solid fa-arrow-trend-up"></i></div>
-                                <div style={{ fontSize: '8px' }}>vs last month</div>
-                            </div>
+                <div className="summary-cards" style={{ width: '350px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb', marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                        <div>
+                            <div className="card-title" style={{ fontSize: '13px', color: '#6b7280', fontWeight: 500, marginBottom: '4px' }}>Total Sales</div>
+                            <div className="card-amount" style={{ fontSize: '24px', fontWeight: 700, color: '#111827' }}>Rs {totalSales.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
                         </div>
-                        <div style={{ display: 'flex', gap: '16px', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #f3f4f6', fontSize: '12px' }}>
-                            <span style={{ color: '#6b7280' }}>Received: <b style={{ color: '#111827' }}>Rs {received.toLocaleString('en-IN', {minimumFractionDigits: 2})}</b></span>
-                            <span style={{ color: '#6b7280' }}>Balance: <b style={{ color: '#111827' }}>Rs {balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</b></span>
+                        <div style={{ background: '#d1fae5', color: '#10b981', padding: '6px 10px', borderRadius: '16px', fontSize: '11px', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><i className="fa-solid fa-arrow-up"></i> 100%</div>
+                            <span style={{ fontSize: '9px', fontWeight: 'normal', color: '#6b7280' }}>vs last month</span>
                         </div>
+                    </div>
+                    <div className="card-footer" style={{ display: 'flex', fontSize: '12px', color: '#6b7280', borderTop: '1px solid #f3f4f6', paddingTop: '12px', justifyContent: 'space-between' }}>
+                        <span>Received: <b style={{ color: '#111827' }}>Rs {received.toLocaleString('en-IN', {minimumFractionDigits: 2})}</b></span>
+                        <span style={{ color: '#d1d5db' }}>|</span>
+                        <span>Balance: <b style={{ color: '#111827' }}>Rs {balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</b></span>
                     </div>
                 </div>
 
-                <div className="table-container" style={{ padding: '24px 0', minHeight: 'auto' }}>
-                    <div className="table-header-row" style={{ padding: '0 0 16px 0' }}>
-                        <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#374151' }}>Transactions</h3>
-                        <div style={{ display: 'flex', gap: '16px', color: '#6b7280', fontSize: '14px' }}>
-                            <i className="fa-solid fa-magnifying-glass cursor-pointer"></i>
-                            <i className="fa-solid fa-chart-simple cursor-pointer"></i>
-                            <i className="fa-solid fa-file-excel cursor-pointer" style={{ color: '#10b981' }}></i>
-                            <i className="fa-solid fa-print cursor-pointer"></i>
-                        </div>
-                    </div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div className="table-container" style={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead>
-                            <tr style={{ backgroundColor: '#f9fafb', borderTop: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb' }}>
-                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#6b7280', fontWeight: 600 }}>Date <i className="fa-solid fa-filter" style={{ fontSize: '10px' }}></i></th>
-                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#6b7280', fontWeight: 600 }}>Invoice No. <i className="fa-solid fa-filter" style={{ fontSize: '10px' }}></i></th>
-                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#6b7280', fontWeight: 600 }}>Party Name <i className="fa-solid fa-filter" style={{ fontSize: '10px' }}></i></th>
-                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#6b7280', fontWeight: 600 }}>Type <i className="fa-solid fa-filter" style={{ fontSize: '10px' }}></i></th>
-                                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#6b7280', fontWeight: 600 }}>Payment <i className="fa-solid fa-filter" style={{ fontSize: '10px' }}></i></th>
-                                <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', color: '#6b7280', fontWeight: 600 }}>Amount <i className="fa-solid fa-filter" style={{ fontSize: '10px' }}></i></th>
-                                <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', color: '#6b7280', fontWeight: 600 }}>Balance <i className="fa-solid fa-filter" style={{ fontSize: '10px' }}></i></th>
-                                <th style={{ padding: '12px 16px', width: '100px' }}></th>
+                            <tr style={{ borderBottom: '1px solid #E5E7EB', backgroundColor: '#F9FAFB' }}>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Date</th>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Invoice No.</th>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Party Name</th>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Type</th>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Payment</th>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Amount</th>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Balance</th>
+                                <th style={{ padding: '12px 16px', width: '100px', textAlign: 'right' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {sales.map((inv) => (
-                                <tr key={inv.id} style={{ borderBottom: '1px solid #f3f4f6', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors" onClick={() => onViewSale(inv)}>
-                                    <td style={{ padding: '12px 16px', fontSize: '13px' }}>{inv.date}</td>
-                                    <td style={{ padding: '12px 16px', fontSize: '13px' }}>{inv.refNo}</td>
-                                    <td style={{ padding: '12px 16px', fontSize: '13px' }}>
+                            {sales.map((inv) => {
+                                const isFullyPaid = (inv.receivedAmount || 0) >= inv.totalAmount;
+                                
+                                return (
+                                <tr key={inv.id} style={{ borderBottom: '1px solid #E5E7EB', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors" onClick={() => onViewSale(inv)}>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{inv.date}</td>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{inv.refNo}</td>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', fontWeight: 500 }}>
                                         <div style={{ maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={inv.customerName}>
                                             {inv.customerName}
                                         </div>
                                     </td>
-                                    <td style={{ padding: '12px 16px', fontSize: '13px' }}>Sale</td>
-                                    <td style={{ padding: '12px 16px', fontSize: '13px' }}>{inv.paymentType || 'Cash'}</td>
-                                    <td style={{ padding: '12px 16px', fontSize: '13px', textAlign: 'right', fontWeight: 500 }}>Rs {inv.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                                    <td style={{ padding: '12px 16px', fontSize: '13px', textAlign: 'right' }}>Rs {inv.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                                        <div style={{ display: 'flex', gap: '12px', color: '#6b7280', justifyContent: 'flex-end' }}>
-                                            <i className="fa-solid fa-pencil cursor-pointer hover:text-blue-600" onClick={(e) => { e.stopPropagation(); onEditSale(inv); }}></i>
-                                            <i className="fa-solid fa-print cursor-pointer hover:text-blue-600" onClick={(e) => { e.stopPropagation(); onViewSale(inv); }}></i>
-                                            <i className="fa-solid fa-trash cursor-pointer hover:text-red-600" onClick={(e) => { e.stopPropagation(); onDeleteSale?.(inv.id); }}></i>
-                                            <i className="fa-solid fa-share-nodes cursor-pointer hover:text-blue-600"></i>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>Sale</td>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{inv.paymentType || 'Cash'}</td>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', textAlign: 'right', color: '#111827' }}>Rs {inv.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', textAlign: 'right', color: '#111827' }}>Rs {inv.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="relative inline-block text-left">
+                                            <button 
+                                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setOpenMenuId(openMenuId === inv.id ? null : inv.id);
+                                                }}
+                                            >
+                                                <i className="fa-solid fa-ellipsis-vertical px-1"></i>
+                                            </button>
+                                            {openMenuId === inv.id && (
+                                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 ring-1 ring-black ring-opacity-5 z-10 transition-all">
+                                                    <div className="py-1">
+                                                        <button 
+                                                            className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
+                                                            onClick={(e) => { e.stopPropagation(); onViewSale(inv); setOpenMenuId(null); }}
+                                                        >
+                                                            <i className="fa-solid fa-print w-5"></i> Print / PDF
+                                                        </button>
+                                                        <button 
+                                                            className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
+                                                            onClick={(e) => { e.stopPropagation(); onEditSale(inv); setOpenMenuId(null); }}
+                                                        >
+                                                            <i className="fa-solid fa-pen-to-square w-5"></i> Edit
+                                                        </button>
+                                                        {!isFullyPaid && (
+                                                            <button 
+                                                                className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-emerald-600 border-t border-slate-100 mt-1 pt-1.5"
+                                                                onClick={(e) => { e.stopPropagation(); onMoneyIn?.(inv); setOpenMenuId(null); }}
+                                                            >
+                                                                <i className="fa-solid fa-money-bill-wave w-5 text-emerald-500"></i> Money In
+                                                            </button>
+                                                        )}
+                                                        <button 
+                                                            className="group flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-slate-100 mt-1 pt-1.5"
+                                                            onClick={(e) => { e.stopPropagation(); onDeleteSale?.(inv.id); setOpenMenuId(null); }}
+                                                        >
+                                                            <i className="fa-solid fa-trash w-5"></i> Delete
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                            )})}
                             {sales.length === 0 && (
                                 <tr>
-                                    <td colSpan={8} style={{ padding: '48px', textAlign: 'center', color: '#9ca3af' }}>
-                                        <div style={{ marginBottom: '12px', fontSize: '24px' }}><i className="fa-solid fa-file-invoice"></i></div>
-                                        <div>No sales recorded yet</div>
+                                    <td colSpan={8} style={{ padding: '64px 20px', textAlign: 'center' }}>
+                                        <div style={{ width: '120px', height: '120px', backgroundColor: '#eff6ff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', margin: '0 auto' }}>
+                                            <i className="fa-solid fa-file-invoice text-blue-400" style={{ fontSize: '48px' }}></i>
+                                        </div>
+                                        <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', margin: '0 0 8px 0' }}>No Transactions to show</h3>
+                                        <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 24px 0' }}>You haven't added any sale invoices yet.</p>
                                     </td>
                                 </tr>
                             )}

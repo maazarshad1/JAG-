@@ -9,7 +9,7 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
     const open = estimates.filter(e => e.status !== 'Closed').reduce((sum, e) => sum + e.totalAmount, 0);
 
     return (
-        <div style={{ flex: 1, backgroundColor: 'var(--bg-main)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, backgroundColor: 'var(--bg-main)', display: 'flex', flexDirection: 'column' }} onClick={() => setOpenDropdownId(null)}>
             <div className="module-header" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h2 className="module-title" style={{ fontSize: '20px', fontWeight: 600, color: '#111827', margin: 0 }}>Estimate/Quotation <i className="fa-solid fa-chevron-down" style={{ fontSize: '12px', marginLeft: '8px', color: '#6b7280' }}></i></h2>
                 <button className="btn btn-primary-red" onClick={onAddEstimate} style={{ backgroundColor: 'var(--accent-red)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '24px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
@@ -89,27 +89,57 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
                                                     {isOpen ? 'Open' : 'Closed'}
                                                 </span>
                                             </td>
-                                            <td style={{ padding: '12px 16px', fontSize: '13px', textAlign: 'right' }}>
-                                                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                                                    {isOpen && (
-                                                        <div style={{ display: 'inline-block', position: 'relative' }}>
-                                                            <span 
-                                                                style={{ color: '#3b82f6', cursor: 'pointer', fontWeight: 500, fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '4px' }} 
-                                                                onClick={(e) => { e.stopPropagation(); setOpenDropdownId(openDropdownId === est.id ? null : est.id); }}
-                                                            >
-                                                                Convert <i className="fa-solid fa-chevron-down" style={{ fontSize: '10px' }}></i>
-                                                            </span>
-                                                            {openDropdownId === est.id && (
-                                                                <div style={{ position: 'absolute', top: '100%', right: 0, backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '4px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', zIndex: 10, width: '150px', textAlign: 'left', overflow: 'hidden' }}>
-                                                                    <div style={{ padding: '8px 16px', cursor: 'pointer', color: '#374151', fontSize: '13px' }} onClick={(e) => { e.stopPropagation(); onConvertToSale(est.id, 'SALE'); setOpenDropdownId(null); }} className="hover:bg-slate-50">Convert to Sale</div>
-                                                                    <div style={{ padding: '8px 16px', cursor: 'pointer', color: '#374151', fontSize: '13px' }} onClick={(e) => { e.stopPropagation(); onConvertToSale(est.id, 'SALE_ORDER'); setOpenDropdownId(null); }} className="hover:bg-slate-50">Convert to Sale Order</div>
-                                                                </div>
-                                                            )}
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="relative inline-block text-left">
+                                                    <button 
+                                                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setOpenDropdownId(openDropdownId === est.id ? null : est.id);
+                                                        }}
+                                                    >
+                                                        <i className="fa-solid fa-ellipsis-vertical px-1"></i>
+                                                    </button>
+                                                    {openDropdownId === est.id && (
+                                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 ring-1 ring-black ring-opacity-5 z-10 transition-all">
+                                                            <div className="py-1">
+                                                                <button 
+                                                                    className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
+                                                                    onClick={(e) => { e.stopPropagation(); onViewEstimate(est); setOpenDropdownId(null); }}
+                                                                >
+                                                                    <i className="fa-solid fa-print w-5"></i> Print / PDF
+                                                                </button>
+                                                                <button 
+                                                                    className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
+                                                                    onClick={(e) => { e.stopPropagation(); onEditEstimate(est); setOpenDropdownId(null); }}
+                                                                >
+                                                                    <i className="fa-solid fa-pen-to-square w-5"></i> Edit
+                                                                </button>
+                                                                {isOpen && (
+                                                                    <>
+                                                                        <button 
+                                                                            className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-emerald-600 border-t border-slate-100 mt-1 pt-1.5"
+                                                                            onClick={(e) => { e.stopPropagation(); onConvertToSale(est.id, 'SALE'); setOpenDropdownId(null); }}
+                                                                        >
+                                                                            <i className="fa-solid fa-file-invoice-dollar w-5 text-emerald-500"></i> Convert to Sale
+                                                                        </button>
+                                                                        <button 
+                                                                            className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-emerald-600"
+                                                                            onClick={(e) => { e.stopPropagation(); onConvertToSale(est.id, 'SALE_ORDER'); setOpenDropdownId(null); }}
+                                                                        >
+                                                                            <i className="fa-solid fa-file-signature w-5 text-emerald-500"></i> Convert to Order
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                                <button 
+                                                                    className="group flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-slate-100 mt-1 pt-1.5"
+                                                                    onClick={(e) => { e.stopPropagation(); onDeleteEstimate?.(est.id); setOpenDropdownId(null); }}
+                                                                >
+                                                                    <i className="fa-solid fa-trash w-5"></i> Delete
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     )}
-                                                    <i className="fa-solid fa-pencil" style={{ color: '#3b82f6', cursor: 'pointer', padding: '4px' }} onClick={(e) => { e.stopPropagation(); onEditEstimate(est); }}></i>
-                                                    <i className="fa-solid fa-trash" style={{ color: '#ef4444', cursor: 'pointer', padding: '4px' }} onClick={(e) => { e.stopPropagation(); onDeleteEstimate?.(est.id); }}></i>
-                                                    <i className="fa-solid fa-ellipsis-vertical" style={{ color: '#9ca3af', cursor: 'pointer', padding: '4px' }}></i>
                                                 </div>
                                             </td>
                                         </tr>

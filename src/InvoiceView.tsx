@@ -309,15 +309,15 @@ export function InvoiceView({
                  <button 
                    onClick={handleDownloadPDF} 
                    disabled={isGenerating}
-                   className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-semibold hover:bg-indigo-700 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                   className={`px-4 py-2 ${estimate.isSale ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-md text-sm font-semibold flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed`}
                  >
                    {isGenerating ? (
                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                    ) : <Download size={16} />}
                    {isGenerating ? 'Generating...' : 'Download PDF'}
                  </button>
-                 <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer font-medium"><input type="checkbox" className="rounded" /> Do not show invoice preview again</label>
-                 <button onClick={onBack} className="text-blue-600 font-semibold hover:underline text-sm">Save & Close</button>
+                 <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer font-medium"><input type="checkbox" className="rounded text-red-600 focus:ring-red-500" /> Do not show invoice preview again</label>
+                 <button onClick={onBack} className={`${estimate.isSale ? 'text-red-600 hover:text-red-700' : 'text-blue-600 hover:text-blue-700'} font-semibold underline text-sm`}>Save & Close</button>
               </div>
             </div>
 
@@ -429,7 +429,7 @@ export function InvoiceView({
                         <td style={{ padding: '8px 10px', borderBottom: '1px solid #000', textAlign: 'center', fontWeight: 'bold' }}>:</td>
                         <td style={{ padding: '8px 15px', borderBottom: '1px solid #000', textAlign: 'right', fontWeight: 'bold', fontSize: '16px' }}>₨ {estimate.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
-                      {estimate.isSale && (
+                      {(estimate.isSale || estimate.status === 'Closed') && (
                         <>
                           <tr>
                             <td style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontWeight: '500' }}>Received Amount</td>
@@ -481,9 +481,9 @@ export function InvoiceView({
                      )}
                      <div style={{ fontSize: '12px', color: '#555', marginTop: '6px', fontWeight: 'bold' }}>Authorized Signatory</div>
                      
-                     <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/5 transition-colors print:hidden" />
+                     <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/5 transition-colors print:hidden" />
                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
-                        <Edit2 size={14} className="text-indigo-600" />
+                        <Edit2 size={14} className={estimate.isSale ? 'text-red-600' : 'text-blue-600'} />
                      </div>
                   </div>
                </div>
@@ -500,7 +500,7 @@ export function InvoiceView({
                      <button 
                        onClick={handleDownloadPDF} 
                        disabled={isGenerating}
-                       className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-semibold hover:bg-indigo-700 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                       className={`px-4 py-2 ${estimate.isSale ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-md text-sm font-semibold flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed`}
                      >
                        {isGenerating ? (
                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -568,7 +568,7 @@ export function InvoiceView({
         <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-slate-800 flex items-center gap-2"><Pencil size={18} className="text-indigo-600" /> Draw Signature</h3>
+              <h3 className="font-bold text-slate-800 flex items-center gap-2"><Pencil size={18} className={estimate.isSale ? 'text-red-600' : 'text-blue-600'} /> Draw Signature</h3>
               <button onClick={() => setShowSignatureModal(false)} className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-200 transition-colors">
                 <X size={20} />
               </button>
@@ -587,7 +587,7 @@ export function InvoiceView({
               <button onClick={() => setShowSignatureModal(false)} className="px-5 py-2.5 font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors">Cancel</button>
               <button 
                 onClick={handleSignatureSave} 
-                className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 hover:shadow-lg active:scale-95 transition-all text-sm"
+                className={`px-6 py-2.5 ${estimate.isSale ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all text-sm`}
               >
                 Save Signature
               </button>

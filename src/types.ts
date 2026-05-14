@@ -19,6 +19,7 @@ export interface Party {
   userId?: string;
   workspaceId?: string;
   name: string;
+  customerRefNo?: string;
   balance: number;
   type: 'receive' | 'pay';
   phone: string;
@@ -58,6 +59,7 @@ export interface Estimate {
   balance: number;
   isSale?: boolean;
   receivedAmount?: number;
+  convertedFromId?: string;
   paymentType?: 'Cash' | 'Cheque' | 'Online' | 'Credit';
 }
 
@@ -74,4 +76,4 @@ export interface CompanyData {
   terms?: string;
 }
 
-export type View = 'HOME' | 'REPORTS' | 'MENU' | 'ESTIMATE_LIST' | 'ESTIMATE_FORM' | 'INVOICE_VIEW' | 'PROFILE_EDIT' | 'SALE_FORM' | 'SALE_LIST' | 'PARTIES_LIST' | 'ITEMS_LIST';
+export type View = 'HOME' | 'REPORTS' | 'MENU' | 'ESTIMATE_LIST' | 'ESTIMATE_FORM' | 'INVOICE_VIEW' | 'PROFILE_EDIT' | 'SALE_FORM' | 'SALE_LIST' | 'PARTIES_LIST' | 'ITEMS_LIST' | 'PAYMENT_IN_LIST' | 'PAYMENT_IN_FORM';

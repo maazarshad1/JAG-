@@ -16,6 +16,8 @@ import { PartyFormModal } from './PartyFormModal';
 import { ItemFormModal } from './ItemFormModal';
 import { SettingsModule } from './SettingsModule';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
+import { PaymentInModal } from './PaymentInModal';
+import { PaymentInModule } from './PaymentInModule';
 import { 
   auth, db, googleProvider, 
   handleFirestoreError, OperationType, 
@@ -39,6 +41,7 @@ export default function App() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<View>('HOME');
   const [currentInvoice, setCurrentInvoice] = useState<Estimate | null>(null);
+  const [paymentInSale, setPaymentInSale] = useState<Estimate | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   
   const [companyData, setCompanyData] = useState<CompanyData>({
@@ -305,6 +308,7 @@ export default function App() {
           const ref = doc(collection(db, 'parties'));
           await setDoc(ref, { 
             ...partyData, 
+            customerRefNo: partyData.customerRefNo || ('CUST-' + String(parties.length + 1).padStart(3, '0')),
             id: ref.id, 
             balance: partyData.balance || 0,
             type: 'receive'
@@ -318,6 +322,7 @@ export default function App() {
       } else {
           const newParty: Party = {
               ...partyData as Party,
+              customerRefNo: partyData.customerRefNo || ('CUST-' + String(parties.length + 1).padStart(3, '0')),
               id: Date.now().toString(),
               balance: partyData.balance || 0,
               type: 'receive'
@@ -390,6 +395,93 @@ export default function App() {
     setDeleteAction({ type: 'transaction', id });
   };
 
+  const handleSavePaymentIn = async (
+    saleId: string | null, 
+    amount: number, 
+    paymentType: 'Cash' | 'Cheque' | 'Online', 
+    newPartyBalance: number,
+    partyData?: { name: string, id?: string | number },
+    date?: string,
+    refNo?: number
+  ) => {
+    if (saleId) {
+      // Update existing sale
+      const isSale = !!sales.find(s => s.id === saleId);
+      const saleList = isSale ? sales : estimates;
+      const sale = saleList.find(s => s.id === saleId);
+      if (!sale) return;
+
+      const newReceived = (sale.receivedAmount || 0) + amount;
+      const newBalance = sale.totalAmount - newReceived;
+
+      const newSaleData = {
+        ...sale,
+        receivedAmount: newReceived,
+        balance: newBalance,
+        paymentType: paymentType,
+        status: (!isSale && newBalance <= 0) ? 'Closed' : sale.status
+      };
+
+      if (user) {
+        try {
+          await setDoc(doc(db, 'transactions', saleId), newSaleData);
+          if (sale.partyId) {
+            await setDoc(doc(db, 'parties', String(sale.partyId)), { balance: newPartyBalance }, { merge: true });
+          }
+        } catch (err) { handleFirestoreError(err, OperationType.WRITE, `transactions/${saleId}`); }
+      } else {
+        if (isSale) {
+          setSales(prev => prev.map(s => s.id === saleId ? newSaleData as Estimate : s));
+        } else {
+          setEstimates(prev => prev.map(s => s.id === saleId ? newSaleData as Estimate : s));
+        }
+        if (sale.partyId) {
+          setParties(prev => prev.map(p => p.id === sale.partyId ? { ...p, balance: newPartyBalance } as Party : p));
+        }
+      }
+    } else {
+      // Create new general payment-in
+      const txnId = Date.now().toString();
+      const newPayment: Estimate = {
+        id: txnId,
+        refNo: refNo || 0,
+        date: date || new Date().toISOString().split('T')[0],
+        customerName: partyData?.name || 'Walk-in Customer',
+        partyId: partyData?.id || undefined,
+        items: [],
+        totalAmount: 0,
+        receivedAmount: amount,
+        balance: -amount,
+        isSale: true,
+        paymentType: paymentType,
+        status: 'Closed',
+        discountValue: 0,
+        discountType: 'fixed',
+        taxType: 'none',
+        description: 'Payment-In received'
+      };
+
+      if (user) {
+        try {
+          const txnRef = doc(collection(db, 'transactions'));
+          newPayment.id = txnRef.id;
+          await setDoc(txnRef, newPayment);
+          if (newPayment.partyId) {
+            await setDoc(doc(db, 'parties', String(newPayment.partyId)), { balance: newPartyBalance }, { merge: true });
+          }
+        } catch (err) { handleFirestoreError(err, OperationType.WRITE, 'transactions'); }
+      } else {
+        setSales([...sales, newPayment]);
+        if (newPayment.partyId) {
+          setParties(prev => prev.map(p => p.id === newPayment.partyId ? { ...p, balance: newPartyBalance } as Party : p));
+        }
+      }
+    }
+
+    setPaymentInSale(null);
+    setCurrentView('PAYMENT_IN_LIST');
+  };
+
   const executeDelete = async () => {
     if (!deleteAction) return;
     const { type, id } = deleteAction;
@@ -443,19 +535,29 @@ export default function App() {
   };
 
   const handleViewInvoice = (inv: Estimate) => {
+    // If it's a closed estimate, try to find the sale it was converted to
+    if (!inv.isSale && inv.status === 'Closed') {
+      const associatedSale = sales.find(s => s.convertedFromId === inv.id);
+      if (associatedSale) {
+        setCurrentInvoice(associatedSale);
+        setCurrentView('INVOICE_VIEW');
+        return;
+      }
+    }
     setCurrentInvoice(inv);
     setCurrentView('INVOICE_VIEW');
   };
 
   const handleSaveInvoice = async (inv: Estimate, isSale: boolean, printAndPreview: boolean) => {
+      inv.isSale = isSale;
       if (user) {
-        inv.isSale = isSale;
         try {
           if (editingInvoice) {
             await updateDoc(doc(db, 'transactions', editingInvoice.id), { ...inv });
             setEditingInvoice(null);
           } else {
             if (isSale && convertingEstimateId) {
+              inv.convertedFromId = convertingEstimateId;
               await updateDoc(doc(db, 'transactions', convertingEstimateId), { status: 'Closed' });
               setConvertingEstimateId(null);
             }
@@ -478,6 +580,7 @@ export default function App() {
                   phone: inv.customerPhone || '',
                   email: '',
                   billingAddress: inv.billingAddress || '',
+                  customerRefNo: 'CUST-' + String(parties.length + 1).padStart(3, '0'),
                   balance: isSale ? inv.totalAmount : 0,
                   type: 'receive'
                 };
@@ -503,6 +606,7 @@ export default function App() {
             setEditingInvoice(null);
         } else {
             if (isSale && convertingEstimateId) {
+                inv.convertedFromId = convertingEstimateId;
                 setEstimates(prev => prev.map(e => e.id === convertingEstimateId ? { ...e, status: 'Closed' } : e));
                 setConvertingEstimateId(null);
             }
@@ -513,7 +617,7 @@ export default function App() {
                 if (partyIndex >= 0) {
                     if (isSale) updatedParties[partyIndex] = { ...updatedParties[partyIndex], balance: (updatedParties[partyIndex].balance || 0) + inv.totalAmount };
                 } else {
-                    const newParty: Party = { id: Date.now().toString() + "_party", name: inv.customerName, phone: inv.customerPhone || '', email: '', billingAddress: inv.billingAddress || '', balance: isSale ? inv.totalAmount : 0, type: 'receive' };
+                    const newParty: Party = { id: Date.now().toString() + "_party", name: inv.customerName, phone: inv.customerPhone || '', email: '', billingAddress: inv.billingAddress || '', customerRefNo: 'CUST-' + String(parties.length + 1).padStart(3, '0'), balance: isSale ? inv.totalAmount : 0, type: 'receive' };
                     updatedParties.push(newParty);
                     inv.partyId = newParty.id;
                 }
@@ -553,6 +657,8 @@ export default function App() {
     }
   };
 
+  const maxRefNo = Math.max(...[...sales, ...estimates].map(s => Number(s.refNo || 0)), 0);
+
   return (
     <div id="app-container">
       <Sidebar 
@@ -570,13 +676,17 @@ export default function App() {
           {currentView === 'HOME' && (
             <DashboardModule 
               sales={[...sales, ...estimates]} 
-              parties={parties} 
-              items={items} 
+              parties={parties}
+              items={items}
               onNavigate={setCurrentView} 
-              onExportExcel={exportToExcel}
               onEditSale={handleEditSale}
               onDeleteSale={handleDeleteSale}
               onViewSale={handleViewInvoice}
+              onConvertToSale={handleConvertToSale}
+              onReceivePayment={(sale) => {
+                 setPaymentInSale(sale);
+                 setCurrentView('PAYMENT_IN_FORM');
+              }}
             />
           )}
           {currentView === 'REPORTS' && <ReportsModule sales={sales} parties={parties} items={items} onNavigate={setCurrentView} onExportExcel={exportToExcel} />}
@@ -587,6 +697,25 @@ export default function App() {
               onEditSale={handleEditSale} 
               onViewSale={handleViewInvoice} 
               onDeleteSale={handleDeleteSale}
+              onMoneyIn={setPaymentInSale}
+            />
+          )}
+          {currentView === 'PAYMENT_IN_LIST' && (
+            <PaymentInModule 
+              sales={sales} 
+              onViewSale={handleViewInvoice}
+              onAddPaymentIn={() => {
+                  setPaymentInSale(null);
+                  setCurrentView('PAYMENT_IN_FORM');
+              }}
+            />
+          )}
+          {currentView === 'PAYMENT_IN_FORM' && (
+            <PaymentInModal
+              parties={parties}
+              initialData={paymentInSale || undefined}
+              onClose={() => setCurrentView('PAYMENT_IN_LIST')}
+              onSave={(data: any) => handleSavePaymentIn(paymentInSale?.id || '', data.receivedAmount, data.paymentType, (parties.find(p => p.id === data.partyId)?.balance || 0) - data.receivedAmount, { id: data.partyId, customerName: data.customerName } as any, data.date, paymentInSale?.refNo || '')}
             />
           )}
           {currentView === 'PARTIES_LIST' && (
@@ -612,8 +741,8 @@ export default function App() {
               onDeleteEstimate={handleDeleteSale}
             />
           )}
-          {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale, print) => handleSaveInvoice(sale, true, print)} onCancel={() => { setConvertingEstimateId(null); setEditingInvoice(null); setCurrentView('SALE_LIST'); }} initialData={editingInvoice || (convertingEstimateId ? estimates.find(e => e.id === convertingEstimateId) : undefined)} parties={parties} items={items} />}
-          {currentView === 'ESTIMATE_FORM' && <InvoiceForm isSale={false} onSave={(est, print) => handleSaveInvoice(est, false, print)} onCancel={() => { setEditingInvoice(null); setCurrentView('ESTIMATE_LIST'); }} initialData={editingInvoice || undefined} parties={parties} items={items} />}
+          {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale) => handleSaveInvoice(sale, true, false)} onCancel={() => { setConvertingEstimateId(null); setEditingInvoice(null); setCurrentView('SALE_LIST'); }} initialData={editingInvoice || (convertingEstimateId ? estimates.find(e => e.id === convertingEstimateId) : undefined)} parties={parties} inventoryItems={items} />}
+          {currentView === 'ESTIMATE_FORM' && <InvoiceForm isSale={false} onSave={(est) => handleSaveInvoice(est, false, false)} onCancel={() => { setEditingInvoice(null); setCurrentView('ESTIMATE_LIST'); }} initialData={editingInvoice || undefined} parties={parties} inventoryItems={items} />}
           {currentView === 'INVOICE_VIEW' && currentInvoice && (
              <InvoiceView 
                 estimate={currentInvoice} 
