@@ -123,7 +123,10 @@ export function Sidebar({ currentView, setCurrentView, onAction, companyData, is
                         <i className="fa-solid fa-chevron-down right-icon group-toggle"></i>
                     </div>
                     <div className="nav-subgroup">
-                        <button className="nav-subitem border-0 bg-transparent w-full text-left">
+                        <button 
+                            className={`nav-subitem ${currentView === 'REPORTS' ? 'active' : ''} border-0 bg-transparent w-full text-left`}
+                            onClick={() => setCurrentView('REPORTS')}
+                        >
                             <i className="fa-solid fa-chart-pie" style={{ width: '16px', marginRight: '8px' }}></i>
                             <span>Reports</span>
                         </button>

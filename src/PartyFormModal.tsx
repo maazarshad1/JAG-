@@ -138,11 +138,8 @@ export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormM
                     <div>
                         {party.id && onDelete && (
                             <button 
-                                onClick={() => {
-                                    if(window.confirm('Are you sure you want to delete this party?')) {
-                                        onDelete(party.id!);
-                                    }
-                                }}
+                                type="button"
+                                onClick={() => onDelete(party.id!)}
                                 style={{ padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '6px', backgroundColor: '#fff', color: '#6b7280', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}
                             >
                                 Delete

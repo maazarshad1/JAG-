@@ -1,7 +1,7 @@
 import React from 'react';
 import { Estimate } from './types';
 
-export function HomeModule({ sales, onAddSale, onEditSale, onViewSale }: { sales: Estimate[], onAddSale: () => void, onEditSale: (inv: Estimate) => void, onViewSale: (inv: Estimate) => void }) {
+export function HomeModule({ sales, onAddSale, onEditSale, onViewSale, onDeleteSale }: { sales: Estimate[], onAddSale: () => void, onEditSale: (inv: Estimate) => void, onViewSale: (inv: Estimate) => void, onDeleteSale?: (id: string) => void }) {
     const totalSales = sales.reduce((sum, inv) => sum + inv.totalAmount, 0);
     const received = sales.reduce((sum, inv) => sum + (inv.receivedAmount || 0), 0);
     const balance = sales.reduce((sum, inv) => sum + inv.balance, 0);
@@ -82,6 +82,7 @@ export function HomeModule({ sales, onAddSale, onEditSale, onViewSale }: { sales
                                         <div style={{ display: 'flex', gap: '12px', color: '#6b7280', justifyContent: 'flex-end' }}>
                                             <i className="fa-solid fa-pencil cursor-pointer hover:text-blue-600" onClick={(e) => { e.stopPropagation(); onEditSale(inv); }}></i>
                                             <i className="fa-solid fa-print cursor-pointer hover:text-blue-600" onClick={(e) => { e.stopPropagation(); onViewSale(inv); }}></i>
+                                            <i className="fa-solid fa-trash cursor-pointer hover:text-red-600" onClick={(e) => { e.stopPropagation(); onDeleteSale?.(inv.id); }}></i>
                                             <i className="fa-solid fa-share-nodes cursor-pointer hover:text-blue-600"></i>
                                         </div>
                                     </td>

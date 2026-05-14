@@ -74,4 +74,4 @@ export interface CompanyData {
   terms?: string;
 }
 
-export type View = 'HOME' | 'MENU' | 'ESTIMATE_LIST' | 'ESTIMATE_FORM' | 'INVOICE_VIEW' | 'PROFILE_EDIT' | 'SALE_FORM' | 'SALE_LIST' | 'PARTIES_LIST' | 'ITEMS_LIST';
+export type View = 'HOME' | 'REPORTS' | 'MENU' | 'ESTIMATE_LIST' | 'ESTIMATE_FORM' | 'INVOICE_VIEW' | 'PROFILE_EDIT' | 'SALE_FORM' | 'SALE_LIST' | 'PARTIES_LIST' | 'ITEMS_LIST';

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Estimate } from './types';
 import { FileText } from 'lucide-react';
 
-export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onEditEstimate, onViewEstimate }: { estimates: Estimate[], onAddEstimate: () => void, onConvertToSale: (id: string, type: 'SALE' | 'SALE_ORDER') => void, onEditEstimate: (est: Estimate) => void, onViewEstimate: (est: Estimate) => void }) {
+export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onEditEstimate, onViewEstimate, onDeleteEstimate }: { estimates: Estimate[], onAddEstimate: () => void, onConvertToSale: (id: string, type: 'SALE' | 'SALE_ORDER') => void, onEditEstimate: (est: Estimate) => void, onViewEstimate: (est: Estimate) => void, onDeleteEstimate?: (id: string) => void }) {
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
     const totalQuotations = estimates.reduce((sum, e) => sum + e.totalAmount, 0);
     const converted = estimates.filter(e => e.status === 'Closed').reduce((sum, e) => sum + e.totalAmount, 0);
@@ -104,6 +104,7 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
                                                         </div>
                                                     )}
                                                     <i className="fa-solid fa-pencil" style={{ color: '#3b82f6', cursor: 'pointer', padding: '4px' }} onClick={(e) => { e.stopPropagation(); onEditEstimate(est); }}></i>
+                                                    <i className="fa-solid fa-trash" style={{ color: '#ef4444', cursor: 'pointer', padding: '4px' }} onClick={(e) => { e.stopPropagation(); onDeleteEstimate?.(est.id); }}></i>
                                                     <i className="fa-solid fa-ellipsis-vertical" style={{ color: '#9ca3af', cursor: 'pointer', padding: '4px' }}></i>
                                                 </div>
                                             </td>

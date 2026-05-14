@@ -6,6 +6,7 @@ import { Sidebar } from './Sidebar';
 import { TopHeader } from './TopHeader';
 import { HomeModule } from './HomeModule';
 import { DashboardModule } from './DashboardModule';
+import { ReportsModule } from './ReportsModule';
 import { EstimatesModule } from './EstimatesModule';
 import { PartiesModule } from './PartiesModule';
 import { ItemsModule } from './ItemsModule';
@@ -14,6 +15,7 @@ import { InvoiceForm } from './InvoiceForm';
 import { PartyFormModal } from './PartyFormModal';
 import { ItemFormModal } from './ItemFormModal';
 import { SettingsModule } from './SettingsModule';
+import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { 
   auth, db, googleProvider, 
   handleFirestoreError, OperationType, 
@@ -37,6 +39,7 @@ export default function App() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<View>('HOME');
   const [currentInvoice, setCurrentInvoice] = useState<Estimate | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   
   const [companyData, setCompanyData] = useState<CompanyData>({
     name: '',
@@ -70,7 +73,22 @@ export default function App() {
 
   // Sync data with Firestore
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      // Load local data if no user
+      const savedSales = localStorage.getItem('vyapar_sales');
+      const savedEstimates = localStorage.getItem('vyapar_estimates');
+      const savedParties = localStorage.getItem('vyapar_parties');
+      const savedItems = localStorage.getItem('vyapar_items');
+      const savedCompany = localStorage.getItem('vyapar_company');
+
+      if (savedSales) setSales(JSON.parse(savedSales));
+      if (savedEstimates) setEstimates(JSON.parse(savedEstimates));
+      if (savedParties) setParties(JSON.parse(savedParties));
+      if (savedItems) setItems(JSON.parse(savedItems));
+      if (savedCompany) setCompanyData(JSON.parse(savedCompany));
+      
+      return;
+    };
 
     // Check for local data migration on first sync
     const hasLocalData = localStorage.getItem('vyapar_company') || 
@@ -121,6 +139,16 @@ export default function App() {
       unsubTxns();
     };
   }, [user]);
+
+  // Persist local data if no user
+  useEffect(() => {
+    if (user) return;
+    localStorage.setItem('vyapar_sales', JSON.stringify(sales));
+    localStorage.setItem('vyapar_estimates', JSON.stringify(estimates));
+    localStorage.setItem('vyapar_parties', JSON.stringify(parties));
+    localStorage.setItem('vyapar_items', JSON.stringify(items));
+    localStorage.setItem('vyapar_company', JSON.stringify(companyData));
+  }, [sales, estimates, parties, items, companyData, user]);
 
   const handleSignIn = async () => {
     setAuthError(null);
@@ -296,17 +324,6 @@ export default function App() {
     setEditingParty(null);
   };
 
-  const handleDeleteParty = async (id: string | number) => {
-    if (user) {
-      try { await deleteDoc(doc(db, 'parties', id as string)); }
-      catch (err) { handleFirestoreError(err, OperationType.DELETE, `parties/${id}`); }
-    } else {
-      setParties(prev => prev.filter(p => p.id !== id));
-    }
-    setShowPartyModal(false);
-    setEditingParty(null);
-  };
-
   const handleEditItem = (item: InventoryItem) => {
     setEditingItem(item);
     setShowItemModal(true);
@@ -344,17 +361,6 @@ export default function App() {
     setEditingItem(null);
   };
 
-  const handleDeleteItem = async (id: string | number) => {
-    if (user) {
-      try { await deleteDoc(doc(db, 'inventory', id as string)); }
-      catch (err) { handleFirestoreError(err, OperationType.DELETE, `inventory/${id}`); }
-    } else {
-      setItems(prev => prev.filter(i => i.id !== id));
-    }
-    setShowItemModal(false);
-    setEditingItem(null);
-  };
-
   const handleConvertToSale = async (estimateId: string, type: 'SALE' | 'SALE_ORDER') => {
     // Both SALE and SALE_ORDER conversions should open the Sale Form with estimate data
     setConvertingEstimateId(estimateId);
@@ -370,7 +376,60 @@ export default function App() {
 
   const handleEditSale = (inv: Estimate) => {
     setEditingInvoice(inv);
-    setCurrentView('SALE_FORM');
+    setCurrentView(inv.isSale ? 'SALE_FORM' : 'ESTIMATE_FORM');
+  };
+
+  const [deleteAction, setDeleteAction] = useState<{type: 'transaction'|'party'|'item', id: string, name?: string} | null>(null);
+
+  const handleDeleteSale = async (id: string) => {
+    setDeleteAction({ type: 'transaction', id });
+  };
+
+  const executeDelete = async () => {
+    if (!deleteAction) return;
+    const { type, id } = deleteAction;
+
+    if (type === 'transaction') {
+      if (user) {
+        try {
+          await deleteDoc(doc(db, 'transactions', id));
+        } catch (err) {
+          console.error("Delete failed:", err);
+          handleFirestoreError(err, OperationType.DELETE, `transactions/${id}`);
+        }
+      } else {
+        setSales(prev => prev.filter(s => s.id !== id));
+        setEstimates(prev => prev.filter(e => e.id !== id));
+      }
+    } else if (type === 'party') {
+      if (user) {
+        try { await deleteDoc(doc(db, 'parties', id)); }
+        catch (err) { handleFirestoreError(err, OperationType.DELETE, `parties/${id}`); }
+      } else {
+        setParties(prev => prev.filter(p => p.id !== id));
+      }
+      setShowPartyModal(false);
+      setEditingParty(null);
+    } else if (type === 'item') {
+      if (user) {
+        try { await deleteDoc(doc(db, 'inventory', id)); }
+        catch (err) { handleFirestoreError(err, OperationType.DELETE, `inventory/${id}`); }
+      } else {
+        setItems(prev => prev.filter(i => i.id !== id));
+      }
+      setShowItemModal(false);
+      setEditingItem(null);
+    }
+
+    setDeleteAction(null);
+  };
+
+  const handleDeleteItem = (id: string | number) => {
+    setDeleteAction({ type: 'item', id: String(id) });
+  };
+
+  const handleDeleteParty = (id: string | number) => {
+    setDeleteAction({ type: 'party', id: String(id) });
   };
 
   const handleEditEstimate = (est: Estimate) => {
@@ -503,8 +562,28 @@ export default function App() {
         <TopHeader title={companyData.name} onAction={handleAction} />
         
         <div id="module-container">
-          {currentView === 'HOME' && <DashboardModule sales={sales} parties={parties} items={items} onNavigate={setCurrentView} onExportExcel={exportToExcel} />}
-          {currentView === 'SALE_LIST' && <HomeModule sales={sales} onAddSale={() => setCurrentView('SALE_FORM')} onEditSale={handleEditSale} onViewSale={handleViewInvoice} />}
+          {currentView === 'HOME' && (
+            <DashboardModule 
+              sales={[...sales, ...estimates]} 
+              parties={parties} 
+              items={items} 
+              onNavigate={setCurrentView} 
+              onExportExcel={exportToExcel}
+              onEditSale={handleEditSale}
+              onDeleteSale={handleDeleteSale}
+              onViewSale={handleViewInvoice}
+            />
+          )}
+          {currentView === 'REPORTS' && <ReportsModule sales={sales} parties={parties} items={items} onNavigate={setCurrentView} onExportExcel={exportToExcel} />}
+          {currentView === 'SALE_LIST' && (
+            <HomeModule 
+              sales={sales} 
+              onAddSale={() => setCurrentView('SALE_FORM')} 
+              onEditSale={handleEditSale} 
+              onViewSale={handleViewInvoice} 
+              onDeleteSale={handleDeleteSale}
+            />
+          )}
           {currentView === 'PARTIES_LIST' && (
             <PartiesModule 
               parties={parties} 
@@ -518,7 +597,16 @@ export default function App() {
             />
           )}
           {currentView === 'ITEMS_LIST' && <ItemsModule items={items} onAddItem={() => { setEditingItem({}); setShowItemModal(true); }} onEditItem={handleEditItem} />}
-          {currentView === 'ESTIMATE_LIST' && <EstimatesModule estimates={estimates} onAddEstimate={() => setCurrentView('ESTIMATE_FORM')} onConvertToSale={handleConvertToSale} onEditEstimate={handleEditEstimate} onViewEstimate={handleViewInvoice} />}
+          {currentView === 'ESTIMATE_LIST' && (
+            <EstimatesModule 
+              estimates={estimates} 
+              onAddEstimate={() => setCurrentView('ESTIMATE_FORM')} 
+              onConvertToSale={handleConvertToSale} 
+              onEditEstimate={handleEditEstimate} 
+              onViewEstimate={handleViewInvoice} 
+              onDeleteEstimate={handleDeleteSale}
+            />
+          )}
           {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} onSave={(sale, print) => handleSaveInvoice(sale, true, print)} onCancel={() => { setConvertingEstimateId(null); setEditingInvoice(null); setCurrentView('SALE_LIST'); }} initialData={editingInvoice || (convertingEstimateId ? estimates.find(e => e.id === convertingEstimateId) : undefined)} parties={parties} items={items} />}
           {currentView === 'ESTIMATE_FORM' && <InvoiceForm isSale={false} onSave={(est, print) => handleSaveInvoice(est, false, print)} onCancel={() => { setEditingInvoice(null); setCurrentView('ESTIMATE_LIST'); }} initialData={editingInvoice || undefined} parties={parties} items={items} />}
           {currentView === 'INVOICE_VIEW' && currentInvoice && (
@@ -554,6 +642,14 @@ export default function App() {
             onCancel={() => { setShowItemModal(false); setEditingItem(null); }}
             onDelete={handleDeleteItem}
           />
+      )}
+      {deleteAction && (
+        <DeleteConfirmModal
+            title={`Delete ${deleteAction.type}`}
+            message={`Are you sure you want to delete this ${deleteAction.type}? This action cannot be undone.`}
+            onConfirm={executeDelete}
+            onCancel={() => setDeleteAction(null)}
+        />
       )}
     </div>
   );
