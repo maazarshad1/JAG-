@@ -352,8 +352,9 @@ export function InvoiceView({
                <div style={{ flex: 1 }}>
                   <h1 style={{ margin: '0 0 4px 0', fontSize: '26px', color: '#111827', fontWeight: 'bold' }}>{companyData.name || 'Business Name'}</h1>
                   <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#374151', fontWeight: '500' }}>{companyData.address || 'Company Address'}</p>
-                  <div style={{ display: 'flex', fontSize: '14px', color: '#111827', gap: '30px' }}>
+                  <div style={{ display: 'flex', fontSize: '14px', color: '#111827', gap: '30px', flexWrap: 'wrap' }}>
                      <div>Phone: <b style={{ fontWeight: 'bold' }}>{companyData.phone || '0000000000'}</b></div>
+                     {companyData.landline && <div>Landline: <b style={{ fontWeight: 'bold' }}>{companyData.landline}</b></div>}
                      <div>Email: <b style={{ fontWeight: 'bold' }}>{companyData.email || 'email@example.com'}</b></div>
                   </div>
                </div>

@@ -67,6 +67,19 @@ export function SettingsModule({ companyData, onChange, onBack }: SettingsModule
                                 />
                             </div>
 
+                            <div>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#4b5563', marginBottom: '8px' }}>
+                                    <Phone size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Landline Number (Optional)
+                                </label>
+                                <input 
+                                    type="text" 
+                                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', outline: 'none' }} 
+                                    value={companyData.landline || ''} 
+                                    onChange={e => onChange({...companyData, landline: e.target.value})}
+                                    placeholder="e.g. 051-XXXXXXX"
+                                />
+                            </div>
+
                             <div style={{ gridColumn: 'span 2' }}>
                                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#4b5563', marginBottom: '8px' }}>
                                     <MapPin size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Business Address

@@ -63,6 +63,7 @@ export interface CompanyData {
   name: string;
   email: string;
   phone: string;
+  landline?: string;
   address: string;
   logo?: string;
   signature?: string;

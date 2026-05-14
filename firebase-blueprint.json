@@ -9,6 +9,7 @@
         "name": { "type": "string" },
         "email": { "type": "string" },
         "phone": { "type": "string" },
+        "landline": { "type": "string" },
         "address": { "type": "string" },
         "logo": { "type": "string" },
         "signature": { "type": "string" },
