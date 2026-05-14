@@ -44,6 +44,7 @@
     --border-color: #E5E7EB;
     --bg-main: #F8FAFC;
     --sidebar-width: 260px;
+    --sidebar-collapsed-width: 64px;
 }
 
 * {
@@ -67,12 +68,74 @@ body, html {
 /* SIDEBAR STYLES */
 #sidebar {
     width: var(--sidebar-width);
+    transition: width 0.3s ease;
     background-color: var(--bg-dark);
     color: var(--text-light);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
     z-index: 10;
+    position: relative;
+}
+
+#sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+#sidebar.collapsed .sidebar-search span,
+#sidebar.collapsed .nav-item span,
+#sidebar.collapsed .nav-item .right-icon,
+#sidebar.collapsed .nav-group .group-toggle,
+#sidebar.collapsed .nav-subgroup,
+#sidebar.collapsed .company-name,
+#sidebar.collapsed .sidebar-footer i:last-child {
+    display: none;
+}
+
+#sidebar.collapsed .search-box {
+    justify-content: center;
+    padding: 8px 0;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    margin: 0 auto;
+}
+
+#sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 12px 0;
+}
+
+#sidebar.collapsed .nav-item i:first-child {
+    margin-right: 0;
+    width: auto;
+    font-size: 18px;
+}
+
+#sidebar.collapsed .company-logo {
+    margin-right: 0;
+}
+
+.sidebar-toggle-btn {
+    position: absolute;
+    right: -12px;
+    top: 65px;
+    width: 24px;
+    height: 24px;
+    background-color: var(--bg-active);
+    color: var(--text-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 20;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.sidebar-toggle-btn:hover {
+    background-color: var(--bg-darker);
 }
 
 .sidebar-search {

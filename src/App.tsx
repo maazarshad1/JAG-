@@ -261,9 +261,18 @@ export default function App() {
       }
   };
 
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   return (
     <div id="app-container">
-      <Sidebar currentView={currentView} setCurrentView={setCurrentView} onAction={handleAction} companyData={companyData} />
+      <Sidebar 
+        currentView={currentView} 
+        setCurrentView={setCurrentView} 
+        onAction={handleAction} 
+        companyData={companyData} 
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
+      />
       <main id="main-content">
         <TopHeader title={companyData.name} onAction={handleAction} />
         

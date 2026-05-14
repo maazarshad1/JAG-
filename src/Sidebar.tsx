@@ -1,19 +1,26 @@
 import React, { useState } from 'react';
 import { View, CompanyData } from './types';
 
-export function Sidebar({ currentView, setCurrentView, onAction, companyData }: { 
+export function Sidebar({ currentView, setCurrentView, onAction, companyData, isCollapsed, setIsCollapsed }: { 
     currentView: View, 
     setCurrentView: (v: View) => void, 
     onAction: (action: string) => void,
-    companyData: CompanyData
+    companyData: CompanyData,
+    isCollapsed: boolean,
+    setIsCollapsed: (v: boolean) => void
 }) {
     const [saleGroupOpen, setSaleGroupOpen] = useState(true);
 
     return (
-        <aside id="sidebar">
+        <aside id="sidebar" className={isCollapsed ? 'collapsed' : ''}>
+            <div className="sidebar-toggle-btn" onClick={() => setIsCollapsed(!isCollapsed)}>
+                <i className={`fa-solid ${isCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'}`}></i>
+            </div>
+            
             <div className="sidebar-search">
                 <div className="search-box">
-                    <span>Open Anything (Ctrl+F)</span>
+                    <i className="fa-solid fa-search" style={{ marginRight: isCollapsed ? '0' : '8px' }}></i>
+                    {!isCollapsed && <span>Open Anything (Ctrl+F)</span>}
                 </div>
             </div>
             
