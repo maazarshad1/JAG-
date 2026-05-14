@@ -29,38 +29,6 @@ export function DashboardModule({ sales, parties, items, onNavigate, onExportExc
                 </div>
             </div>
 
-            {/* Quick Actions */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '12px', marginBottom: '24px' }}>
-                <button 
-                    onClick={() => onNavigate?.('SALE_FORM')}
-                    style={{ padding: '16px', background: '#4f46e5', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', transition: 'transform 0.2s' }}
-                >
-                    <i className="fa-solid fa-file-invoice" style={{ fontSize: '20px' }}></i>
-                    <span style={{ fontSize: '13px', fontWeight: 600 }}>New Sale</span>
-                </button>
-                <button 
-                    onClick={() => onNavigate?.('ESTIMATE_FORM')}
-                    style={{ padding: '16px', background: '#8b5cf6', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
-                >
-                    <i className="fa-solid fa-file-lines" style={{ fontSize: '20px' }}></i>
-                    <span style={{ fontSize: '13px', fontWeight: 600 }}>New Estimate</span>
-                </button>
-                <button 
-                    onClick={() => onNavigate?.('PARTIES_LIST')}
-                    style={{ padding: '16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
-                >
-                    <i className="fa-solid fa-users" style={{ fontSize: '20px' }}></i>
-                    <span style={{ fontSize: '13px', fontWeight: 600 }}>Parties</span>
-                </button>
-                <button 
-                    onClick={() => onNavigate?.('ITEMS_LIST')}
-                    style={{ padding: '16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
-                >
-                    <i className="fa-solid fa-box-archive" style={{ fontSize: '20px' }}></i>
-                    <span style={{ fontSize: '13px', fontWeight: 600 }}>Inventory</span>
-                </button>
-            </div>
-            
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '24px' }}>
                 <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
                     <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>Total Sales (This Month)</div>
