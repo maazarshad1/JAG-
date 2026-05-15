@@ -232,7 +232,7 @@ export function InvoiceForm({
           )}
         </div>
 
-        <div style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden', marginBottom: '32px' }}>
+        <div style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', overflowX: 'auto', marginBottom: '32px' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
               <tr>
@@ -254,7 +254,7 @@ export function InvoiceForm({
                       list="items-list"
                       value={item.name} 
                       onChange={e => updateItem(index, 'name', e.target.value)}
-                      style={{ width: '100%', padding: '6px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+                      style={{ width: '100%', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '4px', minWidth: '200px' }}
                     />
                     <datalist id="items-list">
                       {inventoryItems.map(i => <option key={i.id} value={i.name} />)}
@@ -265,14 +265,14 @@ export function InvoiceForm({
                       type="number" 
                       value={item.quantity === '' as any ? '' : item.quantity} 
                       onChange={e => updateItem(index, 'quantity', e.target.value === '' ? '' as any : parseFloat(e.target.value))}
-                      style={{ width: '80px', padding: '6px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
+                      style={{ width: '80px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
                     />
                   </td>
                   <td style={{ padding: '16px 20px' }}>
                     <select 
                       value={item.unit} 
                       onChange={e => updateItem(index, 'unit', e.target.value)}
-                      style={{ width: '80px', padding: '6px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'center' }}
+                      style={{ width: '80px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'center' }}
                     >
                       {UNIT_SUGGESTIONS.map(u => <option key={u} value={u}>{u}</option>)}
                     </select>
@@ -282,14 +282,30 @@ export function InvoiceForm({
                       type="number" 
                       value={item.rate === '' as any ? '' : item.rate} 
                       onChange={e => updateItem(index, 'rate', e.target.value === '' ? '' as any : parseFloat(e.target.value))}
-                      style={{ width: '120px', padding: '6px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
+                      style={{ width: '100px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
                     />
                   </td>
                   <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 500 }}>
                     Rs {((Number(item.quantity) || 0) * (Number(item.rate) || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}
                   </td>
                   <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                    <button type="button" onClick={() => removeItem(index)} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fa-solid fa-trash"></i></button>
+                    <button 
+                      type="button" 
+                      onClick={() => removeItem(index)} 
+                      style={{ 
+                        color: '#ef4444', 
+                        border: '1px solid #fee2e2', 
+                        background: '#fef2f2', 
+                        cursor: 'pointer', 
+                        padding: '10px', 
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <i className="fa-solid fa-trash"></i>
+                    </button>
                   </td>
                 </tr>
               ))}
