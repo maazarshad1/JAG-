@@ -128,7 +128,7 @@ export function SettingsModule({ companyData, onChange, onBack, onDeleteAllParti
                                             }
                                         }}
                                     />
-                                    <label htmlFor="logo-upload" style={{ padding: '8px 16px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '13px', fontWeight: 500, color: '#4b5563', cursor: 'pointer' }}>
+                                    <label htmlFor="logo-upload" style={{ padding: '8px 16px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '15px', fontWeight: 500, color: '#4b5563', cursor: 'pointer' }}>
                                         Change Logo
                                     </label>
                                 </div>
@@ -158,7 +158,7 @@ export function SettingsModule({ companyData, onChange, onBack, onDeleteAllParti
                                             }
                                         }}
                                     />
-                                    <label htmlFor="sig-upload" style={{ padding: '8px 16px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '13px', fontWeight: 500, color: '#4b5563', cursor: 'pointer' }}>
+                                    <label htmlFor="sig-upload" style={{ padding: '8px 16px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '15px', fontWeight: 500, color: '#4b5563', cursor: 'pointer' }}>
                                         Upload Signature
                                     </label>
                                 </div>

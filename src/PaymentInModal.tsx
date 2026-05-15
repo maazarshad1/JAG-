@@ -26,7 +26,10 @@ export function PaymentInModal({
   const [isSaving, setIsSaving] = useState(false);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
 
-  const selectedParty = parties.find(p => p.name.toLowerCase().trim() === customerName.toLowerCase().trim());
+  const selectedParty = parties.find(p => 
+    p.name && 
+    p.name.toLowerCase().trim() === (customerName || '').toLowerCase().trim()
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,13 +68,13 @@ export function PaymentInModal({
         
         <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
           {errorStatus && (
-            <div style={{ marginBottom: '16px', padding: '10px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '4px', fontSize: '13px' }}>
+            <div style={{ marginBottom: '16px', padding: '10px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '4px', fontSize: '15px' }}>
                 {errorStatus}
             </div>
           )}
           
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Party Name *</label>
+            <label style={{ display: 'block', fontSize: '15px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Party Name *</label>
             <input 
               list="parties-list-payment"
               value={customerName} 
@@ -86,25 +89,25 @@ export function PaymentInModal({
               ))}
             </datalist>
             {selectedParty ? (
-              <div style={{ marginTop: '4px', fontSize: '12px', color: '#6b7280' }}>
+              <div style={{ marginTop: '4px', fontSize: '14px', color: '#6b7280' }}>
                 Ref: {selectedParty.customerRefNo || 'N/A'} | Current Balance: <span style={{ color: selectedParty.balance >= 0 ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>Rs {Math.abs(selectedParty.balance).toLocaleString()}</span>
               </div>
             ) : customerName && (
-               <div style={{ marginTop: '4px', fontSize: '12px', color: '#dc2626' }}>
+               <div style={{ marginTop: '4px', fontSize: '14px', color: '#dc2626' }}>
                 New Party will be created
               </div>
             )}
           </div>
 
           {initialData?.refNo && (
-              <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f3f4f6', borderRadius: '4px', fontSize: '13px', color: '#374151' }}>
+              <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f3f4f6', borderRadius: '4px', fontSize: '15px', color: '#374151' }}>
                   <strong>Linked Invoice Reference No:</strong> {initialData.refNo}
               </div>
           )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Amount Received *</label>
+              <label style={{ display: 'block', fontSize: '15px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Amount Received *</label>
               <input 
                 type="number" 
                 value={amount}
@@ -115,7 +118,7 @@ export function PaymentInModal({
               />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Date</label>
+              <label style={{ display: 'block', fontSize: '15px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Date</label>
               <input 
                 type="date" 
                 value={date}
@@ -126,22 +129,22 @@ export function PaymentInModal({
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Payment Type</label>
+            <label style={{ display: 'block', fontSize: '15px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Payment Type</label>
             <div style={{ display: 'flex', gap: '16px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '15px', cursor: 'pointer' }}>
                 <input type="radio" name="paymentType" value="Cash" checked={paymentType === 'Cash'} onChange={e => setPaymentType(e.target.value)} /> Cash
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '15px', cursor: 'pointer' }}>
                 <input type="radio" name="paymentType" value="Cheque" checked={paymentType === 'Cheque'} onChange={e => setPaymentType(e.target.value)} /> Cheque
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '15px', cursor: 'pointer' }}>
                 <input type="radio" name="paymentType" value="Online" checked={paymentType === 'Online'} onChange={e => setPaymentType(e.target.value)} /> Online
               </label>
             </div>
           </div>
 
           <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Description (Optional)</label>
+            <label style={{ display: 'block', fontSize: '15px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Description (Optional)</label>
             <textarea 
               value={description}
               onChange={e => setDescription(e.target.value)}

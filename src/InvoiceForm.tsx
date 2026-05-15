@@ -24,7 +24,7 @@ export function InvoiceForm({
   const [billingAddress, setBillingAddress] = useState(initialData?.billingAddress || '');
   const [date, setDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
   
-  const selectedParty = parties.find(p => p.name.toLowerCase() === customerName.toLowerCase());
+  const selectedParty = parties.find(p => p.name && (p.name.toLowerCase() === (customerName || '').toLowerCase()));
 
   useEffect(() => {
     if (selectedParty && !initialData) {
@@ -53,16 +53,16 @@ export function InvoiceForm({
 
   const [refNo, setRefNo] = useState<number | null>((initialData && initialData.isSale === isSale) ? initialData.refNo : null);
   const [status, setStatus] = useState<'Open'|'Closed'>(initialData?.status as any || 'Open');
-  const [items, setItems] = useState<Item[]>(initialData?.items || []);
+  const [items, setItems] = useState<Item[]>(initialData?.items && initialData.items.length > 0 ? initialData.items : [{ id: Date.now().toString(), name: '', quantity: '' as any, rate: '' as any, unit: 'pcs', tax: 0, discount: 0 }]);
   const [receivedAmount, setReceivedAmount] = useState(initialData?.receivedAmount || 0);
   const [paymentType, setPaymentType] = useState(initialData?.paymentType || 'Cash');
   const [isSaving, setIsSaving] = useState(false);
 
-  const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+  const totalAmount = items.reduce((sum, item) => sum + ((Number(item.quantity) || 0) * (Number(item.rate) || 0)), 0);
   const balance = totalAmount - receivedAmount;
 
   const addItem = () => {
-    setItems([...items, { id: Date.now().toString(), name: '', quantity: 1, rate: 0, unit: 'pcs', tax: 0, discount: 0 }]);
+    setItems([...items, { id: Date.now().toString(), name: '', quantity: '' as any, rate: '' as any, unit: 'pcs', tax: 0, discount: 0 }]);
   };
 
   const updateItem = (index: number, field: keyof Item, value: string | number) => {
@@ -106,7 +106,7 @@ export function InvoiceForm({
           customerPhone,
           billingAddress,
           partyId: selectedParty?.id || '',
-          customerRefNo: selectedParty?.customerRefNo,
+          customerRefNo: selectedParty?.customerRefNo ?? null,
           date,
           refNo: invoiceNumber,
           status,
@@ -154,7 +154,7 @@ export function InvoiceForm({
       <form onSubmit={handleSubmit} style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px', marginBottom: '32px', padding: '24px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Customer Name</label>
+            <label style={{ display: 'block', fontSize: '15px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Customer Name</label>
             <input 
               list="parties-list"
               value={customerName} 
@@ -167,17 +167,17 @@ export function InvoiceForm({
               {parties.map(p => <option key={p.id} value={p.name}>{`${p.customerRefNo || 'N/A'} - Bal: ${p.balance}`}</option>)}
             </datalist>
             {selectedParty ? (
-              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+              <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>
                 Ref: {selectedParty.customerRefNo || 'N/A'} | Balance: Rs {selectedParty.balance.toLocaleString()}
               </div>
             ) : customerName && (
-              <div style={{ fontSize: '12px', color: '#dc2626', marginTop: '4px' }}>
+              <div style={{ fontSize: '14px', color: '#dc2626', marginTop: '4px' }}>
                 New Party - Will be assigned Ref: {safeNextPartyRef}
               </div>
             )}
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Phone Number</label>
+            <label style={{ display: 'block', fontSize: '15px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Phone Number</label>
             <input 
               value={customerPhone} 
               onChange={e => setCustomerPhone(e.target.value)}
@@ -187,7 +187,7 @@ export function InvoiceForm({
             />
           </div>
           <div style={{ gridColumn: 'span 2' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Billing Address</label>
+            <label style={{ display: 'block', fontSize: '15px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Billing Address</label>
             <textarea 
               value={billingAddress} 
               onChange={e => setBillingAddress(e.target.value)}
@@ -198,7 +198,7 @@ export function InvoiceForm({
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Date</label>
+            <label style={{ display: 'block', fontSize: '15px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Date</label>
             <input 
               type="date" 
               value={date} 
@@ -208,7 +208,7 @@ export function InvoiceForm({
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Invoice No.</label>
+            <label style={{ display: 'block', fontSize: '15px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Invoice No.</label>
             <input 
               value={refNo === null || isNaN(refNo) ? '' : refNo} 
               readOnly
@@ -218,7 +218,7 @@ export function InvoiceForm({
           </div>
           {!isSale && (
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Status</label>
+              <label style={{ display: 'block', fontSize: '15px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Status</label>
               <select 
                 value={status} 
                 onChange={e => setStatus(e.target.value as any)}
@@ -236,20 +236,20 @@ export function InvoiceForm({
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
               <tr>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px' }}>#</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px' }}>Item</th>
-                <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, fontSize: '13px' }}>Qty</th>
-                <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, fontSize: '13px' }}>Unit</th>
-                <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, fontSize: '13px' }}>Price/Unit</th>
-                <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, fontSize: '13px' }}>Amount</th>
-                <th style={{ padding: '12px 16px', width: '50px' }}></th>
+                <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, fontSize: '15px' }}>#</th>
+                <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, fontSize: '15px' }}>Item</th>
+                <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, fontSize: '15px' }}>Qty</th>
+                <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, fontSize: '15px' }}>Unit</th>
+                <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, fontSize: '15px' }}>Price/Unit</th>
+                <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, fontSize: '15px' }}>Amount</th>
+                <th style={{ padding: '16px 20px', width: '50px' }}></th>
               </tr>
             </thead>
             <tbody>
               {items.map((item, index) => (
                 <tr key={index} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                  <td style={{ padding: '12px 16px', fontSize: '13px' }}>{index + 1}</td>
-                  <td style={{ padding: '12px 16px' }}>
+                  <td style={{ padding: '16px 20px', fontSize: '15px' }}>{index + 1}</td>
+                  <td style={{ padding: '16px 20px' }}>
                     <input 
                       list="items-list"
                       value={item.name} 
@@ -260,15 +260,15 @@ export function InvoiceForm({
                       {inventoryItems.map(i => <option key={i.id} value={i.name} />)}
                     </datalist>
                   </td>
-                  <td style={{ padding: '12px 16px' }}>
+                  <td style={{ padding: '16px 20px' }}>
                     <input 
                       type="number" 
-                      value={isNaN(item.quantity) ? '' : item.quantity} 
-                      onChange={e => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                      value={item.quantity === '' as any ? '' : item.quantity} 
+                      onChange={e => updateItem(index, 'quantity', e.target.value === '' ? '' as any : parseFloat(e.target.value))}
                       style={{ width: '80px', padding: '6px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
                     />
                   </td>
-                  <td style={{ padding: '12px 16px' }}>
+                  <td style={{ padding: '16px 20px' }}>
                     <select 
                       value={item.unit} 
                       onChange={e => updateItem(index, 'unit', e.target.value)}
@@ -277,18 +277,18 @@ export function InvoiceForm({
                       {UNIT_SUGGESTIONS.map(u => <option key={u} value={u}>{u}</option>)}
                     </select>
                   </td>
-                  <td style={{ padding: '12px 16px' }}>
+                  <td style={{ padding: '16px 20px' }}>
                     <input 
                       type="number" 
-                      value={isNaN(item.rate) ? '' : item.rate} 
-                      onChange={e => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                      value={item.rate === '' as any ? '' : item.rate} 
+                      onChange={e => updateItem(index, 'rate', e.target.value === '' ? '' as any : parseFloat(e.target.value))}
                       style={{ width: '120px', padding: '6px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
                     />
                   </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500 }}>
-                    Rs {(item.quantity * item.rate).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                  <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 500 }}>
+                    Rs {((Number(item.quantity) || 0) * (Number(item.rate) || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}
                   </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                  <td style={{ padding: '16px 20px', textAlign: 'center' }}>
                     <button type="button" onClick={() => removeItem(index)} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}><i className="fa-solid fa-trash"></i></button>
                   </td>
                 </tr>
@@ -302,7 +302,7 @@ export function InvoiceForm({
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px' }}>
           <div style={{ padding: '24px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '12px' }}>Payment Type</label>
+            <label style={{ display: 'block', fontSize: '15px', fontWeight: 500, color: '#374151', marginBottom: '12px' }}>Payment Type</label>
             <div style={{ display: 'flex', gap: '16px' }}>
                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
                   <input type="radio" checked={paymentType === 'Cash'} onChange={() => setPaymentType('Cash')} /> Cash

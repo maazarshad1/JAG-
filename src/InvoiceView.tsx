@@ -367,7 +367,7 @@ export function InvoiceView({
                   <div style={{ padding: '15px', fontSize: '15px', fontWeight: 'bold', minHeight: '80px', wordBreak: 'break-word' }}>
                     <div style={{ marginBottom: '6px' }}>{estimate.customerName}</div>
                     {estimate.customerPhone && <div style={{ fontWeight: 'normal', fontSize: '14px' }}>Phone: <span style={{ fontWeight: 'bold' }}>{estimate.customerPhone}</span></div>}
-                    {estimate.billingAddress && <div style={{ fontWeight: 'normal', fontSize: '13px', whiteSpace: 'pre-wrap', color: '#374151', marginTop: '4px' }}>{estimate.billingAddress}</div>}
+                    {estimate.billingAddress && <div style={{ fontWeight: 'normal', fontSize: '15px', whiteSpace: 'pre-wrap', color: '#374151', marginTop: '4px' }}>{estimate.billingAddress}</div>}
                   </div>
                </div>
                <div style={{ flex: 1 }}>
@@ -386,7 +386,7 @@ export function InvoiceView({
                 <table className="repl-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', tableLayout: 'fixed' }}>
                  <thead>
                    <tr style={{ background: '#f8fafc' }}>
-                     <th style={{ width: '40px', textAlign: 'left' }}>#</th>
+                     <th style={{ width: '44px', textAlign: 'left' }}>#</th>
                      <th style={{ textAlign: 'left', width: 'auto' }}>Item name</th>
                      <th style={{ width: '80px', textAlign: 'right' }}>Quantity</th>
                      <th style={{ width: '110px', textAlign: 'right' }}>Price/Unit (₨)</th>
@@ -448,7 +448,7 @@ export function InvoiceView({
                         <td colSpan={3} style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice' : 'Estimate'} Amount In Words :</td>
                       </tr>
                       <tr>
-                        <td colSpan={3} style={{ padding: '8px 15px', minHeight: '50px', verticalAlign: 'top', textTransform: 'capitalize', fontSize: '13px' }}>
+                        <td colSpan={3} style={{ padding: '8px 15px', minHeight: '50px', verticalAlign: 'top', textTransform: 'capitalize', fontSize: '15px' }}>
                           {numberToWords(estimate.totalAmount)}
                         </td>
                       </tr>
@@ -460,7 +460,7 @@ export function InvoiceView({
             {/* Terms And Conditions */}
             <div style={{ borderBottom: '2px solid #000' }}>
                <div style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontSize: '14px', fontWeight: 'bold', background: '#f8fafc' }}>Terms And Conditions:</div>
-               <div style={{ padding: '10px 15px', fontSize: '13px', color: '#111', whiteSpace: 'pre-wrap' }}>
+               <div style={{ padding: '10px 15px', fontSize: '15px', color: '#111', whiteSpace: 'pre-wrap' }}>
                   {companyData.terms || 'Thank you for doing business with us.'}
                </div>
             </div>
@@ -480,7 +480,7 @@ export function InvoiceView({
                      ) : (
                          <div style={{ height: '60px' }}></div>
                      )}
-                     <div style={{ fontSize: '12px', color: '#555', marginTop: '6px', fontWeight: 'bold' }}>Authorized Signatory</div>
+                     <div style={{ fontSize: '14px', color: '#555', marginTop: '6px', fontWeight: 'bold' }}>Authorized Signatory</div>
                      
                      <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/5 transition-colors print:hidden" />
                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">

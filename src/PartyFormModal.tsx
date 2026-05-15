@@ -37,7 +37,7 @@ export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormM
                 <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Party Name *</label>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Party Name *</label>
                                 <input 
                                     type="text" 
                                     style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} 
@@ -47,7 +47,7 @@ export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormM
                                 />
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Ref No *</label>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Ref No *</label>
                                 <input 
                                     type="number" 
                                     style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} 
@@ -58,7 +58,7 @@ export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormM
                             </div>
                         </div>
                         <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Phone Number</label>
+                            <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Phone Number</label>
                             <input 
                                 type="text" 
                                 style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} 
@@ -96,7 +96,7 @@ export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormM
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                                     <div>
-                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Email ID</label>
+                                        <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Email ID</label>
                                         <input 
                                             type="email" 
                                             style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} 
@@ -108,7 +108,7 @@ export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormM
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                                     <div>
-                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Billing Address</label>
+                                        <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Billing Address</label>
                                         <textarea 
                                             style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', minHeight: '80px', resize: 'vertical' }} 
                                             value={formData.billingAddress || ''} 
@@ -117,8 +117,8 @@ export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormM
                                         />
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '13px', color: '#111827' }}>Shipping Address</span>
-                                        <span style={{ fontSize: '13px', color: '#3b82f6', fontWeight: 500, cursor: 'pointer' }}>+ Enable Shipping Address</span>
+                                        <span style={{ fontSize: '15px', color: '#111827' }}>Shipping Address</span>
+                                        <span style={{ fontSize: '15px', color: '#3b82f6', fontWeight: 500, cursor: 'pointer' }}>+ Enable Shipping Address</span>
                                     </div>
                                 </div>
                             </div>
@@ -126,7 +126,7 @@ export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormM
                         {activeTab === 'Credit' && (
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Opening Balance</label>
+                                    <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Opening Balance</label>
                                     <input 
                                         type="number" 
                                         style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} 
@@ -136,7 +136,7 @@ export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormM
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>GSTIN</label>
+                                    <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>GSTIN</label>
                                     <input 
                                         type="text" 
                                         style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} 

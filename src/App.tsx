@@ -424,13 +424,12 @@ export default function App() {
 
     // 1. Ensure party exists
     if (finalPartyName && !finalPartyId) {
-       const existingParty = parties.find(p => p.name.toLowerCase() === finalPartyName.toLowerCase().trim());
+       const existingParty = parties.find(p => p.name && p.name.toLowerCase() === finalPartyName.toLowerCase().trim());
        if (existingParty) {
           finalPartyId = existingParty.id;
           finalPartyName = existingParty.name;
           finalPartyRefNo = existingParty.customerRefNo;
        } else if (user) {
-          // Create new party for this payment-in
           const nextRef = parties.reduce((max, p) => {
             const val = Number(p.customerRefNo);
             return isNaN(val) ? max : Math.max(max, val);
@@ -448,6 +447,25 @@ export default function App() {
           });
           finalPartyId = partyRef.id;
           finalPartyRefNo = nextRef;
+       } else {
+          const nextRef = parties.reduce((max, p) => {
+            const val = Number(p.customerRefNo);
+            return isNaN(val) ? max : Math.max(max, val);
+          }, 0) + 1;
+          const newId = Date.now().toString();
+          const newParty: Party = {
+             id: newId,
+             name: finalPartyName,
+             customerRefNo: nextRef,
+             balance: -amount,
+             type: 'receive',
+             phone: '',
+             email: '',
+             billingAddress: ''
+          };
+          finalPartyId = newId;
+          finalPartyRefNo = nextRef;
+          setParties(prev => [...prev, newParty]);
        }
     }
 
@@ -471,15 +489,15 @@ export default function App() {
 
       if (user) {
         try {
-          await setDoc(doc(db, 'transactions', saleId), newSaleData);
-          if (sale.partyId) {
-            await setDoc(doc(db, 'parties', String(sale.partyId)), { balance: newPartyBalance }, { merge: true });
-          }
-          alert("Payment recorded successfully!");
           setCurrentView('PAYMENT_IN_LIST');
+          setDoc(doc(db, 'transactions', saleId), newSaleData);
+          if (sale.partyId) {
+            setDoc(doc(db, 'parties', String(sale.partyId)), { balance: newPartyBalance }, { merge: true });
+          }
+          console.log("Payment recorded successfully!");
         } catch (err) { 
           handleFirestoreError(err, OperationType.WRITE, `transactions/${saleId}`); 
-          alert("Failed to record payment. Please try again.");
+          console.log("Failed to record payment. Please try again.");
         }
       } else {
         if (isSale) {
@@ -490,7 +508,7 @@ export default function App() {
         if (sale.partyId) {
           setParties(prev => prev.map(p => p.id === sale.partyId ? { ...p, balance: newPartyBalance } as Party : p));
         }
-        alert("Payment recorded locally.");
+        console.log("Payment recorded locally.");
         setCurrentView('PAYMENT_IN_LIST');
       }
     } else {
@@ -501,8 +519,8 @@ export default function App() {
         refNo: refNo || 0,
         date: date || new Date().toISOString().split('T')[0],
         customerName: finalPartyName,
-        partyId: String(finalPartyId) || undefined,
-        customerRefNo: finalPartyRefNo,
+        partyId: finalPartyId ?? null,
+        customerRefNo: typeof finalPartyRefNo === 'number' ? finalPartyRefNo : null,
         items: [],
         totalAmount: 0,
         receivedAmount: amount,
@@ -541,6 +559,7 @@ export default function App() {
 
       if (user) {
         try {
+          setCurrentView('PAYMENT_IN_LIST');
           const batch = writeBatch(db);
           const txnRef = doc(collection(db, 'transactions'));
           newPayment.id = txnRef.id;
@@ -560,12 +579,11 @@ export default function App() {
                 batch.update(doc(db, 'parties', String(newPayment.partyId)), { balance: newPartyBalance });
              }
           }
-          await batch.commit();
-          alert("General payment recorded successfully!");
-          setCurrentView('PAYMENT_IN_LIST');
+          batch.commit();
+          console.log("General payment recorded successfully!");
         } catch (err) { 
             handleFirestoreError(err, OperationType.WRITE, 'transactions'); 
-            alert("Failed to record general payment.");
+            console.log("Failed to record general payment.");
         }
       } else {
         setSales(prev => {
@@ -587,7 +605,7 @@ export default function App() {
         if (newPayment.partyId) {
           setParties(prev => prev.map(p => p.id === newPayment.partyId ? { ...p, balance: newPartyBalance } as Party : p));
         }
-        alert("General payment recorded locally.");
+        console.log("General payment recorded locally.");
         setCurrentView('PAYMENT_IN_LIST');
       }
     }
@@ -601,20 +619,17 @@ export default function App() {
 
     if (type === 'transaction') {
       if (user) {
-        try {
-          await deleteDoc(doc(db, 'transactions', id));
-        } catch (err) {
+        deleteDoc(doc(db, 'transactions', id)).catch((err) => {
           console.error("Delete failed:", err);
           handleFirestoreError(err, OperationType.DELETE, `transactions/${id}`);
-        }
+        });
       } else {
         setSales(prev => prev.filter(s => s.id !== id));
         setEstimates(prev => prev.filter(e => e.id !== id));
       }
     } else if (type === 'party') {
       if (user) {
-        try { await deleteDoc(doc(db, 'parties', id)); }
-        catch (err) { handleFirestoreError(err, OperationType.DELETE, `parties/${id}`); }
+        deleteDoc(doc(db, 'parties', id)).catch((err) => handleFirestoreError(err, OperationType.DELETE, `parties/${id}`));
       } else {
         setParties(prev => prev.filter(p => p.id !== id));
       }
@@ -622,8 +637,7 @@ export default function App() {
       setEditingParty(null);
     } else if (type === 'item') {
       if (user) {
-        try { await deleteDoc(doc(db, 'inventory', id)); }
-        catch (err) { handleFirestoreError(err, OperationType.DELETE, `inventory/${id}`); }
+        deleteDoc(doc(db, 'inventory', id)).catch((err) => handleFirestoreError(err, OperationType.DELETE, `inventory/${id}`));
       } else {
         setItems(prev => prev.filter(i => i.id !== id));
       }
@@ -743,11 +757,18 @@ export default function App() {
 
   const handleSaveInvoice = async (inv: Estimate, isSale: boolean, printAndPreview: boolean) => {
       inv.isSale = isSale;
+      if (printAndPreview) {
+          setCurrentInvoice(inv);
+          setCurrentView('INVOICE_VIEW');
+      } else {
+          setCurrentView(isSale ? 'SALE_LIST' : 'ESTIMATE_LIST');
+      }
+
       if (user) {
         try {
           // 1. Party management (common for both edit and new)
           if (inv.customerName) {
-            const partyIndex = parties.findIndex(p => p.name.toLowerCase().trim() === inv.customerName.toLowerCase().trim());
+            const partyIndex = parties.findIndex(p => p.name && p.name.toLowerCase().trim() === (inv.customerName || '').toLowerCase().trim());
             if (partyIndex >= 0) {
               const party = parties[partyIndex];
               inv.customerRefNo = party.customerRefNo;
@@ -760,13 +781,13 @@ export default function App() {
               // Only update balance if it's a new sale or we can calculate delta
               // For simplicity, we merge balance if it's a sale
               if (isSale && !editingInvoice) {
-                await updateDoc(doc(db, 'parties', party.id as string), {
+                updateDoc(doc(db, 'parties', party.id as string), {
                   balance: (party.balance || 0) + inv.totalAmount
                 });
               } else if (isSale && editingInvoice && editingInvoice.totalAmount !== inv.totalAmount) {
                 // Adjust balance for edited sale
                 const delta = inv.totalAmount - editingInvoice.totalAmount;
-                await updateDoc(doc(db, 'parties', party.id as string), {
+                updateDoc(doc(db, 'parties', party.id as string), {
                   balance: (party.balance || 0) + delta
                 });
               }
@@ -787,7 +808,7 @@ export default function App() {
                 balance: isSale ? inv.totalAmount : 0,
                 type: 'receive'
               };
-              await setDoc(partyRef, newParty);
+              setDoc(partyRef, newParty);
               inv.partyId = partyRef.id;
               inv.customerRefNo = isNaN(nextRef) ? 1 : nextRef;
             }
@@ -795,17 +816,17 @@ export default function App() {
 
           // 2. Transaction save
           if (editingInvoice) {
-            await updateDoc(doc(db, 'transactions', editingInvoice.id), { ...inv });
+            updateDoc(doc(db, 'transactions', editingInvoice.id), { ...inv });
             setEditingInvoice(null);
           } else {
             if (isSale && convertingEstimateId) {
               inv.convertedFromId = convertingEstimateId;
-              await updateDoc(doc(db, 'transactions', convertingEstimateId), { status: 'Closed' });
+              updateDoc(doc(db, 'transactions', convertingEstimateId), { status: 'Closed' });
               setConvertingEstimateId(null);
             }
             const txnRef = doc(collection(db, 'transactions'));
             inv.id = txnRef.id;
-            await setDoc(txnRef, inv);
+            setDoc(txnRef, inv);
           }
         } catch (err) { 
           console.error("Save Invoice Error:", err);
@@ -830,7 +851,7 @@ export default function App() {
             
             if (inv.customerName) {
                 let updatedParties = [...parties];
-                let partyIndex = updatedParties.findIndex(p => p.name.toLowerCase().trim() === inv.customerName.toLowerCase().trim());
+                let partyIndex = updatedParties.findIndex(p => p.name && p.name.toLowerCase().trim() === (inv.customerName || '').toLowerCase().trim());
                 if (partyIndex >= 0) {
                     const party = updatedParties[partyIndex];
                     inv.customerRefNo = party.customerRefNo;
@@ -852,13 +873,6 @@ export default function App() {
             if (isSale) setSales([...sales, inv]);
             else setEstimates([...estimates, inv]);
         }
-      }
-
-      if (printAndPreview) {
-          setCurrentInvoice(inv);
-          setCurrentView('INVOICE_VIEW');
-      } else {
-          setCurrentView(isSale ? 'SALE_LIST' : 'ESTIMATE_LIST');
       }
   };
 
@@ -917,7 +931,7 @@ export default function App() {
           {currentView === 'REPORTS' && <ReportsModule sales={sales} parties={parties} items={items} onNavigate={setCurrentView} onExportExcel={exportToExcel} />}
           {currentView === 'SALE_LIST' && (
             <HomeModule 
-              sales={sales.filter(s => s.customerName.toLowerCase().includes(searchQuery.toLowerCase()) || String(s.refNo).includes(searchQuery))} 
+              sales={sales.filter(s => (s.customerName || '').toLowerCase().includes((searchQuery || '').toLowerCase()) || String(s.refNo).includes(searchQuery))} 
               onAddSale={() => setCurrentView('SALE_FORM')} 
               onEditSale={handleEditSale} 
               onViewSale={handleViewInvoice} 

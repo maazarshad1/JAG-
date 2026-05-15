@@ -12,10 +12,10 @@ interface ItemFormModalProps {
 export function ItemFormModal({ item, onSave, onCancel, onDelete }: ItemFormModalProps) {
   const [formData, setFormData] = useState<Partial<InventoryItem>>({
     name: '',
-    price: 0,
+    price: '' as any,
     unit: 'PCS',
-    stock: 0,
-    minStock: 0,
+    stock: '' as any,
+    minStock: '' as any,
     ...item
   });
 
@@ -53,8 +53,8 @@ export function ItemFormModal({ item, onSave, onCancel, onDelete }: ItemFormModa
                 <input 
                   type="number"
                   style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                  value={formData.price === undefined || formData.price === null || isNaN(formData.price as any) ? '' : formData.price}
-                  onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
+                  value={formData.price === '' as any || formData.price === undefined || formData.price === null || isNaN(formData.price as any) ? '' : formData.price}
+                  onChange={e => setFormData({ ...formData, price: e.target.value === '' ? '' as any : Number(e.target.value) })}
                 />
               </div>
               <div style={{ width: '120px' }}>
@@ -86,8 +86,8 @@ export function ItemFormModal({ item, onSave, onCancel, onDelete }: ItemFormModa
                 <input 
                   type="number"
                   style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                  value={formData.stock === undefined || formData.stock === null || isNaN(formData.stock as any) ? '' : formData.stock}
-                  onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })}
+                  value={formData.stock === '' as any || formData.stock === undefined || formData.stock === null || isNaN(formData.stock as any) ? '' : formData.stock}
+                  onChange={e => setFormData({ ...formData, stock: e.target.value === '' ? '' as any : Number(e.target.value) })}
                 />
               </div>
               <div style={{ flex: 1 }}>
@@ -95,8 +95,8 @@ export function ItemFormModal({ item, onSave, onCancel, onDelete }: ItemFormModa
                 <input 
                   type="number"
                   style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                  value={formData.minStock === undefined || formData.minStock === null || isNaN(formData.minStock as any) ? '' : formData.minStock}
-                  onChange={e => setFormData({ ...formData, minStock: Number(e.target.value) })}
+                  value={formData.minStock === '' as any || formData.minStock === undefined || formData.minStock === null || isNaN(formData.minStock as any) ? '' : formData.minStock}
+                  onChange={e => setFormData({ ...formData, minStock: e.target.value === '' ? '' as any : Number(e.target.value) })}
                 />
               </div>
             </div>

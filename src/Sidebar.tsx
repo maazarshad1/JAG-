@@ -14,7 +14,9 @@ export function Sidebar({ currentView, setCurrentView, onAction, companyData, is
     return (
         <aside id="sidebar" className={isCollapsed ? 'collapsed' : ''}>
             <div className="sidebar-header" onClick={() => setIsCollapsed(!isCollapsed)}>
-                <i className="fa-solid fa-ellipsis-vertical"></i>
+                <div className="p-2 text-slate-500 hover:text-indigo-700 hover:bg-slate-200 rounded-full transition-all bg-transparent flex items-center justify-center cursor-pointer" style={{ width: '40px', height: '40px' }}>
+                    <i className="fa-solid fa-ellipsis-vertical text-xl"></i>
+                </div>
                 {!isCollapsed && <span>Navigation</span>}
             </div>
             
