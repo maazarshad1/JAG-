@@ -10,10 +10,10 @@ interface DashboardModuleProps {
     onDeleteSale?: (id: string) => void;
     onViewSale?: (sale: Estimate) => void;
     onConvertToSale?: (id: string, type: 'SALE' | 'SALE_ORDER') => void;
-    onReceivePayment?: (sale: Estimate) => void;
+    onPaymentIn?: (sale: Estimate) => void;
 }
 
-export function DashboardModule({ sales, parties, items, onNavigate, onEditSale, onDeleteSale, onViewSale, onConvertToSale, onReceivePayment }: DashboardModuleProps) {
+export function DashboardModule({ sales, parties, items, onNavigate, onEditSale, onDeleteSale, onViewSale, onConvertToSale, onPaymentIn }: DashboardModuleProps) {
     const sortedSales = [...sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     const [searchQuery, setSearchQuery] = React.useState('');
     const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
@@ -178,10 +178,10 @@ export function DashboardModule({ sales, parties, items, onNavigate, onEditSale,
                                                             )}
                                                             {sale.isSale && (sale.totalAmount > (sale.receivedAmount || 0)) && (
                                                                 <button 
-                                                                    className="group flex w-full items-center px-4 py-2 text-sm text-indigo-600 hover:bg-indigo-50 border-t border-slate-100 mt-1 pt-1.5"
-                                                                    onClick={(e) => { e.stopPropagation(); onReceivePayment?.(sale); setOpenMenuId(null); }}
+                                                                    className="group flex w-full items-center px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 border-t border-slate-100 mt-1 pt-1.5"
+                                                                    onClick={(e) => { e.stopPropagation(); onPaymentIn?.(sale); setOpenMenuId(null); }}
                                                                 >
-                                                                    <i className="fa-solid fa-money-bill-wave w-5"></i> Receive Payment
+                                                                    <i className="fa-solid fa-money-bill-transfer w-5"></i> Payment In
                                                                 </button>
                                                             )}
                                                             <button 

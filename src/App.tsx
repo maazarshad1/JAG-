@@ -514,7 +514,7 @@ export default function App() {
       const updatedTxns: Estimate[] = [];
       if (finalPartyId) {
           const openTxns = [...estimates, ...sales]
-            .filter(t => t.partyId === finalPartyId && t.status !== 'Closed' && t.balance > 0)
+            .filter(t => String(t.partyId) === String(finalPartyId) && t.status !== 'Closed' && t.balance > 0)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
           for (const txn of openTxns) {
@@ -544,7 +544,7 @@ export default function App() {
           });
 
           if (newPayment.partyId) {
-             const isNew = !partyDataInput?.id && !parties.find(p => p.name.toLowerCase() === finalPartyName.toLowerCase().trim());
+             const isNew = !partyDataInput?.id && !parties.find(p => String(p.id) === String(finalPartyId));
              if (!isNew) {
                batch.update(doc(db, 'parties', String(newPayment.partyId)), { balance: newPartyBalance });
              }
@@ -623,6 +623,86 @@ export default function App() {
 
   const handleDeleteParty = (id: string | number) => {
     setDeleteAction({ type: 'party', id: String(id) });
+  };
+
+  const handleDeleteAllParties = async () => {
+    const confirm = window.confirm("Are you sure you want to delete ALL parties? This action cannot be undone.");
+    if (!confirm) return;
+
+    if (user) {
+      try {
+        const batch = writeBatch(db);
+        if (parties.length === 0) {
+          alert("No parties to delete.");
+          return;
+        }
+        parties.forEach(p => {
+          batch.delete(doc(db, 'parties', String(p.id)));
+        });
+        await batch.commit();
+        alert("All parties deleted successfully.");
+      } catch (err) { 
+        handleFirestoreError(err, OperationType.DELETE, 'parties (all)'); 
+        alert("Failed to delete parties. Check console for details.");
+      }
+    } else {
+      setParties([]);
+      alert("Local parties cleared.");
+    }
+  };
+
+  const handleDeleteAllTransactions = async () => {
+    const confirm = window.confirm("Are you sure you want to delete ALL transactions (Sales & Estimates)? This action cannot be undone.");
+    if (!confirm) return;
+
+    const allTxns = [...sales, ...estimates];
+    if (user) {
+      try {
+        if (allTxns.length === 0) {
+          alert("No transactions to delete.");
+          return;
+        }
+        const batch = writeBatch(db);
+        allTxns.forEach(t => {
+          batch.delete(doc(db, 'transactions', t.id));
+        });
+        await batch.commit();
+        alert("All transactions deleted successfully.");
+      } catch (err) { 
+        handleFirestoreError(err, OperationType.DELETE, 'transactions (all)'); 
+        alert("Failed to delete transactions.");
+      }
+    } else {
+      setSales([]);
+      setEstimates([]);
+      alert("Local transactions cleared.");
+    }
+  };
+
+  const handleDeleteAllItems = async () => {
+    const confirm = window.confirm("Are you sure you want to delete ALL inventory items? This action cannot be undone.");
+    if (!confirm) return;
+
+    if (user) {
+      try {
+        if (items.length === 0) {
+          alert("No items to delete.");
+          return;
+        }
+        const batch = writeBatch(db);
+        items.forEach(i => {
+          batch.delete(doc(db, 'inventory', String(i.id)));
+        });
+        await batch.commit();
+        alert("All items deleted successfully.");
+      } catch (err) { 
+        handleFirestoreError(err, OperationType.DELETE, 'inventory (all)'); 
+        alert("Failed to delete items.");
+      }
+    } else {
+      setItems([]);
+      alert("Local items cleared.");
+    }
   };
 
   const handleEditEstimate = (est: Estimate) => {
@@ -811,7 +891,7 @@ export default function App() {
               onDeleteSale={handleDeleteSale}
               onViewSale={handleViewInvoice}
               onConvertToSale={handleConvertToSale}
-              onReceivePayment={(sale) => {
+              onPaymentIn={(sale) => {
                  setPaymentInSale(sale);
                  setCurrentView('PAYMENT_IN_FORM');
               }}
@@ -825,7 +905,7 @@ export default function App() {
               onEditSale={handleEditSale} 
               onViewSale={handleViewInvoice} 
               onDeleteSale={handleDeleteSale}
-              onMoneyIn={(sale) => {
+              onPaymentIn={(sale) => {
                   setPaymentInSale(sale);
                   setCurrentView('PAYMENT_IN_FORM');
               }}
@@ -850,7 +930,7 @@ export default function App() {
                 paymentInSale?.id || null, 
                 data.receivedAmount, 
                 data.paymentType, 
-                (parties.find(p => p.id === data.partyId)?.balance || 0) - data.receivedAmount, 
+                (parties.find(p => String(p.id) === String(data.partyId))?.balance || 0) - data.receivedAmount, 
                 { id: data.partyId, name: data.customerName }, 
                 data.date, 
                 paymentInSale?.refNo || 0,
@@ -875,9 +955,31 @@ export default function App() {
               onEditSale={handleEditSale}
               onEditEstimate={handleEditEstimate}
               onViewTransaction={handleViewInvoice}
+              onDeleteParty={handleDeleteParty}
+              onPaymentIn={(party) => {
+                setPaymentInSale({
+                  id: '',
+                  refNo: 0,
+                  date: new Date().toISOString().split('T')[0],
+                  customerName: party.name,
+                  partyId: String(party.id),
+                  customerRefNo: party.customerRefNo,
+                  items: [],
+                  totalAmount: 0,
+                  receivedAmount: 0,
+                  balance: 0,
+                  isSale: true,
+                  status: 'Open',
+                  discountValue: 0,
+                  discountType: 'fixed',
+                  taxType: 'none',
+                  description: ''
+                });
+                setCurrentView('PAYMENT_IN_FORM');
+              }}
             />
           )}
-          {currentView === 'ITEMS_LIST' && <ItemsModule items={items} onAddItem={() => { setEditingItem({}); setShowItemModal(true); }} onEditItem={handleEditItem} />}
+          {currentView === 'ITEMS_LIST' && <ItemsModule items={items} onAddItem={() => { setEditingItem({}); setShowItemModal(true); }} onEditItem={handleEditItem} onDeleteItem={handleDeleteItem} />}
           {currentView === 'ESTIMATE_LIST' && (
             <EstimatesModule 
               estimates={estimates} 
@@ -886,6 +988,10 @@ export default function App() {
               onEditEstimate={handleEditEstimate} 
               onViewEstimate={handleViewInvoice} 
               onDeleteEstimate={handleDeleteSale}
+              onPaymentIn={(est) => {
+                setPaymentInSale(est);
+                setCurrentView('PAYMENT_IN_FORM');
+              }}
             />
           )}
           {currentView === 'SALE_FORM' && <InvoiceForm isSale={true} allTransactions={[...sales, ...estimates]} onSave={(sale) => handleSaveInvoice(sale, true, false)} onCancel={() => { setConvertingEstimateId(null); setEditingInvoice(null); setCurrentView('SALE_LIST'); }} initialData={editingInvoice || (convertingEstimateId ? estimates.find(e => e.id === convertingEstimateId) : undefined)} parties={parties} inventoryItems={items} />}
@@ -903,6 +1009,9 @@ export default function App() {
                 companyData={companyData} 
                 onChange={handleUpdateCompanyData} 
                 onBack={() => setCurrentView('HOME')} 
+                onDeleteAllParties={handleDeleteAllParties}
+                onDeleteAllTransactions={handleDeleteAllTransactions}
+                onDeleteAllItems={handleDeleteAllItems}
              />
           )}
         </div>

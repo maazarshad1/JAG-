@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { InventoryItem } from './types';
 
-export function ItemsModule({ items, onAddItem, onEditItem }: { items: InventoryItem[], onAddItem: () => void, onEditItem: (item: InventoryItem) => void }) {
+export function ItemsModule({ items, onAddItem, onEditItem, onDeleteItem }: { items: InventoryItem[], onAddItem: () => void, onEditItem: (item: InventoryItem) => void, onDeleteItem?: (id: string) => void }) {
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
     const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
+
+    useEffect(() => {
+        if (selectedItem && !items.find(i => i.id === selectedItem.id)) {
+            setSelectedItem(null);
+        }
+    }, [items, selectedItem]);
 
     const totalStock = items.reduce((sum, item) => sum + item.stock, 0);
     const lowStockCount = items.filter(item => item.stock < item.minStock).length;
@@ -19,10 +25,38 @@ export function ItemsModule({ items, onAddItem, onEditItem }: { items: Inventory
                         </button>
                         <h2 className="module-title" style={{ fontSize: '20px', fontWeight: 600, color: '#111827', margin: 0 }}>{selectedItem.name}</h2>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button className="btn" onClick={() => onEditItem(selectedItem)} style={{ backgroundColor: '#fff', color: '#374151', border: '1px solid #d1d5db', padding: '10px 20px', borderRadius: '24px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-                            <i className="fa-solid fa-pen-to-square"></i> Edit
-                        </button>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div className="relative inline-block text-left" style={{ position: 'relative' }}>
+                            <button 
+                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors border border-slate-200"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(openMenuId === 'HEADER_MENU' ? null : 'HEADER_MENU');
+                                }}
+                            >
+                                <i className="fa-solid fa-ellipsis-vertical px-1"></i>
+                            </button>
+                            {openMenuId === 'HEADER_MENU' && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 ring-1 ring-black ring-opacity-5 z-20 transition-all font-sans text-left">
+                                    <div className="py-1">
+                                        <button 
+                                            className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
+                                            onClick={(e) => { e.stopPropagation(); onEditItem(selectedItem); setOpenMenuId(null); }}
+                                        >
+                                            <i className="fa-solid fa-pen-to-square w-5"></i> Edit Item
+                                        </button>
+                                        {onDeleteItem && (
+                                            <button 
+                                                className="group flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-slate-100 mt-1 pt-1.5"
+                                                onClick={(e) => { e.stopPropagation(); onDeleteItem(String(selectedItem.id)); setOpenMenuId(null); }}
+                                            >
+                                                <i className="fa-solid fa-trash w-5"></i> Delete
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -128,7 +162,11 @@ export function ItemsModule({ items, onAddItem, onEditItem }: { items: Inventory
                                                         </button>
                                                         <button 
                                                             className="group flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-slate-100 mt-1 pt-1.5"
-                                                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }}
+                                                            onClick={(e) => { 
+                                                                e.stopPropagation(); 
+                                                                setOpenMenuId(null);
+                                                                if (onDeleteItem) onDeleteItem(String(item.id));
+                                                            }}
                                                         >
                                                             <i className="fa-solid fa-trash w-5"></i> Delete
                                                         </button>

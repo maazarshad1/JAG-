@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Party, Estimate } from './types';
 
 export function PartiesModule({ 
@@ -9,7 +9,9 @@ export function PartiesModule({
     onEditParty,
     onViewTransaction,
     onEditSale,
-    onEditEstimate
+    onEditEstimate,
+    onPaymentIn,
+    onDeleteParty
 }: { 
     parties: Party[], 
     sales: Estimate[],
@@ -18,10 +20,18 @@ export function PartiesModule({
     onEditParty: (party: Party) => void,
     onViewTransaction: (txn: Estimate) => void,
     onEditSale?: (txn: Estimate) => void,
-    onEditEstimate?: (txn: Estimate) => void
+    onEditEstimate?: (txn: Estimate) => void,
+    onPaymentIn?: (party: Party) => void,
+    onDeleteParty?: (partyId: string) => void
 }) {
     const [selectedParty, setSelectedParty] = useState<Party | null>(null);
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (selectedParty && !parties.find(p => p.id === selectedParty.id)) {
+            setSelectedParty(null);
+        }
+    }, [parties, selectedParty]);
 
     const transactions = [...sales, ...estimates];
     const partyTransactions = transactions.filter(t => t.partyId === selectedParty?.id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -49,10 +59,43 @@ export function PartiesModule({
                         </button>
                         <h2 className="module-title" style={{ fontSize: '20px', fontWeight: 600, color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' }} title={selectedParty.name}>{selectedParty.name}</h2>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button className="btn" onClick={() => onEditParty(selectedParty)} style={{ backgroundColor: '#fff', color: '#374151', border: '1px solid #d1d5db', padding: '10px 20px', borderRadius: '24px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-                            <i className="fa-solid fa-pen-to-square"></i> Edit
-                        </button>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        {onPaymentIn && (
+                            <button className="btn" onClick={() => onPaymentIn(selectedParty)} style={{ backgroundColor: '#10b981', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '24px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                                <i className="fa-solid fa-money-bill-transfer"></i> Payment In
+                            </button>
+                        )}
+                        <div className="relative inline-block text-left" style={{ position: 'relative' }}>
+                            <button 
+                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors border border-slate-200"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMenuOpenId(menuOpenId === 'HEADER_MENU' ? null : 'HEADER_MENU');
+                                }}
+                            >
+                                <i className="fa-solid fa-ellipsis-vertical px-1"></i>
+                            </button>
+                            {menuOpenId === 'HEADER_MENU' && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 ring-1 ring-black ring-opacity-5 z-20 transition-all font-sans text-left">
+                                    <div className="py-1">
+                                        <button 
+                                            className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
+                                            onClick={(e) => { e.stopPropagation(); onEditParty(selectedParty); setMenuOpenId(null); }}
+                                        >
+                                            <i className="fa-solid fa-pen-to-square w-5"></i> Edit Party
+                                        </button>
+                                        {onDeleteParty && (
+                                            <button 
+                                                className="group flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-slate-100 mt-1 pt-1.5"
+                                                onClick={(e) => { e.stopPropagation(); onDeleteParty(String(selectedParty.id)); setMenuOpenId(null); }}
+                                            >
+                                                <i className="fa-solid fa-trash w-5"></i> Delete
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -237,20 +280,32 @@ export function PartiesModule({
                                             </button>
                                             {menuOpenId === party.id && (
                                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 ring-1 ring-black ring-opacity-5 z-10 transition-all font-sans text-left">
-                                                    <div className="py-1">
-                                                        <button 
-                                                            className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
-                                                            onClick={(e) => { e.stopPropagation(); onEditParty(party); setMenuOpenId(null); }}
-                                                        >
-                                                            <i className="fa-solid fa-pen-to-square w-5"></i> Edit Party
-                                                        </button>
-                                                        <button 
-                                                            className="group flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-slate-100 mt-1 pt-1.5"
-                                                            onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); }}
-                                                        >
-                                                            <i className="fa-solid fa-trash w-5"></i> Delete
-                                                        </button>
-                                                    </div>
+                                                        <div className="py-1">
+                                                            <button 
+                                                                className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
+                                                                onClick={(e) => { e.stopPropagation(); onEditParty(party); setMenuOpenId(null); }}
+                                                            >
+                                                                <i className="fa-solid fa-pen-to-square w-5"></i> Edit Party
+                                                            </button>
+                                                            {onPaymentIn && (
+                                                                <button 
+                                                                    className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-emerald-600 border-t border-slate-100 mt-1 pt-1.5"
+                                                                    onClick={(e) => { e.stopPropagation(); onPaymentIn(party); setMenuOpenId(null); }}
+                                                                >
+                                                                    <i className="fa-solid fa-money-bill-transfer w-5"></i> Payment In
+                                                                </button>
+                                                            )}
+                                                            <button 
+                                                                className="group flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-slate-100 mt-1 pt-1.5"
+                                                                onClick={(e) => { 
+                                                                    e.stopPropagation(); 
+                                                                    setMenuOpenId(null);
+                                                                    if (onDeleteParty) onDeleteParty(String(party.id));
+                                                                }}
+                                                            >
+                                                                <i className="fa-solid fa-trash w-5"></i> Delete
+                                                            </button>
+                                                        </div>
                                                 </div>
                                             )}
                                         </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Estimate } from './types';
 import { FileText } from 'lucide-react';
 
-export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onEditEstimate, onViewEstimate, onDeleteEstimate }: { estimates: Estimate[], onAddEstimate: () => void, onConvertToSale: (id: string, type: 'SALE' | 'SALE_ORDER') => void, onEditEstimate: (est: Estimate) => void, onViewEstimate: (est: Estimate) => void, onDeleteEstimate?: (id: string) => void }) {
+export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onEditEstimate, onViewEstimate, onDeleteEstimate, onPaymentIn }: { estimates: Estimate[], onAddEstimate: () => void, onConvertToSale: (id: string, type: 'SALE' | 'SALE_ORDER') => void, onEditEstimate: (est: Estimate) => void, onViewEstimate: (est: Estimate) => void, onDeleteEstimate?: (id: string) => void, onPaymentIn?: (est: Estimate) => void }) {
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
     const totalQuotations = estimates.reduce((sum, e) => sum + e.totalAmount, 0);
     const converted = estimates.filter(e => e.status === 'Closed').reduce((sum, e) => sum + e.totalAmount, 0);
@@ -103,45 +103,53 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
                                                         <i className="fa-solid fa-ellipsis-vertical px-1"></i>
                                                     </button>
                                                     {openDropdownId === est.id && (
-                                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 ring-1 ring-black ring-opacity-5 z-10 transition-all">
+                                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 ring-1 ring-black ring-opacity-5 z-20 transition-all font-sans text-left">
                                                             <div className="py-1">
                                                                 <button 
-                                                                    className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
-                                                                    onClick={(e) => { e.stopPropagation(); onViewEstimate(est); setOpenDropdownId(null); }}
-                                                                >
-                                                                    <i className="fa-solid fa-print w-5"></i> Print / PDF
-                                                                </button>
-                                                                <button 
-                                                                    className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
-                                                                    onClick={(e) => { e.stopPropagation(); onEditEstimate(est); setOpenDropdownId(null); }}
-                                                                >
-                                                                    <i className="fa-solid fa-pen-to-square w-5"></i> Edit
-                                                                </button>
-                                                                {isOpen && (
-                                                                    <>
-                                                                        <button 
-                                                                            className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-emerald-600 border-t border-slate-100 mt-1 pt-1.5"
-                                                                            onClick={(e) => { e.stopPropagation(); onConvertToSale(est.id, 'SALE'); setOpenDropdownId(null); }}
-                                                                        >
-                                                                            <i className="fa-solid fa-file-invoice-dollar w-5 text-emerald-500"></i> Convert to Sale
-                                                                        </button>
-                                                                        <button 
-                                                                            className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-emerald-600"
-                                                                            onClick={(e) => { e.stopPropagation(); onConvertToSale(est.id, 'SALE_ORDER'); setOpenDropdownId(null); }}
-                                                                        >
-                                                                            <i className="fa-solid fa-file-signature w-5 text-emerald-500"></i> Convert to Order
-                                                                        </button>
-                                                                    </>
-                                                                )}
-                                                                <button 
-                                                                    className="group flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-slate-100 mt-1 pt-1.5"
-                                                                    onClick={(e) => { e.stopPropagation(); onDeleteEstimate?.(est.id); setOpenDropdownId(null); }}
-                                                                >
-                                                                    <i className="fa-solid fa-trash w-5"></i> Delete
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    )}
+                                                                     className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
+                                                                     onClick={(e) => { e.stopPropagation(); onViewEstimate(est); setOpenDropdownId(null); }}
+                                                                 >
+                                                                     <i className="fa-solid fa-print w-5"></i> Print / PDF
+                                                                 </button>
+                                                                  <button 
+                                                                     className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
+                                                                     onClick={(e) => { e.stopPropagation(); onEditEstimate(est); setOpenDropdownId(null); }}
+                                                                 >
+                                                                     <i className="fa-solid fa-pen-to-square w-5"></i> Edit
+                                                                 </button>
+                                                                 {onPaymentIn && isOpen && (
+                                                                     <button 
+                                                                         className="group flex w-full items-center px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 border-t border-slate-100 mt-1 pt-1.5"
+                                                                         onClick={(e) => { e.stopPropagation(); onPaymentIn(est); setOpenDropdownId(null); }}
+                                                                     >
+                                                                         <i className="fa-solid fa-money-bill-transfer w-5"></i> Payment In
+                                                                     </button>
+                                                                 )}
+                                                                 {isOpen && (
+                                                                     <>
+                                                                         <button 
+                                                                             className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-emerald-600 border-t border-slate-100 mt-1 pt-1.5"
+                                                                             onClick={(e) => { e.stopPropagation(); onConvertToSale(est.id, 'SALE'); setOpenDropdownId(null); }}
+                                                                         >
+                                                                             <i className="fa-solid fa-file-invoice-dollar w-5 text-emerald-500"></i> Convert to Sale
+                                                                         </button>
+                                                                         <button 
+                                                                             className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-emerald-600"
+                                                                             onClick={(e) => { e.stopPropagation(); onConvertToSale(est.id, 'SALE_ORDER'); setOpenDropdownId(null); }}
+                                                                         >
+                                                                             <i className="fa-solid fa-file-signature w-5 text-emerald-500"></i> Convert to Order
+                                                                         </button>
+                                                                     </>
+                                                                 )}
+                                                                 <button 
+                                                                     className="group flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-slate-100 mt-1 pt-1.5"
+                                                                     onClick={(e) => { e.stopPropagation(); onDeleteEstimate?.(est.id); setOpenDropdownId(null); }}
+                                                                 >
+                                                                     <i className="fa-solid fa-trash w-5"></i> Delete
+                                                                 </button>
+                                                             </div>
+                                                         </div>
+                                                     )}
                                                 </div>
                                             </td>
                                         </tr>

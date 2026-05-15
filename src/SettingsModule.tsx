@@ -6,9 +6,12 @@ interface SettingsModuleProps {
     companyData: CompanyData;
     onChange: (data: CompanyData) => void;
     onBack: () => void;
+    onDeleteAllParties?: () => void;
+    onDeleteAllTransactions?: () => void;
+    onDeleteAllItems?: () => void;
 }
 
-export function SettingsModule({ companyData, onChange, onBack }: SettingsModuleProps) {
+export function SettingsModule({ companyData, onChange, onBack, onDeleteAllParties, onDeleteAllTransactions, onDeleteAllItems }: SettingsModuleProps) {
     return (
         <div style={{ padding: '32px', backgroundColor: '#f9fafb', minHeight: '100%', overflowY: 'auto' }}>
             <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -170,6 +173,79 @@ export function SettingsModule({ companyData, onChange, onBack }: SettingsModule
                                 onChange={e => onChange({...companyData, terms: e.target.value})}
                                 placeholder="These will appear at the bottom of your invoices and estimates"
                             />
+                        </div>
+                    </div>
+
+                    {/* Danger Zone / Data Management */}
+                    <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #fecaca', borderLeft: '4px solid #ef4444' }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#991b1b', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <FileText size={20} color="#ef4444" /> Data Management (Testing Mode)
+                        </h3>
+                        <p style={{ fontSize: '14px', color: '#7f1d1d', marginBottom: '24px' }}>
+                            Warning: These actions are permanent and cannot be undone. Use them to reset your data during testing.
+                        </p>
+                        
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+                            {onDeleteAllParties && (
+                                <button 
+                                    onClick={onDeleteAllParties}
+                                    style={{ 
+                                        padding: '10px 20px', 
+                                        backgroundColor: '#fff', 
+                                        color: '#ef4444', 
+                                        border: '1px solid #fca5a5', 
+                                        borderRadius: '8px', 
+                                        fontSize: '14px', 
+                                        fontWeight: 600, 
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}
+                                >
+                                    <i className="fa-solid fa-users-slash"></i> Delete All Parties
+                                </button>
+                            )}
+                            {onDeleteAllTransactions && (
+                                <button 
+                                    onClick={onDeleteAllTransactions}
+                                    style={{ 
+                                        padding: '10px 20px', 
+                                        backgroundColor: '#fff', 
+                                        color: '#ef4444', 
+                                        border: '1px solid #fca5a5', 
+                                        borderRadius: '8px', 
+                                        fontSize: '14px', 
+                                        fontWeight: 600, 
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}
+                                >
+                                    <i className="fa-solid fa-trash-can"></i> Delete All Transactions
+                                </button>
+                            )}
+                            {onDeleteAllItems && (
+                                <button 
+                                    onClick={onDeleteAllItems}
+                                    style={{ 
+                                        padding: '10px 20px', 
+                                        backgroundColor: '#fff', 
+                                        color: '#ef4444', 
+                                        border: '1px solid #fca5a5', 
+                                        borderRadius: '8px', 
+                                        fontSize: '14px', 
+                                        fontWeight: 600, 
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}
+                                >
+                                    <i className="fa-solid fa-boxes-stacked"></i> Delete All Items
+                                </button>
+                            )}
                         </div>
                     </div>
 

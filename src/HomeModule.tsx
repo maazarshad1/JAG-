@@ -7,14 +7,14 @@ export function HomeModule({
     onEditSale, 
     onViewSale,
     onDeleteSale,
-    onMoneyIn
+    onPaymentIn
 }: { 
     sales: Estimate[], 
     onAddSale: () => void, 
     onEditSale: (sale: Estimate) => void, 
     onViewSale: (sale: Estimate) => void,
     onDeleteSale?: (id: string) => void,
-    onMoneyIn?: (sale: Estimate) => void
+    onPaymentIn?: (sale: Estimate) => void
 }) {
     const totalSales = sales.reduce((sum, inv) => sum + inv.totalAmount, 0);
     const balance = sales.reduce((sum, inv) => sum + inv.balance, 0);
@@ -120,9 +120,9 @@ export function HomeModule({
                                                         {!isFullyPaid && (
                                                             <button 
                                                                 className="group flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-emerald-600 border-t border-slate-100 mt-1 pt-1.5"
-                                                                onClick={(e) => { e.stopPropagation(); onMoneyIn?.(inv); setOpenMenuId(null); }}
+                                                                onClick={(e) => { e.stopPropagation(); onPaymentIn?.(inv); setOpenMenuId(null); }}
                                                             >
-                                                                <i className="fa-solid fa-money-bill-wave w-5 text-emerald-500"></i> Money In
+                                                                <i className="fa-solid fa-money-bill-transfer w-5 text-emerald-500"></i> Payment In
                                                             </button>
                                                         )}
                                                         <button 
