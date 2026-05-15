@@ -20,21 +20,38 @@ export function InvoiceForm({
   allTransactions?: Estimate[]
 }) {
   const [customerName, setCustomerName] = useState(initialData?.customerName || '');
+  const [customerPhone, setCustomerPhone] = useState(initialData?.customerPhone || '');
+  const [billingAddress, setBillingAddress] = useState(initialData?.billingAddress || '');
   const [date, setDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
   
   const selectedParty = parties.find(p => p.name.toLowerCase() === customerName.toLowerCase());
+
+  useEffect(() => {
+    if (selectedParty && !initialData) {
+      setCustomerPhone(selectedParty.phone || '');
+      setBillingAddress(selectedParty.billingAddress || '');
+    }
+  }, [selectedParty, initialData]);
   
   useEffect(() => {
-    if (initialData) return;
+    if (initialData && initialData.isSale === isSale) return;
     
-    // Calculate next global refNo (101 suggests 102)
-    const maxRef = Math.max(...allTransactions.map(t => Number(t.refNo || 0)), 0);
-    setRefNo(maxRef + 1);
-  }, [allTransactions, initialData]);
+    // Calculate next refNo for this type (starting from 101)
+    const filteredTxns = allTransactions.filter(t => t.isSale === isSale);
+    const maxRef = filteredTxns.reduce((max, t) => {
+        const val = Number(t.refNo);
+        return isNaN(val) ? max : Math.max(max, val);
+    }, 0);
+    setRefNo(maxRef < 100 ? 101 : maxRef + 1);
+  }, [allTransactions, initialData, isSale]);
 
-  const nextPartyRef = Math.max(...parties.map(p => Number(p.customerRefNo || 0)), 0) + 1;
+  const nextPartyRef = (parties || []).reduce((max, p) => {
+    const val = parseInt(String(p?.customerRefNo || 0), 10);
+    return isNaN(val) ? max : Math.max(max, val);
+  }, 0) + 1;
+  const safeNextPartyRef = isNaN(nextPartyRef) ? 1 : nextPartyRef;
 
-  const [refNo, setRefNo] = useState<number | null>(initialData?.refNo || null);
+  const [refNo, setRefNo] = useState<number | null>((initialData && initialData.isSale === isSale) ? initialData.refNo : null);
   const [status, setStatus] = useState<'Open'|'Closed'>(initialData?.status as any || 'Open');
   const [items, setItems] = useState<Item[]>(initialData?.items || []);
   const [receivedAmount, setReceivedAmount] = useState(initialData?.receivedAmount || 0);
@@ -73,16 +90,23 @@ export function InvoiceForm({
     setIsSaving(true);
     
     let invoiceNumber = refNo;
-    if (!invoiceNumber) {
-        const maxRef = Math.max(...allTransactions.map(t => Number(t.refNo || 0)), 0);
-        invoiceNumber = maxRef + 1;
+    if (!invoiceNumber || isNaN(invoiceNumber)) {
+        const filteredTxns = allTransactions.filter(t => t.isSale === isSale);
+        const maxRef = filteredTxns.reduce((max, t) => {
+            const val = Number(t.refNo);
+            return isNaN(val) ? max : Math.max(max, val);
+        }, 0);
+        invoiceNumber = maxRef < 100 ? 101 : maxRef + 1;
     }
 
     try {
         await onSave({
           id: initialData?.id || Date.now().toString(),
           customerName,
+          customerPhone,
+          billingAddress,
           partyId: selectedParty?.id || '',
+          customerRefNo: selectedParty?.customerRefNo,
           date,
           refNo: invoiceNumber,
           status,
@@ -136,20 +160,42 @@ export function InvoiceForm({
               value={customerName} 
               onChange={e => setCustomerName(e.target.value)}
               className="input-field" 
+              placeholder="Search or enter name"
               style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
             />
             <datalist id="parties-list">
-              {parties.map(p => <option key={p.id} value={p.name}>{`#${p.customerRefNo || 'N/A'} - Bal: ${p.balance}`}</option>)}
+              {parties.map(p => <option key={p.id} value={p.name}>{`${p.customerRefNo || 'N/A'} - Bal: ${p.balance}`}</option>)}
             </datalist>
             {selectedParty ? (
               <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                Ref: #{selectedParty.customerRefNo || 'N/A'} | Balance: Rs {selectedParty.balance.toLocaleString()}
+                Ref: {selectedParty.customerRefNo || 'N/A'} | Balance: Rs {selectedParty.balance.toLocaleString()}
               </div>
             ) : customerName && (
               <div style={{ fontSize: '12px', color: '#dc2626', marginTop: '4px' }}>
-                New Party - Will be assigned Ref: #{nextPartyRef}
+                New Party - Will be assigned Ref: {safeNextPartyRef}
               </div>
             )}
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Phone Number</label>
+            <input 
+              value={customerPhone} 
+              onChange={e => setCustomerPhone(e.target.value)}
+              className="input-field" 
+              placeholder="Customer Phone"
+              style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+            />
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Billing Address</label>
+            <textarea 
+              value={billingAddress} 
+              onChange={e => setBillingAddress(e.target.value)}
+              className="input-field" 
+              placeholder="Customer Address"
+              rows={1}
+              style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '4px', resize: 'vertical' }}
+            />
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Date</label>

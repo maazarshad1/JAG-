@@ -2,5 +2,7 @@
   "name": "MAAZaa Quoting Tool",
   "description": "Professional estimate and quotation management application for aluminum and glass businesses.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

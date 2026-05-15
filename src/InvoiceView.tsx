@@ -334,7 +334,7 @@ export function InvoiceView({
           <h2 style={{ textAlign: 'center', color: '#111827', fontSize: '28px', fontWeight: 'bold', margin: '0 0 20px 0' }}>
             {estimate.isSale ? 'Invoice' : 'Estimate'}
           </h2>
- 
+
           <div style={{ border: '2px solid #000', flex: 1, display: 'flex', flexDirection: 'column' }}>
             {/* Top Section */}
             <div style={{ display: 'flex', padding: '15px', borderBottom: '2px solid #000', alignItems: 'center' }}>
@@ -372,11 +372,11 @@ export function InvoiceView({
                </div>
                <div style={{ flex: 1 }}>
                   <div style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontSize: '14px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice Details:' : 'Estimate Details:'}</div>
-                  <div style={{ padding: '15px', fontSize: '14px', color: '#111827', minHeight: '80px', lineHeight: '1.6' }}>
-                    <div style={{ display: 'flex' }}><span style={{ width: '100px' }}>Invoice No</span>: <b style={{ color: '#000' }}>{estimate.refNo}</b></div>
-                    {estimate.customerRefNo && <div style={{ display: 'flex' }}><span style={{ width: '100px' }}>Ref No</span>: <b style={{ color: '#000' }}>{estimate.customerRefNo}</b></div>}
-                    <div style={{ display: 'flex' }}><span style={{ width: '100px' }}>Date</span>: <b style={{ color: '#000' }}>{estimate.date}</b></div>
-                    <div style={{ display: 'flex' }}><span style={{ width: '100px' }}>Time</span>: <b style={{ color: '#000' }}>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</b></div>
+                   <div style={{ padding: '15px', fontSize: '14px', color: '#111827', minHeight: '80px', lineHeight: '1.6' }}>
+                    <div style={{ display: 'flex' }}><span style={{ width: '130px' }}>Invoice No</span>: <b style={{ color: '#000' }}>{estimate.refNo}</b></div>
+                    {estimate.customerRefNo && <div style={{ display: 'flex' }}><span style={{ width: '130px' }}>Customer Ref No</span>: <b style={{ color: '#000' }}>{estimate.customerRefNo}</b></div>}
+                    <div style={{ display: 'flex' }}><span style={{ width: '130px' }}>Date</span>: <b style={{ color: '#000' }}>{estimate.date}</b></div>
+                    <div style={{ display: 'flex' }}><span style={{ width: '130px' }}>Time</span>: <b style={{ color: '#000' }}>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</b></div>
                   </div>
                </div>
             </div>

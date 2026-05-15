@@ -12,24 +12,24 @@ export function PaymentInModal({
   onClose: () => void,
   initialData?: Partial<Estimate>
 }) {
-  const [selectedPartyId, setSelectedPartyId] = useState(initialData?.partyId || '');
+  const [customerName, setCustomerName] = useState(initialData?.customerName || '');
   const [amount, setAmount] = useState(initialData?.receivedAmount?.toString() || '');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [paymentType, setPaymentType] = useState('Cash');
   const [isSaving, setIsSaving] = useState(false);
 
-  const selectedParty = parties.find(p => p.id === selectedPartyId);
+  const selectedParty = parties.find(p => p.name.toLowerCase().trim() === customerName.toLowerCase().trim());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPartyId || !amount || isSaving) return;
+    if (!customerName || !amount || isSaving) return;
     setIsSaving(true);
 
     try {
         await onSave({
-          partyId: selectedPartyId,
-          customerName: selectedParty?.name || 'Unknown',
+          partyId: selectedParty?.id || '',
+          customerName: (selectedParty?.name || customerName).trim(),
           receivedAmount: parseFloat(amount),
           totalAmount: parseFloat(amount),
           balance: 0,
@@ -56,27 +56,33 @@ export function PaymentInModal({
         <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Party Name *</label>
-            <select 
-              value={selectedPartyId} 
-              onChange={e => setSelectedPartyId(e.target.value)}
+            <input 
+              list="parties-list-payment"
+              value={customerName} 
+              onChange={e => setCustomerName(e.target.value)}
+              placeholder="Enter or select party name"
               required
               style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '4px', outline: 'none' }}
-            >
-              <option value="">Select Party</option>
+            />
+            <datalist id="parties-list-payment">
               {parties.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
+                <option key={p.id} value={p.name}>{`${p.customerRefNo || 'N/A'}`}</option>
               ))}
-            </select>
-            {selectedParty && (
+            </datalist>
+            {selectedParty ? (
               <div style={{ marginTop: '4px', fontSize: '12px', color: '#6b7280' }}>
-                Current Balance: <span style={{ color: selectedParty.balance >= 0 ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>Rs {Math.abs(selectedParty.balance).toLocaleString()}</span>
+                Ref: {selectedParty.customerRefNo || 'N/A'} | Current Balance: <span style={{ color: selectedParty.balance >= 0 ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>Rs {Math.abs(selectedParty.balance).toLocaleString()}</span>
+              </div>
+            ) : customerName && (
+               <div style={{ marginTop: '4px', fontSize: '12px', color: '#dc2626' }}>
+                New Party will be created
               </div>
             )}
           </div>
 
           {initialData?.refNo && (
               <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f3f4f6', borderRadius: '4px', fontSize: '13px', color: '#374151' }}>
-                  <strong>Linked Invoice Reference No:</strong> #{initialData.refNo}
+                  <strong>Linked Invoice Reference No:</strong> {initialData.refNo}
               </div>
           )}
 

@@ -1,6 +1,6 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth, GoogleAuthProvider, signInWithPopup, signInAnonymously, onAuthStateChanged, User, signOut } from 'firebase/auth';
-import { getFirestore, Firestore, doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, onSnapshot, getDocFromServer } from 'firebase/firestore';
+import { initializeFirestore, Firestore, doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, onSnapshot, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 let app: FirebaseApp | null = null;
@@ -23,7 +23,9 @@ export function getAuthService(): Auth {
 
 export function getDatabaseService(): Firestore {
   if (!dbInstance) {
-    dbInstance = getFirestore(getFirebaseApp(), firebaseConfig.firestoreDatabaseId);
+    dbInstance = initializeFirestore(getFirebaseApp(), {
+      experimentalForceLongPolling: true,
+    }, (firebaseConfig as any).firestoreDatabaseId);
   }
   return dbInstance;
 }

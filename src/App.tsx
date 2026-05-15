@@ -286,8 +286,11 @@ export default function App() {
     if (action === 'ADD_SALE') setCurrentView('SALE_FORM');
     if (action === 'ADD_ESTIMATE') setCurrentView('ESTIMATE_FORM');
     if (action === 'ADD_PARTY') {
-        const nextRef = Math.max(...parties.map(p => Number(p.customerRefNo || 0)), 0) + 1;
-        setEditingParty({ customerRefNo: nextRef });
+        const nextRef = (parties || []).reduce((max, p) => {
+          const val = parseInt(String(p?.customerRefNo || 0), 10);
+          return isNaN(val) ? max : Math.max(max, val);
+        }, 0) + 1;
+        setEditingParty({ customerRefNo: isNaN(nextRef) ? 1 : nextRef });
         setShowPartyModal(true);
     };
     if (action === 'ADD_ITEM') {
@@ -312,7 +315,10 @@ export default function App() {
           const ref = doc(collection(db, 'parties'));
           await setDoc(ref, { 
             ...partyData, 
-            customerRefNo: Number(partyData.customerRefNo) || (Math.max(...parties.map(p => Number(p.customerRefNo || 0)), 0) + 1),
+            customerRefNo: Number(partyData.customerRefNo) || (parties || []).reduce((max, p) => {
+              const val = parseInt(String(p?.customerRefNo || 0), 10);
+              return isNaN(val) ? max : Math.max(max, val);
+            }, 0) + 1,
             id: ref.id, 
             balance: partyData.balance || 0,
             type: 'receive'
@@ -326,7 +332,10 @@ export default function App() {
       } else {
           const newParty: Party = {
               ...partyData as Party,
-              customerRefNo: Number(partyData.customerRefNo) || (Math.max(...parties.map(p => Number(p.customerRefNo || 0)), 0) + 1),
+              customerRefNo: Number(partyData.customerRefNo) || parties.reduce((max, p) => {
+                const val = Number(p.customerRefNo);
+                return isNaN(val) ? max : Math.max(max, val);
+              }, 0) + 1,
               id: Date.now().toString(),
               balance: partyData.balance || 0,
               type: 'receive'
@@ -404,11 +413,45 @@ export default function App() {
     amount: number, 
     paymentType: 'Cash' | 'Cheque' | 'Online', 
     newPartyBalance: number,
-    partyData?: { name: string, id?: string | number },
+    partyDataInput?: { name: string, id?: string | number },
     date?: string,
-    refNo?: number
+    refNo?: number,
+    description?: string
   ) => {
-    if (saleId) {
+    let finalPartyId = partyDataInput?.id;
+    let finalPartyName = (partyDataInput?.name || 'Customer').trim();
+    let finalPartyRefNo = parties.find(p => p.id === finalPartyId)?.customerRefNo;
+
+    // 1. Ensure party exists
+    if (finalPartyName && !finalPartyId) {
+       const existingParty = parties.find(p => p.name.toLowerCase() === finalPartyName.toLowerCase().trim());
+       if (existingParty) {
+          finalPartyId = existingParty.id;
+          finalPartyName = existingParty.name;
+          finalPartyRefNo = existingParty.customerRefNo;
+       } else if (user) {
+          // Create new party for this payment-in
+          const nextRef = parties.reduce((max, p) => {
+            const val = Number(p.customerRefNo);
+            return isNaN(val) ? max : Math.max(max, val);
+          }, 0) + 1;
+          const partyRef = doc(collection(db, 'parties'));
+          await setDoc(partyRef, {
+             id: partyRef.id,
+             name: finalPartyName,
+             phone: '',
+             email: '',
+             billingAddress: '',
+             customerRefNo: nextRef,
+             balance: -amount,
+             type: 'receive'
+          });
+          finalPartyId = partyRef.id;
+          finalPartyRefNo = nextRef;
+       }
+    }
+
+    if (saleId && saleId !== '') {
       // Update existing sale
       const isSale = !!sales.find(s => s.id === saleId);
       const saleList = isSale ? sales : estimates;
@@ -423,7 +466,7 @@ export default function App() {
         receivedAmount: newReceived,
         balance: newBalance,
         paymentType: paymentType,
-        status: (!isSale && newBalance <= 0) ? 'Closed' : sale.status
+        status: (newBalance <= 0) ? 'Closed' : sale.status
       };
 
       if (user) {
@@ -450,9 +493,9 @@ export default function App() {
         id: txnId,
         refNo: refNo || 0,
         date: date || new Date().toISOString().split('T')[0],
-        customerName: partyData?.name || 'Customer',
-        partyId: partyData?.id || undefined,
-        customerRefNo: parties.find(p => p.id === partyData?.id)?.customerRefNo,
+        customerName: finalPartyName,
+        partyId: String(finalPartyId) || undefined,
+        customerRefNo: finalPartyRefNo,
         items: [],
         totalAmount: 0,
         receivedAmount: amount,
@@ -463,20 +506,68 @@ export default function App() {
         discountValue: 0,
         discountType: 'fixed',
         taxType: 'none',
-        description: 'Payment-In received'
+        description: description || 'Payment-In received'
       };
+
+      // Auto-apply to open transactions (estimates first, then sales)
+      let remaining = amount;
+      const updatedTxns: Estimate[] = [];
+      if (finalPartyId) {
+          const openTxns = [...estimates, ...sales]
+            .filter(t => t.partyId === finalPartyId && t.status !== 'Closed' && t.balance > 0)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+          for (const txn of openTxns) {
+              if (remaining <= 0) break;
+              const apply = Math.min(remaining, txn.balance);
+              const newRec = (txn.receivedAmount || 0) + apply;
+              const newBal = txn.totalAmount - newRec;
+              updatedTxns.push({
+                  ...txn,
+                  receivedAmount: newRec,
+                  balance: newBal,
+                  status: (newBal <= 0) ? 'Closed' : txn.status
+              });
+              remaining -= apply;
+          }
+      }
 
       if (user) {
         try {
+          const batch = writeBatch(db);
           const txnRef = doc(collection(db, 'transactions'));
           newPayment.id = txnRef.id;
-          await setDoc(txnRef, newPayment);
+          batch.set(txnRef, newPayment);
+          
+          updatedTxns.forEach(ut => {
+              batch.set(doc(db, 'transactions', ut.id), ut);
+          });
+
           if (newPayment.partyId) {
-            await setDoc(doc(db, 'parties', String(newPayment.partyId)), { balance: newPartyBalance }, { merge: true });
+             const isNew = !partyDataInput?.id && !parties.find(p => p.name.toLowerCase() === finalPartyName.toLowerCase().trim());
+             if (!isNew) {
+               batch.update(doc(db, 'parties', String(newPayment.partyId)), { balance: newPartyBalance });
+             }
           }
+          await batch.commit();
         } catch (err) { handleFirestoreError(err, OperationType.WRITE, 'transactions'); }
       } else {
-        setSales([...sales, newPayment]);
+        setSales(prev => {
+            const updatedSales = [...prev];
+            updatedTxns.filter(t => t.isSale).forEach(ut => {
+                const idx = updatedSales.findIndex(s => s.id === ut.id);
+                if (idx !== -1) updatedSales[idx] = ut;
+            });
+            return [...updatedSales, newPayment];
+        });
+        setEstimates(prev => {
+            const updatedEsts = [...prev];
+            updatedTxns.filter(t => !t.isSale).forEach(ut => {
+                const idx = updatedEsts.findIndex(s => s.id === ut.id);
+                if (idx !== -1) updatedEsts[idx] = ut;
+            });
+            return updatedEsts;
+        });
         if (newPayment.partyId) {
           setParties(prev => prev.map(p => p.id === newPayment.partyId ? { ...p, balance: newPartyBalance } as Party : p));
         }
@@ -559,11 +650,15 @@ export default function App() {
         try {
           // 1. Party management (common for both edit and new)
           if (inv.customerName) {
-            const partyIndex = parties.findIndex(p => p.name.toLowerCase() === inv.customerName.toLowerCase());
+            const partyIndex = parties.findIndex(p => p.name.toLowerCase().trim() === inv.customerName.toLowerCase().trim());
             if (partyIndex >= 0) {
               const party = parties[partyIndex];
               inv.customerRefNo = party.customerRefNo;
               inv.partyId = party.id;
+              
+              // Sync other details too
+              inv.customerPhone = inv.customerPhone || party.phone;
+              inv.billingAddress = inv.billingAddress || party.billingAddress;
               
               // Only update balance if it's a new sale or we can calculate delta
               // For simplicity, we merge balance if it's a sale
@@ -580,21 +675,24 @@ export default function App() {
               }
             } else {
               // Create new party
-              const nextRef = Math.max(...parties.map(p => Number(p.customerRefNo || 0)), 0) + 1;
+              const nextRef = (parties || []).reduce((max, p) => {
+                const val = parseInt(String(p?.customerRefNo || 0), 10);
+                return isNaN(val) ? max : Math.max(max, val);
+              }, 0) + 1;
               const partyRef = doc(collection(db, 'parties'));
               const newParty = {
                 id: partyRef.id,
-                name: inv.customerName,
+                name: inv.customerName.trim(),
                 phone: inv.customerPhone || '',
                 email: '',
                 billingAddress: inv.billingAddress || '',
-                customerRefNo: nextRef,
+                customerRefNo: isNaN(nextRef) ? 1 : nextRef,
                 balance: isSale ? inv.totalAmount : 0,
                 type: 'receive'
               };
               await setDoc(partyRef, newParty);
               inv.partyId = partyRef.id;
-              inv.customerRefNo = nextRef;
+              inv.customerRefNo = isNaN(nextRef) ? 1 : nextRef;
             }
           }
 
@@ -635,17 +733,21 @@ export default function App() {
             
             if (inv.customerName) {
                 let updatedParties = [...parties];
-                let partyIndex = updatedParties.findIndex(p => p.name.toLowerCase() === inv.customerName.toLowerCase());
+                let partyIndex = updatedParties.findIndex(p => p.name.toLowerCase().trim() === inv.customerName.toLowerCase().trim());
                 if (partyIndex >= 0) {
                     const party = updatedParties[partyIndex];
                     inv.customerRefNo = party.customerRefNo;
                     if (isSale) updatedParties[partyIndex] = { ...party, balance: (party.balance || 0) + inv.totalAmount };
                 } else {
-                    const nextRef = Math.max(...parties.map(p => Number(p.customerRefNo || 0)), 0) + 1;
-                    const newParty: Party = { id: Date.now().toString() + "_party", name: inv.customerName, phone: inv.customerPhone || '', email: '', billingAddress: inv.billingAddress || '', customerRefNo: nextRef, balance: isSale ? inv.totalAmount : 0, type: 'receive' };
-                    updatedParties.push(newParty);
-                    inv.partyId = newParty.id;
-                    inv.customerRefNo = nextRef;
+                  const nextRef = (parties || []).reduce((max, p) => {
+                    const val = parseInt(String(p?.customerRefNo || 0), 10);
+                    return isNaN(val) ? max : Math.max(max, val);
+                  }, 0) + 1;
+                  const safeNextRef = isNaN(nextRef) ? 1 : nextRef;
+                  const newParty: Party = { id: Date.now().toString() + "_party", name: inv.customerName.trim(), phone: inv.customerPhone || '', email: '', billingAddress: inv.billingAddress || '', customerRefNo: safeNextRef, balance: isSale ? inv.totalAmount : 0, type: 'receive' };
+                  updatedParties.push(newParty);
+                  inv.partyId = newParty.id;
+                  inv.customerRefNo = safeNextRef;
                 }
                 setParties(updatedParties);
             }
@@ -744,7 +846,16 @@ export default function App() {
               parties={parties}
               initialData={paymentInSale || undefined}
               onClose={() => setCurrentView('PAYMENT_IN_LIST')}
-              onSave={(data: any) => handleSavePaymentIn(paymentInSale?.id || '', data.receivedAmount, data.paymentType, (parties.find(p => p.id === data.partyId)?.balance || 0) - data.receivedAmount, { id: data.partyId, customerName: data.customerName } as any, data.date, paymentInSale?.refNo || '')}
+              onSave={(data: any) => handleSavePaymentIn(
+                paymentInSale?.id || null, 
+                data.receivedAmount, 
+                data.paymentType, 
+                (parties.find(p => p.id === data.partyId)?.balance || 0) - data.receivedAmount, 
+                { id: data.partyId, name: data.customerName }, 
+                data.date, 
+                paymentInSale?.refNo || 0,
+                data.description
+              )}
             />
           )}
           {currentView === 'PARTIES_LIST' && (
@@ -753,8 +864,11 @@ export default function App() {
               sales={sales} 
               estimates={estimates} 
               onAddParty={() => { 
-                const nextRef = Math.max(...parties.map(p => Number(p.customerRefNo || 0)), 0) + 1;
-                setEditingParty({ customerRefNo: nextRef }); 
+                const nextRef = (parties || []).reduce((max, p) => {
+                  const val = parseInt(String(p?.customerRefNo || 0), 10);
+                  return isNaN(val) ? max : Math.max(max, val);
+                }, 0) + 1;
+                setEditingParty({ customerRefNo: isNaN(nextRef) ? 1 : nextRef }); 
                 setShowPartyModal(true); 
               }} 
               onEditParty={handleEditParty}
