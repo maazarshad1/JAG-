@@ -475,7 +475,12 @@ export default function App() {
           if (sale.partyId) {
             await setDoc(doc(db, 'parties', String(sale.partyId)), { balance: newPartyBalance }, { merge: true });
           }
-        } catch (err) { handleFirestoreError(err, OperationType.WRITE, `transactions/${saleId}`); }
+          alert("Payment recorded successfully!");
+          setCurrentView('PAYMENT_IN_LIST');
+        } catch (err) { 
+          handleFirestoreError(err, OperationType.WRITE, `transactions/${saleId}`); 
+          alert("Failed to record payment. Please try again.");
+        }
       } else {
         if (isSale) {
           setSales(prev => prev.map(s => s.id === saleId ? newSaleData as Estimate : s));
@@ -485,6 +490,8 @@ export default function App() {
         if (sale.partyId) {
           setParties(prev => prev.map(p => p.id === sale.partyId ? { ...p, balance: newPartyBalance } as Party : p));
         }
+        alert("Payment recorded locally.");
+        setCurrentView('PAYMENT_IN_LIST');
       }
     } else {
       // Create new general payment-in
@@ -545,12 +552,21 @@ export default function App() {
 
           if (newPayment.partyId) {
              const isNew = !partyDataInput?.id && !parties.find(p => String(p.id) === String(finalPartyId));
-             if (!isNew) {
-               batch.update(doc(db, 'parties', String(newPayment.partyId)), { balance: newPartyBalance });
+             if (isNew) {
+                // The party was already created with its initial balance in lines 438-448
+                // But we might need to adjust if there were other open txns handled?
+                // Actually if it's BRAND NEW, there are no open txns.
+             } else {
+                batch.update(doc(db, 'parties', String(newPayment.partyId)), { balance: newPartyBalance });
              }
           }
           await batch.commit();
-        } catch (err) { handleFirestoreError(err, OperationType.WRITE, 'transactions'); }
+          alert("General payment recorded successfully!");
+          setCurrentView('PAYMENT_IN_LIST');
+        } catch (err) { 
+            handleFirestoreError(err, OperationType.WRITE, 'transactions'); 
+            alert("Failed to record general payment.");
+        }
       } else {
         setSales(prev => {
             const updatedSales = [...prev];
@@ -571,11 +587,12 @@ export default function App() {
         if (newPayment.partyId) {
           setParties(prev => prev.map(p => p.id === newPayment.partyId ? { ...p, balance: newPartyBalance } as Party : p));
         }
+        alert("General payment recorded locally.");
+        setCurrentView('PAYMENT_IN_LIST');
       }
     }
 
     setPaymentInSale(null);
-    setCurrentView('PAYMENT_IN_LIST');
   };
 
   const executeDelete = async () => {

@@ -12,12 +12,19 @@ export function PaymentInModal({
   onClose: () => void,
   initialData?: Partial<Estimate>
 }) {
+  const initialAmount = initialData ? (
+    initialData.totalAmount !== undefined && initialData.receivedAmount !== undefined
+      ? (initialData.totalAmount - initialData.receivedAmount).toString()
+      : (initialData.receivedAmount || '').toString()
+  ) : '';
+
   const [customerName, setCustomerName] = useState(initialData?.customerName || '');
-  const [amount, setAmount] = useState(initialData?.receivedAmount?.toString() || '');
+  const [amount, setAmount] = useState(initialAmount);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [paymentType, setPaymentType] = useState('Cash');
   const [isSaving, setIsSaving] = useState(false);
+  const [errorStatus, setErrorStatus] = useState<string | null>(null);
 
   const selectedParty = parties.find(p => p.name.toLowerCase().trim() === customerName.toLowerCase().trim());
 
@@ -25,6 +32,7 @@ export function PaymentInModal({
     e.preventDefault();
     if (!customerName || !amount || isSaving) return;
     setIsSaving(true);
+    setErrorStatus(null);
 
     try {
         await onSave({
@@ -40,8 +48,10 @@ export function PaymentInModal({
           isSale: true,
           txnType: 'Payment-In'
         });
-    } catch (error) {
+    } catch (error: any) {
         setIsSaving(false);
+        setErrorStatus("Error saving payment. Check if all fields are correct.");
+        console.error("Payment Capture Error:", error);
     }
   };
 
@@ -54,6 +64,12 @@ export function PaymentInModal({
         </div>
         
         <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
+          {errorStatus && (
+            <div style={{ marginBottom: '16px', padding: '10px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '4px', fontSize: '13px' }}>
+                {errorStatus}
+            </div>
+          )}
+          
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Party Name *</label>
             <input 
@@ -88,7 +104,7 @@ export function PaymentInModal({
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Amount *</label>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Amount Received *</label>
               <input 
                 type="number" 
                 value={amount}
