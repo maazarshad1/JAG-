@@ -53,7 +53,7 @@ export function ItemFormModal({ item, onSave, onCancel, onDelete }: ItemFormModa
                 <input 
                   type="number"
                   style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                  value={formData.price}
+                  value={formData.price === undefined || formData.price === null || isNaN(formData.price as any) ? '' : formData.price}
                   onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
                 />
               </div>
@@ -86,7 +86,7 @@ export function ItemFormModal({ item, onSave, onCancel, onDelete }: ItemFormModa
                 <input 
                   type="number"
                   style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                  value={formData.stock}
+                  value={formData.stock === undefined || formData.stock === null || isNaN(formData.stock as any) ? '' : formData.stock}
                   onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })}
                 />
               </div>
@@ -95,7 +95,7 @@ export function ItemFormModal({ item, onSave, onCancel, onDelete }: ItemFormModa
                 <input 
                   type="number"
                   style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                  value={formData.minStock}
+                  value={formData.minStock === undefined || formData.minStock === null || isNaN(formData.minStock as any) ? '' : formData.minStock}
                   onChange={e => setFormData({ ...formData, minStock: Number(e.target.value) })}
                 />
               </div>

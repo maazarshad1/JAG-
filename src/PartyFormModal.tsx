@@ -12,6 +12,17 @@ interface PartyFormModalProps {
 export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormModalProps) {
     const [activeTab, setActiveTab] = useState<'Address' | 'Credit' | 'Additional'>('Address');
     const [formData, setFormData] = useState<Partial<Party>>(party);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSave = async () => {
+        if (isSaving) return;
+        setIsSaving(true);
+        try {
+            await onSave(formData);
+        } catch (error) {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyCenter: 'center', padding: '20px' }}>
@@ -24,16 +35,27 @@ export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormM
 
                 {/* Main Content Area */}
                 <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
-                        <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Party Name *</label>
-                            <input 
-                                type="text" 
-                                style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} 
-                                value={formData.name || ''} 
-                                onChange={e => setFormData({...formData, name: e.target.value})}
-                                placeholder="AWAIS"
-                            />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Party Name *</label>
+                                <input 
+                                    type="text" 
+                                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} 
+                                    value={formData.name || ''} 
+                                    onChange={e => setFormData({...formData, name: e.target.value})}
+                                    placeholder="Customer Name"
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Ref No *</label>
+                                <input 
+                                    type="number" 
+                                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} 
+                                    value={formData.customerRefNo === undefined || formData.customerRefNo === null || isNaN(formData.customerRefNo) ? '' : formData.customerRefNo} 
+                                    onChange={e => setFormData({...formData, customerRefNo: e.target.value ? Number(e.target.value) : undefined})}
+                                    placeholder="Ref No"
+                                />
+                            </div>
                         </div>
                         <div>
                             <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b7280', marginBottom: '8px' }}>Phone Number</label>
@@ -45,7 +67,6 @@ export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormM
                                 placeholder="Phone Number"
                             />
                         </div>
-                    </div>
 
                     {/* Tabs */}
                     <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '24px', gap: '32px' }}>
@@ -109,8 +130,9 @@ export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormM
                                     <input 
                                         type="number" 
                                         style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} 
-                                        value={formData.balance || 0} 
-                                        onChange={e => setFormData({...formData, balance: Number(e.target.value)})}
+                                        value={formData.balance === undefined || formData.balance === null || isNaN(formData.balance) ? '' : formData.balance} 
+                                        onChange={e => setFormData({...formData, balance: e.target.value ? Number(e.target.value) : 0})}
+                                        placeholder="0"
                                     />
                                 </div>
                                 <div>
@@ -154,10 +176,21 @@ export function PartyFormModal({ party, onSave, onCancel, onDelete }: PartyFormM
                             Cancel
                         </button>
                         <button 
-                            onClick={() => onSave(formData)}
-                            style={{ padding: '8px 32px', borderRadius: '20px', border: 'none', backgroundColor: '#3b82f6', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                            disabled={isSaving}
+                            onClick={handleSave}
+                            style={{ 
+                                padding: '8px 32px', 
+                                borderRadius: '20px', 
+                                border: 'none', 
+                                backgroundColor: isSaving ? '#94a3b8' : '#3b82f6', 
+                                color: '#fff', 
+                                fontSize: '14px', 
+                                fontWeight: 600, 
+                                cursor: isSaving ? 'not-allowed' : 'pointer', 
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)' 
+                            }}
                         >
-                            Save
+                            {isSaving ? 'Saving...' : 'Save'}
                         </button>
                     </div>
                 </div>

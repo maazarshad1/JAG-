@@ -373,9 +373,10 @@ export function InvoiceView({
                <div style={{ flex: 1 }}>
                   <div style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontSize: '14px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice Details:' : 'Estimate Details:'}</div>
                   <div style={{ padding: '15px', fontSize: '14px', color: '#111827', minHeight: '80px', lineHeight: '1.6' }}>
-                    <div style={{ display: 'flex' }}><span style={{ width: '60px' }}>No</span>: <b style={{ color: '#000' }}>{estimate.refNo}</b></div>
-                    <div style={{ display: 'flex' }}><span style={{ width: '60px' }}>Date</span>: <b style={{ color: '#000' }}>{estimate.date}</b></div>
-                    <div style={{ display: 'flex' }}><span style={{ width: '60px' }}>Time</span>: <b style={{ color: '#000' }}>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</b></div>
+                    <div style={{ display: 'flex' }}><span style={{ width: '100px' }}>Invoice No</span>: <b style={{ color: '#000' }}>{estimate.refNo}</b></div>
+                    {estimate.customerRefNo && <div style={{ display: 'flex' }}><span style={{ width: '100px' }}>Ref No</span>: <b style={{ color: '#000' }}>{estimate.customerRefNo}</b></div>}
+                    <div style={{ display: 'flex' }}><span style={{ width: '100px' }}>Date</span>: <b style={{ color: '#000' }}>{estimate.date}</b></div>
+                    <div style={{ display: 'flex' }}><span style={{ width: '100px' }}>Time</span>: <b style={{ color: '#000' }}>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</b></div>
                   </div>
                </div>
             </div>

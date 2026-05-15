@@ -62,7 +62,8 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
                             <thead>
                                 <tr style={{ borderBottom: '1px solid #E5E7EB', backgroundColor: '#F9FAFB' }}>
                                     <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Date</th>
-                                    <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Reference No</th>
+                                    <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Inv No</th>
+                                    <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Ref No</th>
                                     <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Party Name</th>
                                     <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Amount</th>
                                     <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Balance</th>
@@ -77,6 +78,7 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
                                         <tr key={est.id} style={{ borderBottom: '1px solid #E5E7EB', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors" onClick={() => onViewEstimate(est)}>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{est.date}</td>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{est.refNo}</td>
+                                            <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{est.customerRefNo || '-'}</td>
                                             <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', fontWeight: 500 }}>
                                                 <div style={{ maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={est.customerName}>
                                                     {est.customerName}

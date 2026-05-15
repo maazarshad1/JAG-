@@ -19,7 +19,7 @@ export interface Party {
   userId?: string;
   workspaceId?: string;
   name: string;
-  customerRefNo?: string;
+  customerRefNo?: number;
   balance: number;
   type: 'receive' | 'pay';
   phone: string;
@@ -49,6 +49,7 @@ export interface Estimate {
   customerPhone?: string;
   billingAddress?: string;
   partyId?: string | number;
+  customerRefNo?: number;
   items: Item[];
   status: EstimateStatus | string;
   discountValue: number;

@@ -95,7 +95,8 @@ export function PartiesModule({
                             <thead>
                                 <tr style={{ borderBottom: '1px solid #E5E7EB', backgroundColor: '#F9FAFB' }}>
                                     <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Type</th>
-                                    <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Number</th>
+                                    <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Inv No</th>
+                                    <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Cust Ref No</th>
                                     <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Date</th>
                                     <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Total</th>
                                     <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Balance</th>
@@ -107,6 +108,7 @@ export function PartiesModule({
                                     <tr key={txn.id} style={{ borderBottom: '1px solid #E5E7EB', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors" onClick={() => onViewTransaction(txn)}>
                                         <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', fontWeight: 500 }}>{txn.isSale ? 'Sale' : 'Estimate'}</td>
                                         <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{txn.refNo}</td>
+                                        <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{txn.customerRefNo || '-'}</td>
                                         <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{txn.date}</td>
                                         <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', textAlign: 'right' }}>Rs {txn.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                                         <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', textAlign: 'right' }}>Rs {(txn.isSale ? txn.balance : 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>

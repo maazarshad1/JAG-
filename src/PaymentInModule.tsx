@@ -54,7 +54,8 @@ export function PaymentInModule({
                         <thead>
                             <tr style={{ borderBottom: '1px solid #E5E7EB', backgroundColor: '#F9FAFB' }}>
                                 <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Date</th>
-                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Ref. No.</th>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Inv No.</th>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Cust Ref No.</th>
                                 <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Party Name</th>
                                 <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Total Amount</th>
                                 <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Received</th>
@@ -67,6 +68,7 @@ export function PaymentInModule({
                                 <tr key={sale.id} style={{ borderBottom: '1px solid #E5E7EB', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors" onClick={() => onViewSale(sale)}>
                                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{sale.date}</td>
                                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{sale.refNo || sale.id.slice(0, 4)}</td>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{sale.customerRefNo || '-'}</td>
                                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', fontWeight: 500 }}>{sale.customerName}</td>
                                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', textAlign: 'right' }}>Rs {sale.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', textAlign: 'right' }}>Rs {(sale.receivedAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>

@@ -17,26 +17,32 @@ export function PaymentInModal({
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [paymentType, setPaymentType] = useState('Cash');
+  const [isSaving, setIsSaving] = useState(false);
 
   const selectedParty = parties.find(p => p.id === selectedPartyId);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPartyId || !amount) return;
+    if (!selectedPartyId || !amount || isSaving) return;
+    setIsSaving(true);
 
-    onSave({
-      partyId: selectedPartyId,
-      customerName: selectedParty?.name || 'Unknown',
-      receivedAmount: parseFloat(amount),
-      totalAmount: parseFloat(amount),
-      balance: 0,
-      date,
-      description,
-      paymentType,
-      items: [],
-      isSale: true,
-      txnType: 'Payment-In'
-    });
+    try {
+        await onSave({
+          partyId: selectedPartyId,
+          customerName: selectedParty?.name || 'Unknown',
+          receivedAmount: parseFloat(amount),
+          totalAmount: parseFloat(amount),
+          balance: 0,
+          date,
+          description,
+          paymentType,
+          items: [],
+          isSale: true,
+          txnType: 'Payment-In'
+        });
+    } catch (error) {
+        setIsSaving(false);
+    }
   };
 
   return (
@@ -67,6 +73,12 @@ export function PaymentInModal({
               </div>
             )}
           </div>
+
+          {initialData?.refNo && (
+              <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f3f4f6', borderRadius: '4px', fontSize: '13px', color: '#374151' }}>
+                  <strong>Linked Invoice Reference No:</strong> #{initialData.refNo}
+              </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
             <div>
@@ -126,9 +138,18 @@ export function PaymentInModal({
             </button>
             <button 
               type="submit"
-              style={{ padding: '8px 24px', border: 'none', borderRadius: '4px', background: '#4f46e5', color: '#fff', cursor: 'pointer', fontWeight: 500 }}
+              disabled={isSaving}
+              style={{ 
+                padding: '8px 24px', 
+                border: 'none', 
+                borderRadius: '4px', 
+                background: isSaving ? '#94a3b8' : '#4f46e5', 
+                color: '#fff', 
+                cursor: isSaving ? 'not-allowed' : 'pointer', 
+                fontWeight: 500 
+              }}
             >
-              Save Payment
+              {isSaving ? 'Saving...' : 'Save Payment'}
             </button>
           </div>
         </form>

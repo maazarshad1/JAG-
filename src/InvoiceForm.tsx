@@ -8,25 +8,39 @@ export function InvoiceForm({
   isSale = true,
   onSave, 
   onCancel,
-  initialData 
+  initialData,
+  allTransactions = []
 }: { 
   parties: Party[], 
   inventoryItems: InventoryItem[],
   isSale?: boolean,
   onSave: (estimate: Estimate) => void, 
   onCancel: () => void,
-  initialData?: Estimate
+  initialData?: Estimate,
+  allTransactions?: Estimate[]
 }) {
   const [customerName, setCustomerName] = useState(initialData?.customerName || '');
   const [date, setDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
-  const [refNo, setRefNo] = useState(initialData?.refNo || (isSale ? 'SALE-001' : 'EST-001'));
+  
+  const selectedParty = parties.find(p => p.name.toLowerCase() === customerName.toLowerCase());
+  
+  useEffect(() => {
+    if (initialData) return;
+    
+    // Calculate next global refNo (101 suggests 102)
+    const maxRef = Math.max(...allTransactions.map(t => Number(t.refNo || 0)), 0);
+    setRefNo(maxRef + 1);
+  }, [allTransactions, initialData]);
+
+  const nextPartyRef = Math.max(...parties.map(p => Number(p.customerRefNo || 0)), 0) + 1;
+
+  const [refNo, setRefNo] = useState<number | null>(initialData?.refNo || null);
   const [status, setStatus] = useState<'Open'|'Closed'>(initialData?.status as any || 'Open');
   const [items, setItems] = useState<Item[]>(initialData?.items || []);
   const [receivedAmount, setReceivedAmount] = useState(initialData?.receivedAmount || 0);
   const [paymentType, setPaymentType] = useState(initialData?.paymentType || 'Cash');
+  const [isSaving, setIsSaving] = useState(false);
 
-  const selectedParty = parties.find(p => p.name.toLowerCase() === customerName.toLowerCase());
-  
   const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
   const balance = totalAmount - receivedAmount;
 
@@ -53,27 +67,39 @@ export function InvoiceForm({
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const selectedParty = parties.find(p => p.name === customerName);
-    onSave({
-      id: initialData?.id || Date.now().toString(),
-      customerName,
-      partyId: selectedParty?.id || '',
-      date,
-      refNo: refNo as any,
-      status,
-      items,
-      totalAmount,
-      receivedAmount,
-      balance,
-      isSale,
-      paymentType: paymentType as any,
-      discountValue: initialData?.discountValue || 0,
-      discountType: initialData?.discountType || 'fixed',
-      taxType: initialData?.taxType || 'none',
-      description: initialData?.description || ''
-    });
+    if (isSaving) return;
+    setIsSaving(true);
+    
+    let invoiceNumber = refNo;
+    if (!invoiceNumber) {
+        const maxRef = Math.max(...allTransactions.map(t => Number(t.refNo || 0)), 0);
+        invoiceNumber = maxRef + 1;
+    }
+
+    try {
+        await onSave({
+          id: initialData?.id || Date.now().toString(),
+          customerName,
+          partyId: selectedParty?.id || '',
+          date,
+          refNo: invoiceNumber,
+          status,
+          items,
+          totalAmount,
+          receivedAmount,
+          balance,
+          isSale,
+          paymentType: paymentType as any,
+          discountValue: initialData?.discountValue || 0,
+          discountType: initialData?.discountType || 'fixed',
+          taxType: initialData?.taxType || 'none',
+          description: initialData?.description || ''
+        });
+    } catch (error) {
+        setIsSaving(false);
+    }
   };
 
   return (
@@ -82,7 +108,22 @@ export function InvoiceForm({
         <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', margin: 0 }}>{initialData ? 'Edit' : 'Add'} {isSale ? 'Sale' : 'Estimate'}</h2>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button type="button" onClick={onCancel} className="btn-secondary" style={{ padding: '8px 16px', borderRadius: '4px', border: '1px solid #e5e7eb', backgroundColor: '#fff', cursor: 'pointer' }}>Cancel</button>
-          <button type="submit" onClick={handleSubmit} className="btn-primary" style={{ padding: '8px 24px', borderRadius: '4px', border: 'none', backgroundColor: '#3b82f6', color: '#fff', cursor: 'pointer' }}>Save</button>
+          <button 
+            type="submit" 
+            onClick={handleSubmit} 
+            disabled={isSaving}
+            className="btn-primary" 
+            style={{ 
+                padding: '8px 24px', 
+                borderRadius: '4px', 
+                border: 'none', 
+                backgroundColor: isSaving ? '#94a3b8' : '#3b82f6', 
+                color: '#fff', 
+                cursor: isSaving ? 'not-allowed' : 'pointer' 
+            }}
+          >
+            {isSaving ? 'Saving...' : 'Save'}
+          </button>
         </div>
       </div>
 
@@ -100,9 +141,13 @@ export function InvoiceForm({
             <datalist id="parties-list">
               {parties.map(p => <option key={p.id} value={p.name}>{`#${p.customerRefNo || 'N/A'} - Bal: ${p.balance}`}</option>)}
             </datalist>
-            {selectedParty && (
+            {selectedParty ? (
               <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                 Ref: #{selectedParty.customerRefNo || 'N/A'} | Balance: Rs {selectedParty.balance.toLocaleString()}
+              </div>
+            ) : customerName && (
+              <div style={{ fontSize: '12px', color: '#dc2626', marginTop: '4px' }}>
+                New Party - Will be assigned Ref: #{nextPartyRef}
               </div>
             )}
           </div>
@@ -119,7 +164,7 @@ export function InvoiceForm({
           <div>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Invoice No.</label>
             <input 
-              value={refNo} 
+              value={refNo === null || isNaN(refNo) ? '' : refNo} 
               readOnly
               className="input-field" 
               style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '4px', backgroundColor: '#f9fafb' }}
@@ -172,7 +217,7 @@ export function InvoiceForm({
                   <td style={{ padding: '12px 16px' }}>
                     <input 
                       type="number" 
-                      value={item.quantity} 
+                      value={isNaN(item.quantity) ? '' : item.quantity} 
                       onChange={e => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
                       style={{ width: '80px', padding: '6px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
                     />
@@ -189,7 +234,7 @@ export function InvoiceForm({
                   <td style={{ padding: '12px 16px' }}>
                     <input 
                       type="number" 
-                      value={item.rate} 
+                      value={isNaN(item.rate) ? '' : item.rate} 
                       onChange={e => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
                       style={{ width: '120px', padding: '6px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
                     />
@@ -235,7 +280,7 @@ export function InvoiceForm({
                   <span style={{ color: '#6b7280' }}>Received Amount</span>
                   <input 
                     type="number" 
-                    value={receivedAmount} 
+                    value={isNaN(receivedAmount) ? '' : receivedAmount} 
                     onChange={e => setReceivedAmount(parseFloat(e.target.value) || 0)}
                     style={{ width: '100px', padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
                   />

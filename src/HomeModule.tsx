@@ -64,6 +64,7 @@ export function HomeModule({
                             <tr style={{ borderBottom: '1px solid #E5E7EB', backgroundColor: '#F9FAFB' }}>
                                 <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Date</th>
                                 <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Invoice No.</th>
+                                <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Ref No.</th>
                                 <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Party Name</th>
                                 <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Type</th>
                                 <th style={{ padding: '12px 16px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Payment</th>
@@ -80,6 +81,7 @@ export function HomeModule({
                                 <tr key={inv.id} style={{ borderBottom: '1px solid #E5E7EB', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors" onClick={() => onViewSale(inv)}>
                                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{inv.date}</td>
                                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{inv.refNo}</td>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827' }}>{inv.customerRefNo || '-'}</td>
                                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#111827', fontWeight: 500 }}>
                                         <div style={{ maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={inv.customerName}>
                                             {inv.customerName}

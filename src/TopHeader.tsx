@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function TopHeader({ title, onAction }: { title: string, onAction: (action: string) => void }) {
+export function TopHeader({ title, onAction, onSearch }: { title: string, onAction: (action: string) => void, onSearch?: (q: string) => void }) {
     return (
         <header className="bg-white border-b border-slate-200 h-14 px-6 flex items-center justify-between shadow-sm sticky top-0 z-30">
             <div className="flex items-center gap-3">
@@ -14,6 +14,16 @@ export function TopHeader({ title, onAction }: { title: string, onAction: (actio
                         <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Online</span>
                     </div>
                 </div>
+                {onSearch && (
+                  <div className="ml-4">
+                    <input 
+                      type="text" 
+                      placeholder="Search..." 
+                      className="border border-slate-300 rounded px-2 py-1 text-sm outline-none focus:border-indigo-500"
+                      onChange={(e) => onSearch(e.target.value)}
+                    />
+                  </div>
+                )}
             </div>
             
             <div className="flex items-center gap-4">
