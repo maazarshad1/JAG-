@@ -19,8 +19,8 @@ export function PartiesModule({
     estimates: Estimate[],
     onAddParty: () => void,
     onEditParty: (party: Party) => void,
-    onViewTransaction: (txn: Estimate) => void,
-    onViewReceipt?: (txn: Estimate) => void,
+    onViewTransaction: (txn: Estimate, autoShare?: boolean) => void,
+    onViewReceipt?: (txn: Estimate, autoShare?: boolean) => void,
     onEditSale?: (txn: Estimate) => void,
     onEditEstimate?: (txn: Estimate) => void,
     onPaymentIn?: (party: Party) => void,
@@ -79,17 +79,17 @@ export function PartiesModule({
                                 <i className="fa-solid fa-ellipsis-vertical text-xl"></i>
                             </button>
                             {menuOpenId === 'HEADER_MENU' && (
-                                <div className="absolute right-0 mt-2 w-[240px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] ring-1 ring-black/5 overflow-hidden py-1 z-50 border border-slate-100 ring-1 ring-black ring-opacity-5 z-20 transition-all font-sans text-left">
+                                <div className="absolute right-0 mt-2 w-[300px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] ring-1 ring-black/5 overflow-hidden py-1 z-50 border border-slate-100 ring-1 ring-black ring-opacity-5 z-20 transition-all font-sans text-left">
                                     <div className="py-1">
                                         <button 
-                                            className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-indigo-600"
+                                            className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-slate-700 gap-4 hover:bg-slate-50 hover:text-indigo-600"
                                             onClick={(e) => { e.stopPropagation(); onEditParty(selectedParty); setMenuOpenId(null); }}
                                         >
                                             <i className="fa-solid fa-pen-to-square w-5"></i> Edit Party
                                         </button>
                                         {onDeleteParty && (
                                             <button 
-                                                className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-red-600 gap-3 hover:bg-red-50 border-t border-slate-100 mt-1 pt-1.5"
+                                                className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-red-600 gap-4 hover:bg-red-50 border-t border-slate-100 mt-1 pt-1.5"
                                                 onClick={(e) => { 
                                                     e.stopPropagation(); 
                                                     onDeleteParty(String(selectedParty.id)); 
@@ -191,33 +191,36 @@ export function PartiesModule({
                                                         <i className="fa-solid fa-ellipsis-vertical text-xl"></i>
                                                     </button>
                                                     {menuOpenId === txn.id && (
-                                                        <div className="absolute right-0 mt-2 w-[240px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 ring-1 ring-black/5 z-50 transition-all font-sans text-left overflow-hidden py-1">
+                                                        <div className="absolute right-0 mt-2 w-[300px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 ring-1 ring-black/5 z-50 transition-all font-sans text-left overflow-hidden py-1">
                                                             <div className="py-2">
                                                                     <button 
-                                                                        className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                                                                        className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-slate-700 gap-4 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                                                                         onClick={(e) => { e.stopPropagation(); onViewTransaction(txn); setMenuOpenId(null); }}
                                                                     >
                                                                         <i className="fa-solid fa-file-pdf w-6 text-lg text-slate-400 group-hover:text-indigo-500"></i> PDF Download
                                                                     </button>
                                                                     <button 
-                                                                        className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+                                                                        className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-slate-700 gap-4 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
                                                                         onClick={(e) => { e.stopPropagation(); onViewReceipt?.(txn); setMenuOpenId(null); }}
                                                                     >
                                                                         <i className="fa-solid fa-receipt w-6 text-lg text-slate-400 group-hover:text-emerald-500"></i> View Receipt
                                                                     </button>
                                                                     <button 
-                                                                        className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-green-600 gap-3 hover:bg-green-50 transition-colors"
+                                                                        className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-green-600 gap-4 hover:bg-green-50 transition-colors"
                                                                         onClick={(e) => { 
                                                                             e.stopPropagation(); 
-                                                                            const message = `*${txn.isSale ? 'Invoice' : 'Estimate'} Details*\n\n*Ref No:* ${txn.refNo}\n*Party:* ${txn.customerName}\n*Date:* ${txn.date}\n*Total:* Rs ${txn.totalAmount.toLocaleString('en-IN')}\n*Balance:* Rs ${txn.balance.toLocaleString('en-IN')}\n\nThank you!`;
-                                                                            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                                                                            if (txn.items.length === 0 && (txn.receivedAmount || 0) > 0) {
+                                                                                onViewReceipt?.(txn, true);
+                                                                            } else {
+                                                                                onViewTransaction(txn, true); 
+                                                                            }
                                                                             setMenuOpenId(null); 
                                                                         }}
                                                                     >
-                                                                        <i className="fa-brands fa-whatsapp w-6 text-lg text-green-500 group-hover:scale-110 transition-transform"></i> Share on WhatsApp
+                                                                        <i className="fa-brands fa-whatsapp w-6 text-lg text-green-500 group-hover:scale-110 transition-transform"></i> Share PDF
                                                                     </button>
                                                                 <button 
-                                                                    className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                                                                    className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-slate-700 gap-4 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                                                                     onClick={(e) => { e.stopPropagation(); handleEditTxn(txn); }}
                                                                 >
                                                                     <i className="fa-solid fa-pen-to-square w-6 text-lg text-slate-400 group-hover:text-indigo-500"></i> Edit Transaction
@@ -330,30 +333,30 @@ export function PartiesModule({
                                                     <i className="fa-solid fa-ellipsis-vertical text-xl"></i>
                                                 </button>
                                                 {menuOpenId === party.id && (
-                                                    <div className="absolute right-0 mt-2 w-[240px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 ring-1 ring-black/5 z-50 transition-all font-sans text-left overflow-hidden py-1">
+                                                    <div className="absolute right-0 mt-2 w-[300px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 ring-1 ring-black/5 z-50 transition-all font-sans text-left overflow-hidden py-1">
                                                             <div className="py-2">
                                                                 <button 
-                                                                    className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                                                                    className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-slate-700 gap-4 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                                                                     onClick={(e) => { e.stopPropagation(); setSelectedParty(party); setMenuOpenId(null); }}
                                                                 >
                                                                     <i className="fa-solid fa-eye w-6 text-lg text-slate-400 group-hover:text-indigo-500"></i> View Records
                                                                 </button>
                                                                 <button 
-                                                                    className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                                                                    className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-slate-700 gap-4 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                                                                     onClick={(e) => { e.stopPropagation(); onEditParty(party); setMenuOpenId(null); }}
                                                                 >
                                                                     <i className="fa-solid fa-pen-to-square w-6 text-lg text-slate-400 group-hover:text-indigo-500"></i> Edit Party Info
                                                                 </button>
                                                             {onPaymentIn && (
                                                                 <button 
-                                                                    className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-emerald-600 gap-3 hover:bg-emerald-50 border-t border-slate-100 transition-colors"
+                                                                    className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-emerald-600 gap-4 hover:bg-emerald-50 border-t border-slate-100 transition-colors"
                                                                     onClick={(e) => { e.stopPropagation(); onPaymentIn(party); setMenuOpenId(null); }}
                                                                 >
                                                                     <i className="fa-solid fa-money-bill-transfer w-6 text-lg group-hover:scale-110 transition-transform"></i> Record Payment
                                                                 </button>
                                                             )}
                                                             <button 
-                                                                className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-red-600 gap-3 hover:bg-red-50 border-t border-slate-100 transition-colors"
+                                                                className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-red-600 gap-4 hover:bg-red-50 border-t border-slate-100 transition-colors"
                                                                 onClick={(e) => { 
                                                                     e.stopPropagation(); 
                                                                     setMenuOpenId(null);

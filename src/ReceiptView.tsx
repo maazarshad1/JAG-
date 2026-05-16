@@ -9,15 +9,26 @@ export function ReceiptView({
   companyData,
   setCompanyData,
   onBack,
-  onDelete
+  onDelete,
+  autoShare = false
 }: {
   payment: Estimate;
   companyData: CompanyData;
   setCompanyData: React.Dispatch<React.SetStateAction<CompanyData>>;
   onBack: () => void;
   onDelete?: (id: string) => void;
+  autoShare?: boolean;
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
+
+  React.useEffect(() => {
+    if (autoShare) {
+      const timer = setTimeout(() => {
+        handleShare();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [autoShare]);
   
   const generatePDFBlob = async (): Promise<{blob: Blob, fileName: string} | null> => {
     const element = document.getElementById('receipt-paper');
@@ -229,6 +240,14 @@ export function ReceiptView({
                    title="Delete Receipt"
                  >
                    <Trash2 size={20} />
+                 </button>
+                 <button 
+                   onClick={() => handleShare()} 
+                   disabled={isGenerating}
+                   className="p-2 bg-white hover:bg-slate-50 text-slate-600 rounded shadow-sm border border-slate-200 transition-colors"
+                   title="Share Receipt"
+                 >
+                   <Share2 size={20} />
                  </button>
                  <button 
                    onClick={handleDownloadPDF} 

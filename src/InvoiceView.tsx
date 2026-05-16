@@ -8,15 +8,27 @@ export function InvoiceView({
   estimate,
   companyData,
   setCompanyData,
-  onBack
+  onBack,
+  autoShare = false
 }: {
   estimate: Estimate;
   companyData: CompanyData;
   setCompanyData: React.Dispatch<React.SetStateAction<CompanyData>>;
   onBack: () => void;
+  autoShare?: boolean;
 }) {
   const subtotal = estimate.items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  React.useEffect(() => {
+    if (autoShare) {
+      // Small delay to ensure the DOM is ready for html-to-image
+      const timer = setTimeout(() => {
+        handleShare();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [autoShare]);
   
   const generatePDFBlob = async (): Promise<{blob: Blob, fileName: string} | null> => {
     const element = document.getElementById('invoice-paper');
@@ -225,6 +237,14 @@ export function InvoiceView({
                 <h2 className="font-bold text-slate-800 text-xl">Preview</h2>
               </div>
               <div className="flex gap-4 items-center">
+                 <button 
+                   onClick={() => handleShare()} 
+                   disabled={isGenerating}
+                   className="p-2 bg-white hover:bg-slate-50 text-slate-600 rounded shadow-sm border border-slate-200 transition-colors"
+                   title="Share Receipt"
+                 >
+                   <Share2 size={20} />
+                 </button>
                  <button 
                    onClick={handleDownloadPDF} 
                    disabled={isGenerating}

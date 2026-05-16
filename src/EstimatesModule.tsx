@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Estimate } from './types';
 import { FileText } from 'lucide-react';
 
-export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onEditEstimate, onViewEstimate, onDeleteEstimate, onPaymentIn }: { estimates: Estimate[], onAddEstimate: () => void, onConvertToSale: (id: string, type: 'SALE' | 'SALE_ORDER') => void, onEditEstimate: (est: Estimate) => void, onViewEstimate: (est: Estimate) => void, onDeleteEstimate?: (id: string) => void, onPaymentIn?: (est: Estimate) => void }) {
+export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onEditEstimate, onViewEstimate, onDeleteEstimate, onPaymentIn }: { estimates: Estimate[], onAddEstimate: () => void, onConvertToSale: (id: string, type: 'SALE' | 'SALE_ORDER') => void, onEditEstimate: (est: Estimate) => void, onViewEstimate: (est: Estimate, autoShare?: boolean) => void, onDeleteEstimate?: (id: string) => void, onPaymentIn?: (est: Estimate) => void }) {
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
     const totalQuotations = estimates.reduce((sum, e) => sum + e.totalAmount, 0);
     const converted = estimates.filter(e => e.status === 'Closed').reduce((sum, e) => sum + e.totalAmount, 0);
@@ -108,34 +108,33 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
                                                             <i className="fa-solid fa-ellipsis-vertical text-xl"></i>
                                                         </button>
                                                         {openDropdownId === est.id && (
-                                                            <div className="absolute right-0 mt-2 w-[240px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 ring-1 ring-black/5 z-50 transition-all font-sans text-left overflow-hidden py-1">
+                                                            <div className="absolute right-0 mt-2 w-[300px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 ring-1 ring-black/5 z-50 transition-all font-sans text-left overflow-hidden py-1">
                                                                 <div className="py-2">
                                                                     <button 
-                                                                         className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                                                                         className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-slate-700 gap-4 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                                                                          onClick={(e) => { e.stopPropagation(); onViewEstimate(est); setOpenDropdownId(null); }}
                                                                      >
                                                                          <i className="fa-solid fa-file-pdf w-6 text-lg text-slate-400 group-hover:text-indigo-500"></i> PDF Download
                                                                      </button>
                                                                      <button 
-                                                                         className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-green-600 gap-3 hover:bg-green-50 transition-colors"
+                                                                         className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-green-600 gap-4 hover:bg-green-50 transition-colors"
                                                                          onClick={(e) => { 
                                                                              e.stopPropagation(); 
-                                                                             const message = `*Estimate Details*\n\n*Ref No:* ${est.refNo}\n*Party:* ${est.customerName}\n*Date:* ${est.date}\n*Total:* Rs ${est.totalAmount.toLocaleString('en-IN')}\n*Balance:* Rs ${est.balance.toLocaleString('en-IN')}\n\nThank you!`;
-                                                                             window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                                                                             onViewEstimate(est, true);
                                                                              setOpenDropdownId(null); 
                                                                          }}
                                                                      >
-                                                                         <i className="fa-brands fa-whatsapp w-6 text-lg text-green-500 group-hover:scale-110 transition-transform"></i> Share on WhatsApp
+                                                                         <i className="fa-brands fa-whatsapp w-6 text-lg text-green-500 group-hover:scale-110 transition-transform"></i> Share PDF
                                                                      </button>
                                                                       <button 
-                                                                         className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                                                                         className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-slate-700 gap-4 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                                                                          onClick={(e) => { e.stopPropagation(); onEditEstimate(est); setOpenDropdownId(null); }}
                                                                      >
                                                                          <i className="fa-solid fa-pen-to-square w-6 text-lg text-slate-400 group-hover:text-indigo-500"></i> Edit Estimate
                                                                      </button>
                                                                  {onPaymentIn && isOpen && (
                                                                      <button 
-                                                                         className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-emerald-600 gap-3 hover:bg-emerald-50 border-t border-slate-100 transition-colors"
+                                                                         className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-emerald-600 gap-4 hover:bg-emerald-50 border-t border-slate-100 transition-colors"
                                                                          onClick={(e) => { e.stopPropagation(); onPaymentIn(est); setOpenDropdownId(null); }}
                                                                      >
                                                                          <i className="fa-solid fa-money-bill-transfer w-6 text-lg group-hover:scale-110 transition-transform"></i> Record Payment
@@ -144,13 +143,13 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
                                                                  {isOpen && (
                                                                      <>
                                                                          <button 
-                                                                             className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-emerald-600 border-t border-slate-100 transition-colors"
+                                                                             className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-slate-700 gap-4 hover:bg-slate-50 hover:text-emerald-600 border-t border-slate-100 transition-colors"
                                                                              onClick={(e) => { e.stopPropagation(); onConvertToSale(est.id, 'SALE'); setOpenDropdownId(null); }}
                                                                          >
                                                                              <i className="fa-solid fa-file-invoice-dollar w-6 text-lg text-emerald-500"></i> Convert to Sale
                                                                          </button>
                                                                          <button 
-                                                                             className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+                                                                             className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-slate-700 gap-4 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
                                                                              onClick={(e) => { e.stopPropagation(); onConvertToSale(est.id, 'SALE_ORDER'); setOpenDropdownId(null); }}
                                                                          >
                                                                              <i className="fa-solid fa-file-signature w-6 text-lg text-emerald-500"></i> Convert to Order
@@ -158,7 +157,7 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
                                                                      </>
                                                                  )}
                                                                  <button 
-                                                                     className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-red-600 gap-3 hover:bg-red-50 border-t border-slate-100 transition-colors"
+                                                                     className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-red-600 gap-4 hover:bg-red-50 border-t border-slate-100 transition-colors"
                                                                      onClick={(e) => { e.stopPropagation(); onDeleteEstimate?.(est.id); setOpenDropdownId(null); }}
                                                                  >
                                                                      <i className="fa-solid fa-trash w-6 text-lg text-red-400 group-hover:text-red-600"></i> Delete Estimate

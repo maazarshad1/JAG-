@@ -10,8 +10,8 @@ export function PaymentInModule({
 }: { 
     sales: Estimate[], 
     onAddPaymentIn: () => void,
-    onViewSale: (sale: Estimate) => void,
-    onViewReceipt: (sale: Estimate) => void,
+    onViewSale: (sale: Estimate, autoShare?: boolean) => void,
+    onViewReceipt: (sale: Estimate, autoShare?: boolean) => void,
     onDelete: (id: string) => void
 }) {
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -93,33 +93,32 @@ export function PaymentInModule({
                                                 <i className="fa-solid fa-ellipsis-vertical text-xl"></i>
                                             </button>
                                             {openMenuId === sale.id && (
-                                                <div className="absolute right-0 mt-2 w-[240px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 ring-1 ring-black/5 z-50 transition-all font-sans text-left overflow-hidden py-1">
+                                                <div className="absolute right-0 mt-2 w-[300px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 ring-1 ring-black/5 z-50 transition-all font-sans text-left overflow-hidden py-1">
                                                     <div className="py-2">
                                                         <button 
-                                                            className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                                                            className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-slate-700 gap-4 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                                                             onClick={(e) => { e.stopPropagation(); onViewSale(sale); setOpenMenuId(null); }}
                                                         >
                                                             <i className="fa-solid fa-file-pdf w-6 text-lg text-slate-400 group-hover:text-indigo-500"></i> PDF Download
                                                         </button>
                                                         <button 
-                                                            className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+                                                            className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-slate-700 gap-4 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
                                                             onClick={(e) => { e.stopPropagation(); onViewReceipt(sale); setOpenMenuId(null); }}
                                                         >
                                                             <i className="fa-solid fa-receipt w-6 text-lg text-slate-400 group-hover:text-emerald-500"></i> Official Receipt
                                                         </button>
                                                         <button 
-                                                            className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-green-600 gap-3 hover:bg-green-50 transition-colors"
+                                                            className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-green-600 gap-4 hover:bg-green-50 transition-colors"
                                                             onClick={(e) => { 
                                                                 e.stopPropagation(); 
-                                                                const message = `*Payment Receipt Details*\n\n*Ref No:* ${sale.refNo}\n*Party:* ${sale.customerName}\n*Date:* ${sale.date}\n*Amount Received:* Rs ${(sale.receivedAmount || 0).toLocaleString('en-IN')}\n\nThank you!`;
-                                                                window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                                                                onViewReceipt(sale, true);
                                                                 setOpenMenuId(null); 
                                                             }}
                                                         >
-                                                            <i className="fa-brands fa-whatsapp w-6 text-lg text-green-500 group-hover:scale-110 transition-transform"></i> Share on WhatsApp
+                                                            <i className="fa-brands fa-whatsapp w-6 text-lg text-green-500 group-hover:scale-110 transition-transform"></i> Share PDF
                                                         </button>
                                                         <button 
-                                                            className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-red-600 gap-3 hover:bg-red-50 border-t border-slate-100 transition-colors"
+                                                            className="group flex w-full items-center px-8 py-5 text-[17px] font-medium text-red-600 gap-4 hover:bg-red-50 border-t border-slate-100 transition-colors"
                                                             onClick={(e) => { 
                                                                 e.stopPropagation(); 
                                                                 onDelete(sale.id); 

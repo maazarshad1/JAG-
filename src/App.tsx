@@ -44,6 +44,7 @@ export default function App() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<View>('HOME');
   const [currentInvoice, setCurrentInvoice] = useState<Estimate | null>(null);
+  const [isAutoSharing, setIsAutoSharing] = useState(false);
   const [paymentInSale, setPaymentInSale] = useState<Estimate | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -777,7 +778,8 @@ export default function App() {
     setCurrentView('ESTIMATE_FORM');
   };
 
-  const handleViewInvoice = (inv: Estimate) => {
+  const handleViewInvoice = (inv: Estimate, autoShare: boolean = false) => {
+    setIsAutoSharing(autoShare);
     // If it's a closed estimate, try to find the sale it was converted to
     if (!inv.isSale && inv.status === 'Closed') {
       const associatedSale = sales.find(s => s.convertedFromId === inv.id);
@@ -791,7 +793,8 @@ export default function App() {
     setCurrentView('INVOICE_VIEW');
   };
 
-  const handleViewReceipt = (inv: Estimate) => {
+  const handleViewReceipt = (inv: Estimate, autoShare: boolean = false) => {
+    setIsAutoSharing(autoShare);
     setCurrentInvoice(inv);
     setCurrentView('RECEIPT_VIEW');
   };
@@ -1076,7 +1079,11 @@ export default function App() {
                 estimate={currentInvoice} 
                 companyData={companyData} 
                 setCompanyData={handleUpdateCompanyData} 
-                onBack={() => setCurrentView(currentInvoice.isSale ? 'SALE_LIST' : 'ESTIMATE_LIST')} 
+                autoShare={isAutoSharing}
+                onBack={() => {
+                  setCurrentView(currentInvoice.isSale ? 'SALE_LIST' : 'ESTIMATE_LIST');
+                  setIsAutoSharing(false);
+                }} 
              />
           )}
           {currentView === 'RECEIPT_VIEW' && currentInvoice && (
@@ -1084,7 +1091,11 @@ export default function App() {
                 payment={currentInvoice} 
                 companyData={companyData} 
                 setCompanyData={handleUpdateCompanyData} 
-                onBack={() => setCurrentView('PAYMENT_IN_LIST')} 
+                autoShare={isAutoSharing}
+                onBack={() => {
+                  setCurrentView('PAYMENT_IN_LIST');
+                  setIsAutoSharing(false);
+                }} 
                 onDelete={handleDeleteSale}
              />
           )}
