@@ -272,9 +272,9 @@ export function InvoiceView({
             {estimate.isSale ? 'Invoice' : 'Estimate'}
           </h2>
 
-          <div style={{ border: '2px solid #000', flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', padding: '15px', borderBottom: '2px solid #000', alignItems: 'center' }}>
-               <div style={{ width: '90px', height: '90px', border: '2px solid #000', marginRight: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#fff' }}>
+          <div style={{ border: '1px solid #000', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', padding: '15px', borderBottom: '1px solid #000', alignItems: 'center' }}>
+               <div style={{ width: '90px', height: '90px', border: '1px solid #000', marginRight: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#fff' }}>
                   {companyData.logo ? (
                      <img src={companyData.logo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                   ) : (
@@ -292,33 +292,34 @@ export function InvoiceView({
                </div>
             </div>
 
-            <div style={{ display: 'flex', borderBottom: '2px solid #000' }}>
-               <div style={{ flex: 1, borderRight: '2px solid #000' }}>
-                  <div style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontSize: '14px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice For:' : 'Estimate For:'}</div>
-                  <div style={{ padding: '15px', fontSize: '15px', fontWeight: 'bold', minHeight: '80px', wordBreak: 'break-word' }}>
-                    <div style={{ marginBottom: '6px' }}>{estimate.customerName}</div>
-                    {estimate.customerPhone && <div style={{ fontWeight: 'normal', fontSize: '14px' }}>Phone: <span style={{ fontWeight: 'bold' }}>{estimate.customerPhone}</span></div>}
-                    {estimate.billingAddress && <div style={{ fontWeight: 'normal', fontSize: '15px', whiteSpace: 'pre-wrap', color: '#374151', marginTop: '4px' }}>{estimate.billingAddress}</div>}
+            <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
+               <div style={{ flex: 1, borderRight: '1px solid #000' }}>
+                  <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '13px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice For:' : 'Estimate For:'}</div>
+                  <div style={{ padding: '10px', fontSize: '14px', fontWeight: 'normal', minHeight: '70px', wordBreak: 'break-word', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ fontWeight: 'bold' }}>{estimate.customerName}</div>
+                    {estimate.customerPhone && <div style={{ fontSize: '13px' }}>Phone: <span style={{ fontWeight: 'bold' }}>{estimate.customerPhone}</span></div>}
+                    {estimate.billingAddress && <div style={{ fontWeight: 'normal', fontSize: '14px', whiteSpace: 'pre-wrap', color: '#374151' }}>{estimate.billingAddress}</div>}
                   </div>
                </div>
-               <div style={{ flex: 1 }}>
-                  <div style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontSize: '14px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice Details:' : 'Estimate Details:'}</div>
-                   <div style={{ padding: '15px', fontSize: '14px', color: '#111827', minHeight: '80px', lineHeight: '1.6' }}>
-                    <div style={{ display: 'flex' }}><span style={{ width: '130px' }}>Invoice No</span>: <b style={{ color: '#000' }}>{estimate.refNo}</b></div>
-                    {estimate.customerRefNo && <div style={{ display: 'flex' }}><span style={{ width: '130px' }}>Customer Ref No</span>: <b style={{ color: '#000' }}>{estimate.customerRefNo}</b></div>}
-                    <div style={{ display: 'flex' }}><span style={{ width: '130px' }}>Date</span>: <b style={{ color: '#000' }}>{estimate.date}</b></div>
+               <div style={{ width: '350px' }}>
+                  <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '13px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice Details:' : 'Estimate Details:'}</div>
+                   <div style={{ padding: '10px', fontSize: '13px', color: '#111827', minHeight: '70px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div><span style={{ color: '#374151' }}>No:</span> <b style={{ color: '#000' }}>{estimate.refNo}</b></div>
+                    {estimate.customerRefNo && <div><span style={{ color: '#374151' }}>Customer Ref No:</span> <b style={{ color: '#000' }}>{estimate.customerRefNo}</b></div>}
+                    <div><span style={{ color: '#374151' }}>Date:</span> <b style={{ color: '#000' }}>{estimate.date}</b></div>
+                    <div><span style={{ color: '#374151' }}>Time:</span> <b style={{ color: '#000' }}>{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</b></div>
                   </div>
                </div>
             </div>
 
-             <div style={{ flex: 1, borderBottom: '2px solid #000' }}>
+             <div style={{ flex: 1, borderBottom: '1px solid #000' }}>
                 <table className="repl-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', tableLayout: 'fixed' }}>
                  <thead>
                    <tr style={{ background: '#f8fafc' }}>
                      <th style={{ width: '44px', textAlign: 'left', padding: '6px 10px' }}>#</th>
                      <th style={{ textAlign: 'left', width: 'auto', padding: '6px 10px' }}>Item name</th>
                      <th style={{ width: '120px', textAlign: 'right', padding: '6px 10px' }}>Quantity</th>
-                     <th style={{ width: '130px', textAlign: 'right', padding: '6px 10px' }}>Price/Unit (₨)</th>
+                     <th style={{ width: '130px', textAlign: 'right', padding: '6px 10px' }}>Price/ Unit (₨)</th>
                      <th style={{ width: '150px', textAlign: 'right', padding: '6px 10px' }}>Amount(₨)</th>
                    </tr>
                  </thead>
@@ -343,8 +344,8 @@ export function InvoiceView({
                </table>
              </div>
 
-            <div style={{ display: 'flex', borderBottom: '2px solid #000' }}>
-               <div style={{ flex: 1, borderRight: '2px solid #000' }}></div>
+            <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
+               <div style={{ flex: 1, borderRight: '1px solid #000' }}></div>
                <div style={{ width: '350px' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                     <tbody>
@@ -371,17 +372,17 @@ export function InvoiceView({
                </div>
             </div>
 
-            <div style={{ borderBottom: '2px solid #000' }}>
-               <div style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontSize: '14px', fontWeight: 'bold', background: '#f8fafc' }}>Terms And Conditions:</div>
-               <div style={{ padding: '10px 15px', fontSize: '15px', color: '#111', whiteSpace: 'pre-wrap' }}>
+            <div style={{ borderBottom: '1px solid #000' }}>
+               <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '13px', fontWeight: 'bold', background: '#f8fafc' }}>Terms And Conditions:</div>
+               <div style={{ padding: '10px 10px', fontSize: '14px', color: '#111', whiteSpace: 'pre-wrap' }}>
                   {companyData.terms || 'Thank you for doing business with us.'}
                </div>
             </div>
 
             <div style={{ display: 'flex' }}>
-               <div style={{ flex: 1, borderRight: '2px solid #000' }}></div>
+               <div style={{ flex: 1, borderRight: '1px solid #000' }}></div>
                <div style={{ width: '350px', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontSize: '14px', fontWeight: 'bold', background: '#f8fafc' }}>For {companyData.name || 'Business Name'}:</div>
+                  <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '13px', fontWeight: 'bold', background: '#f8fafc' }}>For {companyData.name || 'Business Name'}:</div>
                   <div style={{ padding: '20px', textAlign: 'center', minHeight: '120px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                      {companyData.signature ? (
                          <img src={companyData.signature} alt="Signature" style={{ maxHeight: '80px', maxWidth: '240px', objectFit: 'contain' }} />
