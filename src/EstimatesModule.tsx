@@ -116,6 +116,17 @@ export function EstimatesModule({ estimates, onAddEstimate, onConvertToSale, onE
                                                                      >
                                                                          <i className="fa-solid fa-file-pdf w-6 text-lg text-slate-400 group-hover:text-indigo-500"></i> PDF Download
                                                                      </button>
+                                                                     <button 
+                                                                         className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-green-600 gap-3 hover:bg-green-50 transition-colors"
+                                                                         onClick={(e) => { 
+                                                                             e.stopPropagation(); 
+                                                                             const message = `*Estimate Details*\n\n*Ref No:* ${est.refNo}\n*Party:* ${est.customerName}\n*Date:* ${est.date}\n*Total:* Rs ${est.totalAmount.toLocaleString('en-IN')}\n*Balance:* Rs ${est.balance.toLocaleString('en-IN')}\n\nThank you!`;
+                                                                             window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                                                                             setOpenDropdownId(null); 
+                                                                         }}
+                                                                     >
+                                                                         <i className="fa-brands fa-whatsapp w-6 text-lg text-green-500 group-hover:scale-110 transition-transform"></i> Share on WhatsApp
+                                                                     </button>
                                                                       <button 
                                                                          className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                                                                          onClick={(e) => { e.stopPropagation(); onEditEstimate(est); setOpenDropdownId(null); }}

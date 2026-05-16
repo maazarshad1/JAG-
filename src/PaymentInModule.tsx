@@ -98,6 +98,17 @@ export function PaymentInModule({
                                                             <i className="fa-solid fa-file-pdf w-6 text-lg text-slate-400 group-hover:text-indigo-500"></i> PDF Download
                                                         </button>
                                                         <button 
+                                                            className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-green-600 gap-3 hover:bg-green-50 transition-colors"
+                                                            onClick={(e) => { 
+                                                                e.stopPropagation(); 
+                                                                const message = `*Payment Receipt Details*\n\n*Ref No:* ${sale.refNo}\n*Party:* ${sale.customerName}\n*Date:* ${sale.date}\n*Amount Received:* Rs ${(sale.receivedAmount || 0).toLocaleString('en-IN')}\n\nThank you!`;
+                                                                window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                                                                setOpenMenuId(null); 
+                                                            }}
+                                                        >
+                                                            <i className="fa-brands fa-whatsapp w-6 text-lg text-green-500 group-hover:scale-110 transition-transform"></i> Share on WhatsApp
+                                                        </button>
+                                                        <button 
                                                             className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-red-600 gap-3 hover:bg-red-50 border-t border-slate-100 transition-colors"
                                                             onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }}
                                                         >

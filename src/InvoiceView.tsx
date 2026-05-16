@@ -116,12 +116,12 @@ export function InvoiceView({
   };
 
   const handleShare = async (platform?: 'whatsapp' | 'email') => {
-    // For WhatsApp, sharing as an image is often much better as it shows a preview
-    const result = platform === 'whatsapp' ? await generateImageBlob() : await generatePDFBlob();
+    // Generate PDF for sharing
+    const result = await generatePDFBlob();
     
     if (result) {
       try {
-        const file = new File([result.blob], result.fileName, { type: result.blob.type });
+        const file = new File([result.blob], result.fileName, { type: 'application/pdf' });
         
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
@@ -521,7 +521,7 @@ export function InvoiceView({
                        <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
                          {isGenerating ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <i className="fa-brands fa-whatsapp text-2xl"></i>}
                        </div>
-                       <span className="text-sm font-semibold text-slate-700 font-sans">WhatsApp</span>
+                       <span className="text-sm font-semibold text-slate-700 font-sans text-center">WhatsApp PDF</span>
                      </button>
                      
                      <button 

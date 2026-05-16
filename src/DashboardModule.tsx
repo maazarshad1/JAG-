@@ -164,6 +164,17 @@ export function DashboardModule({ sales, parties, items, onNavigate, onEditSale,
                                                                 <i className="fa-solid fa-file-pdf w-6 text-lg text-slate-400 group-hover:text-indigo-500"></i> PDF Download
                                                             </button>
                                                             <button 
+                                                                className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-green-600 gap-3 hover:bg-green-50 transition-colors"
+                                                                onClick={(e) => { 
+                                                                    e.stopPropagation(); 
+                                                                    const message = `*${sale.isSale ? 'Invoice' : 'Estimate'} Details*\n\n*Ref No:* ${sale.refNo}\n*Party:* ${sale.customerName}\n*Date:* ${sale.date}\n*Total:* Rs ${sale.totalAmount.toLocaleString('en-IN')}\n*Balance:* Rs ${sale.balance.toLocaleString('en-IN')}\n\nThank you!`;
+                                                                    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                                                                    setOpenMenuId(null); 
+                                                                }}
+                                                            >
+                                                                <i className="fa-brands fa-whatsapp w-6 text-lg text-green-500 group-hover:scale-110 transition-transform"></i> Share on WhatsApp
+                                                            </button>
+                                                            <button 
                                                                 className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                                                                 onClick={(e) => { e.stopPropagation(); onEditSale?.(sale); setOpenMenuId(null); }}
                                                             >
