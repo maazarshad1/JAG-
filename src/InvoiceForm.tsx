@@ -36,13 +36,13 @@ export function InvoiceForm({
   useEffect(() => {
     if (initialData && initialData.isSale === isSale) return;
     
-    // Calculate next refNo for this type (starting from 101)
-    const filteredTxns = allTransactions.filter(t => t.isSale === isSale);
+    // Calculate next refNo for this type (starting from 1)
+    const filteredTxns = allTransactions.filter(t => t.isSale === isSale && t.txnType !== 'Payment-In');
     const maxRef = filteredTxns.reduce((max, t) => {
         const val = Number(t.refNo);
         return isNaN(val) ? max : Math.max(max, val);
     }, 0);
-    setRefNo(maxRef < 100 ? 101 : maxRef + 1);
+    setRefNo(maxRef < 1 ? 1 : maxRef + 1);
   }, [allTransactions, initialData, isSale]);
 
   const nextPartyRef = (parties || []).reduce((max, p) => {
@@ -96,7 +96,7 @@ export function InvoiceForm({
             const val = Number(t.refNo);
             return isNaN(val) ? max : Math.max(max, val);
         }, 0);
-        invoiceNumber = maxRef < 100 ? 101 : maxRef + 1;
+        invoiceNumber = maxRef < 1 ? 1 : maxRef + 1;
     }
 
     try {
@@ -236,12 +236,12 @@ export function InvoiceForm({
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
               <tr>
-                <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, fontSize: '15px' }}>#</th>
-                <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, fontSize: '15px' }}>Item</th>
-                <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, fontSize: '15px' }}>Qty</th>
-                <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, fontSize: '15px' }}>Unit</th>
-                <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, fontSize: '15px' }}>Price/Unit</th>
-                <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, fontSize: '15px' }}>Amount</th>
+                <th style={{ padding: '12px 10px', textAlign: 'left', fontWeight: 600, fontSize: '15px' }}>#</th>
+                <th style={{ padding: '12px 10px', textAlign: 'left', fontWeight: 600, fontSize: '15px' }}>Item</th>
+                <th style={{ padding: '12px 10px', textAlign: 'right', fontWeight: 600, fontSize: '15px' }}>Qty</th>
+                <th style={{ padding: '12px 10px', textAlign: 'right', fontWeight: 600, fontSize: '15px' }}>Unit</th>
+                <th style={{ padding: '12px 10px', textAlign: 'right', fontWeight: 600, fontSize: '15px' }}>Price/Unit</th>
+                <th style={{ padding: '12px 10px', textAlign: 'right', fontWeight: 600, fontSize: '15px' }}>Amount</th>
                 <th style={{ padding: '16px 20px', width: '50px' }}></th>
               </tr>
             </thead>
@@ -260,29 +260,29 @@ export function InvoiceForm({
                       {inventoryItems.map(i => <option key={i.id} value={i.name} />)}
                     </datalist>
                   </td>
-                  <td style={{ padding: '16px 20px' }}>
+                  <td style={{ padding: '12px 10px' }}>
                     <input 
                       type="number" 
                       value={item.quantity === '' as any ? '' : item.quantity} 
                       onChange={e => updateItem(index, 'quantity', e.target.value === '' ? '' as any : parseFloat(e.target.value))}
-                      style={{ width: '80px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
+                      style={{ width: '90px', padding: '8px 4px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
                     />
                   </td>
-                  <td style={{ padding: '16px 20px' }}>
+                  <td style={{ padding: '12px 10px' }}>
                     <select 
                       value={item.unit} 
                       onChange={e => updateItem(index, 'unit', e.target.value)}
-                      style={{ width: '80px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'center' }}
+                      style={{ width: '75px', padding: '8px 4px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'center' }}
                     >
                       {UNIT_SUGGESTIONS.map(u => <option key={u} value={u}>{u}</option>)}
                     </select>
                   </td>
-                  <td style={{ padding: '16px 20px' }}>
+                  <td style={{ padding: '12px 10px' }}>
                     <input 
                       type="number" 
                       value={item.rate === '' as any ? '' : item.rate} 
                       onChange={e => updateItem(index, 'rate', e.target.value === '' ? '' as any : parseFloat(e.target.value))}
-                      style={{ width: '100px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
+                      style={{ width: '90px', padding: '8px 4px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
                     />
                   </td>
                   <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 500 }}>

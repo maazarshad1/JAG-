@@ -202,24 +202,6 @@ body, html {
     border-left: 3px solid var(--accent-red);
 }
 
-/* Sidebar Ad */
-.sidebar-ad {
-    padding: 16px;
-}
-.ad-card {
-    background: linear-gradient(135deg, #da0e2e 0%, #a1001b 100%);
-    border-radius: 8px;
-    padding: 16px;
-    position: relative;
-    overflow: hidden;
-}
-.ad-brand { font-size: 12px; font-weight: bold; margin-bottom: 8px; }
-.ad-title { font-size: 20px; font-weight: 900; font-style: italic; line-height: 1.1; margin-bottom: 8px; }
-.ad-discount { position: absolute; top: 10px; right: 10px; background: #ffc107; color: #000; border-radius: 50%; width: 50px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; line-height: 1; }
-.ad-discount b { font-size: 16px; }
-.ad-time { font-size: 10px; margin-bottom: 12px; opacity: 0.9; }
-.ad-btn { background: #ffc107; color: #000; border: none; padding: 6px 16px; border-radius: 16px; font-weight: bold; font-size: 12px; cursor: pointer; }
-
 /* Sidebar Footer */
 .sidebar-footer {
     display: flex;

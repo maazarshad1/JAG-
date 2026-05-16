@@ -11,6 +11,7 @@ import { EstimatesModule } from './EstimatesModule';
 import { PartiesModule } from './PartiesModule';
 import { ItemsModule } from './ItemsModule';
 import { InvoiceView } from './InvoiceView';
+import { ReceiptView } from './ReceiptView';
 import { InvoiceForm } from './InvoiceForm';
 import { PartyFormModal } from './PartyFormModal';
 import { ItemFormModal } from './ItemFormModal';
@@ -86,11 +87,11 @@ export default function App() {
   useEffect(() => {
     if (!user) {
       // Load local data if no user
-      const savedSales = localStorage.getItem('vyapar_sales');
-      const savedEstimates = localStorage.getItem('vyapar_estimates');
-      const savedParties = localStorage.getItem('vyapar_parties');
-      const savedItems = localStorage.getItem('vyapar_items');
-      const savedCompany = localStorage.getItem('vyapar_company');
+      const savedSales = localStorage.getItem('jag_sales');
+      const savedEstimates = localStorage.getItem('jag_estimates');
+      const savedParties = localStorage.getItem('jag_parties');
+      const savedItems = localStorage.getItem('jag_items');
+      const savedCompany = localStorage.getItem('jag_company');
 
       if (savedSales) setSales(JSON.parse(savedSales));
       if (savedEstimates) setEstimates(JSON.parse(savedEstimates));
@@ -137,7 +138,13 @@ export default function App() {
 
     // 4. Shared Transactions
     const unsubTxns = onSnapshot(collection(db, 'transactions'), (snap) => {
-      const allTxns = snap.docs.map(d => ({ ...d.data(), id: d.id }) as Estimate);
+      const allTxns = snap.docs.map(d => ({ ...d.data(), id: d.id }) as Estimate)
+        .sort((a, b) => {
+          const dateA = new Date(a.date).getTime();
+          const dateB = new Date(b.date).getTime();
+          if (dateB !== dateA) return dateB - dateA;
+          return (Number(b.refNo) || 0) - (Number(a.refNo) || 0);
+        });
       setSales(allTxns.filter(t => t.isSale));
       setEstimates(allTxns.filter(t => !t.isSale));
       setDataSyncing(false);
@@ -154,11 +161,11 @@ export default function App() {
   // Persist local data if no user
   useEffect(() => {
     if (user) return;
-    localStorage.setItem('vyapar_sales', JSON.stringify(sales));
-    localStorage.setItem('vyapar_estimates', JSON.stringify(estimates));
-    localStorage.setItem('vyapar_parties', JSON.stringify(parties));
-    localStorage.setItem('vyapar_items', JSON.stringify(items));
-    localStorage.setItem('vyapar_company', JSON.stringify(companyData));
+    localStorage.setItem('jag_sales', JSON.stringify(sales));
+    localStorage.setItem('jag_estimates', JSON.stringify(estimates));
+    localStorage.setItem('jag_parties', JSON.stringify(parties));
+    localStorage.setItem('jag_items', JSON.stringify(items));
+    localStorage.setItem('jag_company', JSON.stringify(companyData));
   }, [sales, estimates, parties, items, companyData, user]);
 
   const handleSignIn = async () => {
@@ -416,13 +423,18 @@ export default function App() {
     partyDataInput?: { name: string, id?: string | number },
     date?: string,
     refNo?: number,
-    description?: string
+    description?: string,
+    viewReceipt?: boolean
   ) => {
     let finalPartyId = partyDataInput?.id;
     let finalPartyName = (partyDataInput?.name || 'Customer').trim();
     let finalPartyRefNo = parties.find(p => p.id === finalPartyId)?.customerRefNo;
 
     // 1. Ensure party exists
+    const allTransactions = [...sales, ...estimates];
+    const receiptsCount = sales.filter(t => t.txnType === 'Payment-In').length;
+    const finalRefNo = refNo && refNo !== 0 ? refNo : Math.max(receiptsCount, ...allTransactions.filter(t => t.txnType === 'Payment-In').map(t => Number(t.refNo) || 0)) + 1;
+
     if (finalPartyName && !finalPartyId) {
        const existingParty = parties.find(p => p.name && p.name.toLowerCase() === finalPartyName.toLowerCase().trim());
        if (existingParty) {
@@ -489,11 +501,20 @@ export default function App() {
 
       if (user) {
         try {
-          setCurrentView('PAYMENT_IN_LIST');
-          setDoc(doc(db, 'transactions', saleId), newSaleData);
+          const batch = writeBatch(db);
+          batch.set(doc(db, 'transactions', saleId), newSaleData);
           if (sale.partyId) {
-            setDoc(doc(db, 'parties', String(sale.partyId)), { balance: newPartyBalance }, { merge: true });
+            batch.set(doc(db, 'parties', String(sale.partyId)), { balance: newPartyBalance }, { merge: true });
           }
+
+          if (viewReceipt) {
+            setCurrentInvoice(newSaleData as Estimate);
+            setCurrentView('RECEIPT_VIEW');
+          } else {
+            setCurrentView('PAYMENT_IN_LIST');
+          }
+
+          await batch.commit();
           console.log("Payment recorded successfully!");
         } catch (err) { 
           handleFirestoreError(err, OperationType.WRITE, `transactions/${saleId}`); 
@@ -509,14 +530,19 @@ export default function App() {
           setParties(prev => prev.map(p => p.id === sale.partyId ? { ...p, balance: newPartyBalance } as Party : p));
         }
         console.log("Payment recorded locally.");
-        setCurrentView('PAYMENT_IN_LIST');
+        if (viewReceipt) {
+          setCurrentInvoice(newSaleData as Estimate);
+          setCurrentView('RECEIPT_VIEW');
+        } else {
+          setCurrentView('PAYMENT_IN_LIST');
+        }
       }
     } else {
       // Create new general payment-in
       const txnId = Date.now().toString();
       const newPayment: Estimate = {
         id: txnId,
-        refNo: refNo || 0,
+        refNo: finalRefNo,
         date: date || new Date().toISOString().split('T')[0],
         customerName: finalPartyName,
         partyId: finalPartyId ?? null,
@@ -559,7 +585,12 @@ export default function App() {
 
       if (user) {
         try {
-          setCurrentView('PAYMENT_IN_LIST');
+          if (viewReceipt) {
+              setCurrentInvoice(newPayment);
+              setCurrentView('RECEIPT_VIEW');
+          } else {
+              setCurrentView('PAYMENT_IN_LIST');
+          }
           const batch = writeBatch(db);
           const txnRef = doc(collection(db, 'transactions'));
           newPayment.id = txnRef.id;
@@ -606,7 +637,12 @@ export default function App() {
           setParties(prev => prev.map(p => p.id === newPayment.partyId ? { ...p, balance: newPartyBalance } as Party : p));
         }
         console.log("General payment recorded locally.");
-        setCurrentView('PAYMENT_IN_LIST');
+        if (viewReceipt) {
+            setCurrentInvoice(newPayment);
+            setCurrentView('RECEIPT_VIEW');
+        } else {
+            setCurrentView('PAYMENT_IN_LIST');
+        }
       }
     }
 
@@ -755,6 +791,11 @@ export default function App() {
     setCurrentView('INVOICE_VIEW');
   };
 
+  const handleViewReceipt = (inv: Estimate) => {
+    setCurrentInvoice(inv);
+    setCurrentView('RECEIPT_VIEW');
+  };
+
   const handleSaveInvoice = async (inv: Estimate, isSale: boolean, printAndPreview: boolean) => {
       inv.isSale = isSale;
       if (printAndPreview) {
@@ -766,33 +807,29 @@ export default function App() {
 
       if (user) {
         try {
-          // 1. Party management (common for both edit and new)
+          const batch = writeBatch(db);
+
+          // 1. Party management
           if (inv.customerName) {
-            const partyIndex = parties.findIndex(p => p.name && p.name.toLowerCase().trim() === (inv.customerName || '').toLowerCase().trim());
-            if (partyIndex >= 0) {
-              const party = parties[partyIndex];
+            const trimmedName = inv.customerName.trim();
+            const party = parties.find(p => p.name && p.name.toLowerCase().trim() === trimmedName.toLowerCase());
+            
+            if (party) {
               inv.customerRefNo = party.customerRefNo;
               inv.partyId = party.id;
-              
-              // Sync other details too
               inv.customerPhone = inv.customerPhone || party.phone;
               inv.billingAddress = inv.billingAddress || party.billingAddress;
               
-              // Only update balance if it's a new sale or we can calculate delta
-              // For simplicity, we merge balance if it's a sale
-              if (isSale && !editingInvoice) {
-                updateDoc(doc(db, 'parties', party.id as string), {
-                  balance: (party.balance || 0) + inv.totalAmount
-                });
-              } else if (isSale && editingInvoice && editingInvoice.totalAmount !== inv.totalAmount) {
-                // Adjust balance for edited sale
-                const delta = inv.totalAmount - editingInvoice.totalAmount;
-                updateDoc(doc(db, 'parties', party.id as string), {
+              if (isSale) {
+                let delta = inv.totalAmount;
+                if (editingInvoice) {
+                  delta = inv.totalAmount - editingInvoice.totalAmount;
+                }
+                batch.update(doc(db, 'parties', party.id as string), {
                   balance: (party.balance || 0) + delta
                 });
               }
             } else {
-              // Create new party
               const nextRef = (parties || []).reduce((max, p) => {
                 const val = parseInt(String(p?.customerRefNo || 0), 10);
                 return isNaN(val) ? max : Math.max(max, val);
@@ -800,7 +837,7 @@ export default function App() {
               const partyRef = doc(collection(db, 'parties'));
               const newParty = {
                 id: partyRef.id,
-                name: inv.customerName.trim(),
+                name: trimmedName,
                 phone: inv.customerPhone || '',
                 email: '',
                 billingAddress: inv.billingAddress || '',
@@ -808,7 +845,7 @@ export default function App() {
                 balance: isSale ? inv.totalAmount : 0,
                 type: 'receive'
               };
-              setDoc(partyRef, newParty);
+              batch.set(partyRef, newParty);
               inv.partyId = partyRef.id;
               inv.customerRefNo = isNaN(nextRef) ? 1 : nextRef;
             }
@@ -816,18 +853,20 @@ export default function App() {
 
           // 2. Transaction save
           if (editingInvoice) {
-            updateDoc(doc(db, 'transactions', editingInvoice.id), { ...inv });
+            batch.update(doc(db, 'transactions', editingInvoice.id), { ...inv });
             setEditingInvoice(null);
           } else {
             if (isSale && convertingEstimateId) {
               inv.convertedFromId = convertingEstimateId;
-              updateDoc(doc(db, 'transactions', convertingEstimateId), { status: 'Closed' });
+              batch.update(doc(db, 'transactions', convertingEstimateId), { status: 'Closed' });
               setConvertingEstimateId(null);
             }
             const txnRef = doc(collection(db, 'transactions'));
             inv.id = txnRef.id;
-            setDoc(txnRef, inv);
+            batch.set(txnRef, inv);
           }
+
+          await batch.commit();
         } catch (err) { 
           console.error("Save Invoice Error:", err);
           handleFirestoreError(err, OperationType.WRITE, 'transactions'); 
@@ -921,6 +960,7 @@ export default function App() {
               onEditSale={handleEditSale}
               onDeleteSale={handleDeleteSale}
               onViewSale={handleViewInvoice}
+              onViewReceipt={handleViewReceipt}
               onConvertToSale={handleConvertToSale}
               onPaymentIn={(sale) => {
                  setPaymentInSale(sale);
@@ -946,6 +986,8 @@ export default function App() {
             <PaymentInModule 
               sales={sales} 
               onViewSale={handleViewInvoice}
+              onViewReceipt={handleViewReceipt}
+              onDelete={handleDeleteSale}
               onAddPaymentIn={() => {
                   setPaymentInSale(null);
                   setCurrentView('PAYMENT_IN_FORM');
@@ -957,7 +999,7 @@ export default function App() {
               parties={parties}
               initialData={paymentInSale || undefined}
               onClose={() => setCurrentView('PAYMENT_IN_LIST')}
-              onSave={(data: any) => handleSavePaymentIn(
+              onSave={(data: any, viewReceipt: boolean) => handleSavePaymentIn(
                 paymentInSale?.id || null, 
                 data.receivedAmount, 
                 data.paymentType, 
@@ -965,7 +1007,8 @@ export default function App() {
                 { id: data.partyId, name: data.customerName }, 
                 data.date, 
                 paymentInSale?.refNo || 0,
-                data.description
+                data.description,
+                viewReceipt
               )}
             />
           )}
@@ -986,6 +1029,7 @@ export default function App() {
               onEditSale={handleEditSale}
               onEditEstimate={handleEditEstimate}
               onViewTransaction={handleViewInvoice}
+              onViewReceipt={handleViewReceipt}
               onDeleteParty={handleDeleteParty}
               onPaymentIn={(party) => {
                 setPaymentInSale({
@@ -1033,6 +1077,15 @@ export default function App() {
                 companyData={companyData} 
                 setCompanyData={handleUpdateCompanyData} 
                 onBack={() => setCurrentView(currentInvoice.isSale ? 'SALE_LIST' : 'ESTIMATE_LIST')} 
+             />
+          )}
+          {currentView === 'RECEIPT_VIEW' && currentInvoice && (
+             <ReceiptView 
+                payment={currentInvoice} 
+                companyData={companyData} 
+                setCompanyData={handleUpdateCompanyData} 
+                onBack={() => setCurrentView('PAYMENT_IN_LIST')} 
+                onDelete={handleDeleteSale}
              />
           )}
           {currentView === 'PROFILE_EDIT' && (

@@ -8,7 +8,7 @@ export function PaymentInModal({
   initialData
 }: { 
   parties: Party[], 
-  onSave: (payment: any) => void, 
+  onSave: (payment: any, viewReceipt: boolean) => void, 
   onClose: () => void,
   initialData?: Partial<Estimate>
 }) {
@@ -31,7 +31,7 @@ export function PaymentInModal({
     p.name.toLowerCase().trim() === (customerName || '').toLowerCase().trim()
   );
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, viewReceipt = false) => {
     e.preventDefault();
     if (!customerName || !amount || isSaving) return;
     setIsSaving(true);
@@ -50,7 +50,7 @@ export function PaymentInModal({
           items: [],
           isSale: true,
           txnType: 'Payment-In'
-        });
+        }, viewReceipt);
     } catch (error: any) {
         setIsSaving(false);
         setErrorStatus("Error saving payment. Check if all fields are correct.");
@@ -157,9 +157,28 @@ export function PaymentInModal({
             <button 
               type="button" 
               onClick={onClose}
-              style={{ padding: '8px 24px', border: '1px solid #e5e7eb', borderRadius: '4px', background: '#fff', color: '#374151', cursor: 'pointer', fontWeight: 500 }}
+              style={{ padding: '8px 20px', border: '1px solid #e5e7eb', borderRadius: '4px', background: '#fff', color: '#374151', cursor: 'pointer', fontWeight: 500 }}
             >
               Cancel
+            </button>
+            <button 
+              type="button"
+              disabled={isSaving}
+              onClick={(e) => handleSubmit(e as any, true)}
+              style={{ 
+                padding: '8px 24px', 
+                border: '1px solid #10b981', 
+                borderRadius: '4px', 
+                background: '#fff', 
+                color: '#10b981', 
+                cursor: isSaving ? 'not-allowed' : 'pointer', 
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <i className="fa-solid fa-receipt"></i> Save & View Receipt
             </button>
             <button 
               type="submit"

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CompanyData } from './types';
-import { Save, ArrowLeft, Building, Mail, Phone, MapPin, FileText } from 'lucide-react';
+import { Save, ArrowLeft, Building, Mail, Phone, MapPin, FileText, Pencil, X, Trash2 } from 'lucide-react';
+import SignaturePad from 'signature_pad';
 
 interface SettingsModuleProps {
     companyData: CompanyData;
@@ -12,6 +13,34 @@ interface SettingsModuleProps {
 }
 
 export function SettingsModule({ companyData, onChange, onBack, onDeleteAllParties, onDeleteAllTransactions, onDeleteAllItems }: SettingsModuleProps) {
+    const [showSignatureModal, setShowSignatureModal] = useState(false);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const sigPad = useRef<SignaturePad | null>(null);
+
+    useEffect(() => {
+        if (showSignatureModal && canvasRef.current && !sigPad.current) {
+            sigPad.current = new SignaturePad(canvasRef.current, {
+                backgroundColor: 'rgba(255, 255, 255, 1)',
+                penColor: 'rgb(0, 0, 0)'
+            });
+            // Handle high DPI displays
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvasRef.current.width = canvasRef.current.offsetWidth * ratio;
+            canvasRef.current.height = canvasRef.current.offsetHeight * ratio;
+            canvasRef.current.getContext("2d")?.scale(ratio, ratio);
+            sigPad.current.clear();
+        }
+    }, [showSignatureModal]);
+
+    const handleSignatureSave = () => {
+        if (sigPad.current && !sigPad.current.isEmpty()) {
+            const dataUrl = sigPad.current.toDataURL();
+            onChange({ ...companyData, signature: dataUrl });
+        }
+        setShowSignatureModal(false);
+        sigPad.current = null;
+    };
+
     return (
         <div style={{ padding: '32px', backgroundColor: '#f9fafb', minHeight: '100%', overflowY: 'auto' }}>
             <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -144,23 +173,41 @@ export function SettingsModule({ companyData, onChange, onBack, onDeleteAllParti
                                             <FileText size={32} color="#9ca3af" />
                                         )}
                                     </div>
-                                    <input 
-                                        type="file" 
-                                        accept="image/*" 
-                                        style={{ display: 'none' }} 
-                                        id="sig-upload"
-                                        onChange={e => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => onChange({...companyData, signature: reader.result as string});
-                                                reader.readAsDataURL(file);
-                                            }
-                                        }}
-                                    />
-                                    <label htmlFor="sig-upload" style={{ padding: '8px 16px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '15px', fontWeight: 500, color: '#4b5563', cursor: 'pointer' }}>
-                                        Upload Signature
-                                    </label>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <input 
+                                                type="file" 
+                                                accept="image/*" 
+                                                style={{ display: 'none' }} 
+                                                id="sig-upload"
+                                                onChange={e => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => onChange({...companyData, signature: reader.result as string});
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                }}
+                                            />
+                                            <label htmlFor="sig-upload" style={{ padding: '8px 12px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', fontWeight: 500, color: '#4b5563', cursor: 'pointer' }}>
+                                                Upload
+                                            </label>
+                                            <button 
+                                                onClick={() => setShowSignatureModal(true)}
+                                                style={{ padding: '8px 12px', backgroundColor: '#fff', border: '1px solid #3b82f6', borderRadius: '6px', fontSize: '14px', fontWeight: 500, color: '#3b82f6', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                            >
+                                                <Pencil size={14} /> Draw
+                                            </button>
+                                        </div>
+                                        {companyData.signature && (
+                                            <button 
+                                                onClick={() => onChange({...companyData, signature: undefined})}
+                                                style={{ fontSize: '12px', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: 'fit-content' }}
+                                            >
+                                                Remove Signature
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -274,6 +321,44 @@ export function SettingsModule({ companyData, onChange, onBack, onDeleteAllParti
                     </div>
                 </div>
             </div>
+
+            {/* Signature Modal */}
+            {showSignatureModal && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 100, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+                    <div style={{ backgroundColor: '#fff', borderRadius: '16px', width: '100%', maxWidth: '448px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', overflow: 'hidden', animation: 'zoomIn 0.2s ease-out' }}>
+                        <div style={{ padding: '16px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+                            <h3 style={{ fontWeight: 'bold', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                                <Pencil size={18} color="#3b82f6" /> Draw Signature
+                            </h3>
+                            <button onClick={() => setShowSignatureModal(false)} style={{ color: '#94a3b8', border: 'none', background: 'none', cursor: 'pointer', padding: '4px' }}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div style={{ padding: '24px', backgroundColor: '#f1f5f9', display: 'flex', justifyContent: 'center' }}>
+                            <div style={{ backgroundColor: '#fff', border: '2px solid #cbd5e1', borderRadius: '12px', position: 'relative', width: '100%', height: '192px', cursor: 'crosshair', overflow: 'hidden' }}>
+                                <canvas ref={canvasRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0, touchAction: 'none' }}></canvas>
+                                <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
+                                    <button 
+                                        onClick={() => sigPad.current?.clear()} 
+                                        style={{ padding: '8px', backgroundColor: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 'bold' }}
+                                    >
+                                        <Trash2 size={14} /> Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div style={{ padding: '16px 24px', backgroundColor: '#f8fafc', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'end', gap: '12px' }}>
+                            <button onClick={() => setShowSignatureModal(false)} style={{ padding: '10px 20px', fontWeight: 'bold', color: '#475569', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '12px' }}>Cancel</button>
+                            <button 
+                                onClick={handleSignatureSave} 
+                                style={{ padding: '10px 24px', backgroundColor: '#3b82f6', color: '#fff', fontWeight: 'bold', border: 'none', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.5)' }}
+                            >
+                                Save Signature
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

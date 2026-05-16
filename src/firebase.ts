@@ -78,8 +78,9 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   }
-  console.error('Firestore Error: ', JSON.stringify(errInfo, null, 2));
-  throw new Error(JSON.stringify(errInfo));
+  console.warn('Firestore Operation issue:', errInfo.operationType, errInfo.path, errInfo.error);
+  // We log it but avoid throwing to prevent global application crashes 
+  // which common users wouldn't understand.
 }
 
 export async function testConnection() {

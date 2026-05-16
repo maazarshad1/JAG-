@@ -4,11 +4,15 @@ import { Estimate } from './types';
 export function PaymentInModule({ 
     sales, 
     onAddPaymentIn,
-    onViewSale 
+    onViewSale,
+    onViewReceipt,
+    onDelete
 }: { 
     sales: Estimate[], 
     onAddPaymentIn: () => void,
-    onViewSale: (sale: Estimate) => void 
+    onViewSale: (sale: Estimate) => void,
+    onViewReceipt: (sale: Estimate) => void,
+    onDelete: (id: string) => void
 }) {
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const filteredSales = sales.filter(s => (s.receivedAmount || 0) > 0);
@@ -73,10 +77,10 @@ export function PaymentInModule({
                                         <div className="relative flex justify-end gap-2 items-center">
                                             <button 
                                                 className="btn-view"
-                                                onClick={(e) => { e.stopPropagation(); onViewSale(sale); }}
+                                                onClick={(e) => { e.stopPropagation(); onViewReceipt(sale); }}
                                                 style={{ fontSize: '15px', background: 'var(--accent-red)', color: 'white', padding: '6px 12px', borderRadius: '4px', border: 'none', cursor: 'pointer', fontWeight: 600 }}
                                             >
-                                                View
+                                                Receipt
                                             </button>
                                             <button 
                                                 className="p-2 text-slate-500 hover:text-indigo-700 hover:bg-slate-200 rounded-full transition-all border border-slate-200 bg-white shadow-sm flex items-center justify-center"
@@ -98,6 +102,12 @@ export function PaymentInModule({
                                                             <i className="fa-solid fa-file-pdf w-6 text-lg text-slate-400 group-hover:text-indigo-500"></i> PDF Download
                                                         </button>
                                                         <button 
+                                                            className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+                                                            onClick={(e) => { e.stopPropagation(); onViewReceipt(sale); setOpenMenuId(null); }}
+                                                        >
+                                                            <i className="fa-solid fa-receipt w-6 text-lg text-slate-400 group-hover:text-emerald-500"></i> Official Receipt
+                                                        </button>
+                                                        <button 
                                                             className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-green-600 gap-3 hover:bg-green-50 transition-colors"
                                                             onClick={(e) => { 
                                                                 e.stopPropagation(); 
@@ -110,7 +120,11 @@ export function PaymentInModule({
                                                         </button>
                                                         <button 
                                                             className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-red-600 gap-3 hover:bg-red-50 border-t border-slate-100 transition-colors"
-                                                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }}
+                                                            onClick={(e) => { 
+                                                                e.stopPropagation(); 
+                                                                onDelete(sale.id); 
+                                                                setOpenMenuId(null); 
+                                                            }}
                                                         >
                                                             <i className="fa-solid fa-trash w-6 text-lg text-red-400 group-hover:text-red-600"></i> Delete Transaction
                                                         </button>

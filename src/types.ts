@@ -62,6 +62,7 @@ export interface Estimate {
   receivedAmount?: number;
   convertedFromId?: string;
   paymentType?: 'Cash' | 'Cheque' | 'Online' | 'Credit';
+  txnType?: string;
 }
 
 export interface CompanyData {
@@ -77,4 +78,4 @@ export interface CompanyData {
   terms?: string;
 }
 
-export type View = 'HOME' | 'REPORTS' | 'MENU' | 'ESTIMATE_LIST' | 'ESTIMATE_FORM' | 'INVOICE_VIEW' | 'PROFILE_EDIT' | 'SALE_FORM' | 'SALE_LIST' | 'PARTIES_LIST' | 'ITEMS_LIST' | 'PAYMENT_IN_LIST' | 'PAYMENT_IN_FORM';
+export type View = 'HOME' | 'REPORTS' | 'MENU' | 'ESTIMATE_LIST' | 'ESTIMATE_FORM' | 'INVOICE_VIEW' | 'RECEIPT_VIEW' | 'PROFILE_EDIT' | 'SALE_FORM' | 'SALE_LIST' | 'PARTIES_LIST' | 'ITEMS_LIST' | 'PAYMENT_IN_LIST' | 'PAYMENT_IN_FORM';

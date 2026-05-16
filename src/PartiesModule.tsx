@@ -8,6 +8,7 @@ export function PartiesModule({
     onAddParty,
     onEditParty,
     onViewTransaction,
+    onViewReceipt,
     onEditSale,
     onEditEstimate,
     onPaymentIn,
@@ -19,6 +20,7 @@ export function PartiesModule({
     onAddParty: () => void,
     onEditParty: (party: Party) => void,
     onViewTransaction: (txn: Estimate) => void,
+    onViewReceipt?: (txn: Estimate) => void,
     onEditSale?: (txn: Estimate) => void,
     onEditEstimate?: (txn: Estimate) => void,
     onPaymentIn?: (party: Party) => void,
@@ -88,7 +90,12 @@ export function PartiesModule({
                                         {onDeleteParty && (
                                             <button 
                                                 className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-red-600 gap-3 hover:bg-red-50 border-t border-slate-100 mt-1 pt-1.5"
-                                                onClick={(e) => { e.stopPropagation(); onDeleteParty(String(selectedParty.id)); setMenuOpenId(null); }}
+                                                onClick={(e) => { 
+                                                    e.stopPropagation(); 
+                                                    onDeleteParty(String(selectedParty.id)); 
+                                                    setMenuOpenId(null); 
+                                                    setSelectedParty(null);
+                                                }}
                                             >
                                                 <i className="fa-solid fa-trash w-5"></i> Delete
                                             </button>
@@ -160,7 +167,14 @@ export function PartiesModule({
                                             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
                                                 <button 
                                                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors"
-                                                    onClick={(e) => { e.stopPropagation(); onViewTransaction(txn); }}
+                                                    onClick={(e) => { 
+                                                        e.stopPropagation(); 
+                                                        if (txn.items.length === 0 && (txn.receivedAmount || 0) > 0) {
+                                                            onViewReceipt?.(txn);
+                                                        } else {
+                                                            onViewTransaction(txn); 
+                                                        }
+                                                    }}
                                                 >
                                                     <i className="fa-solid fa-eye"></i> View
                                                 </button>
@@ -184,6 +198,12 @@ export function PartiesModule({
                                                                         onClick={(e) => { e.stopPropagation(); onViewTransaction(txn); setMenuOpenId(null); }}
                                                                     >
                                                                         <i className="fa-solid fa-file-pdf w-6 text-lg text-slate-400 group-hover:text-indigo-500"></i> PDF Download
+                                                                    </button>
+                                                                    <button 
+                                                                        className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+                                                                        onClick={(e) => { e.stopPropagation(); onViewReceipt?.(txn); setMenuOpenId(null); }}
+                                                                    >
+                                                                        <i className="fa-solid fa-receipt w-6 text-lg text-slate-400 group-hover:text-emerald-500"></i> View Receipt
                                                                     </button>
                                                                     <button 
                                                                         className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-green-600 gap-3 hover:bg-green-50 transition-colors"

@@ -9,11 +9,12 @@ interface DashboardModuleProps {
     onEditSale?: (sale: Estimate) => void;
     onDeleteSale?: (id: string) => void;
     onViewSale?: (sale: Estimate) => void;
+    onViewReceipt?: (sale: Estimate) => void;
     onConvertToSale?: (id: string, type: 'SALE' | 'SALE_ORDER') => void;
     onPaymentIn?: (sale: Estimate) => void;
 }
 
-export function DashboardModule({ sales, parties, items, onNavigate, onEditSale, onDeleteSale, onViewSale, onConvertToSale, onPaymentIn }: DashboardModuleProps) {
+export function DashboardModule({ sales, parties, items, onNavigate, onEditSale, onDeleteSale, onViewSale, onViewReceipt, onConvertToSale, onPaymentIn }: DashboardModuleProps) {
     const sortedSales = [...sales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     const [searchQuery, setSearchQuery] = React.useState('');
     const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
@@ -129,7 +130,14 @@ export function DashboardModule({ sales, parties, items, onNavigate, onEditSale,
                                         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
                                             <button 
                                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors"
-                                                onClick={(e) => { e.stopPropagation(); onViewSale?.(sale); }}
+                                                onClick={(e) => { 
+                                                    e.stopPropagation(); 
+                                                    if (sale.items.length === 0 && (sale.receivedAmount || 0) > 0) {
+                                                        onViewReceipt?.(sale);
+                                                    } else {
+                                                        onViewSale?.(sale); 
+                                                    }
+                                                }}
                                             >
                                                 <i className="fa-solid fa-eye"></i> View
                                             </button>
@@ -162,6 +170,12 @@ export function DashboardModule({ sales, parties, items, onNavigate, onEditSale,
                                                                 onClick={(e) => { e.stopPropagation(); onViewSale?.(sale); setOpenMenuId(null); }}
                                                             >
                                                                 <i className="fa-solid fa-file-pdf w-6 text-lg text-slate-400 group-hover:text-indigo-500"></i> PDF Download
+                                                            </button>
+                                                            <button 
+                                                                className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-slate-700 gap-3 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+                                                                onClick={(e) => { e.stopPropagation(); onViewReceipt?.(sale); setOpenMenuId(null); }}
+                                                            >
+                                                                <i className="fa-solid fa-receipt w-6 text-lg text-slate-400 group-hover:text-emerald-500"></i> View Receipt
                                                             </button>
                                                             <button 
                                                                 className="group flex w-full items-center px-6 py-4 text-[15px] font-medium text-green-600 gap-3 hover:bg-green-50 transition-colors"
