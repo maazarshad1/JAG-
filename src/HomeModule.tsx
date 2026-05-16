@@ -16,8 +16,9 @@ export function HomeModule({
     onDeleteSale?: (id: string) => void,
     onPaymentIn?: (sale: Estimate) => void
 }) {
-    const totalSales = sales.reduce((sum, inv) => sum + inv.totalAmount, 0);
-    const balance = sales.reduce((sum, inv) => sum + inv.balance, 0);
+    const filteredSales = sales.filter(s => s.txnType !== 'Payment-In');
+    const totalSales = filteredSales.reduce((sum, inv) => sum + inv.totalAmount, 0);
+    const balance = filteredSales.reduce((sum, inv) => sum + inv.balance, 0);
     const received = sales.reduce((sum, inv) => sum + (inv.receivedAmount || 0), 0);
     const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
 
@@ -70,7 +71,7 @@ export function HomeModule({
                             </tr>
                         </thead>
                         <tbody>
-                            {sales.map((inv) => {
+                            {filteredSales.map((inv) => {
                                 const isFullyPaid = (inv.receivedAmount || 0) >= inv.totalAmount;
                                 
                                 return (
@@ -152,7 +153,7 @@ export function HomeModule({
                                     </td>
                                 </tr>
                             )})}
-                            {sales.length === 0 && (
+                            {filteredSales.length === 0 && (
                                 <tr>
                                     <td colSpan={8} style={{ padding: '64px 20px', textAlign: 'center' }}>
                                         <div style={{ width: '120px', height: '120px', backgroundColor: '#eff6ff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', margin: '0 auto' }}>

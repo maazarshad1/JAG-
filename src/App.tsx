@@ -482,65 +482,7 @@ export default function App() {
        }
     }
 
-    if (saleId && saleId !== '') {
-      // Update existing sale
-      const isSale = !!sales.find(s => s.id === saleId);
-      const saleList = isSale ? sales : estimates;
-      const sale = saleList.find(s => s.id === saleId);
-      if (!sale) return;
-
-      const newReceived = (sale.receivedAmount || 0) + amount;
-      const newBalance = sale.totalAmount - newReceived;
-
-      const newSaleData = {
-        ...sale,
-        receivedAmount: newReceived,
-        balance: newBalance,
-        paymentType: paymentType,
-        status: (newBalance <= 0) ? 'Closed' : sale.status
-      };
-
-      if (user) {
-        try {
-          const batch = writeBatch(db);
-          batch.set(doc(db, 'transactions', saleId), newSaleData);
-          if (sale.partyId) {
-            batch.set(doc(db, 'parties', String(sale.partyId)), { balance: newPartyBalance }, { merge: true });
-          }
-
-          if (viewReceipt) {
-            setCurrentInvoice(newSaleData as Estimate);
-            setCurrentView('RECEIPT_VIEW');
-          } else {
-            setCurrentView('PAYMENT_IN_LIST');
-          }
-
-          await batch.commit();
-          console.log("Payment recorded successfully!");
-        } catch (err) { 
-          handleFirestoreError(err, OperationType.WRITE, `transactions/${saleId}`); 
-          console.log("Failed to record payment. Please try again.");
-        }
-      } else {
-        if (isSale) {
-          setSales(prev => prev.map(s => s.id === saleId ? newSaleData as Estimate : s));
-        } else {
-          setEstimates(prev => prev.map(s => s.id === saleId ? newSaleData as Estimate : s));
-        }
-        if (sale.partyId) {
-          setParties(prev => prev.map(p => p.id === sale.partyId ? { ...p, balance: newPartyBalance } as Party : p));
-        }
-        console.log("Payment recorded locally.");
-        if (viewReceipt) {
-          setCurrentInvoice(newSaleData as Estimate);
-          setCurrentView('RECEIPT_VIEW');
-        } else {
-          setCurrentView('PAYMENT_IN_LIST');
-        }
-      }
-    } else {
-      // Create new general payment-in
-      const txnId = Date.now().toString();
+    const txnId = Date.now().toString();
       const newPayment: Estimate = {
         id: txnId,
         refNo: finalRefNo,
@@ -551,20 +493,35 @@ export default function App() {
         items: [],
         totalAmount: 0,
         receivedAmount: amount,
-        balance: -amount,
+        balance: 0,
         isSale: true,
         paymentType: paymentType,
         status: 'Closed',
         discountValue: 0,
         discountType: 'fixed',
         taxType: 'none',
-        description: description || 'Payment-In received'
+        description: description || 'Payment-In received',
+        txnType: 'Payment-In'
       };
 
-      // Auto-apply to open transactions (estimates first, then sales)
-      let remaining = amount;
       const updatedTxns: Estimate[] = [];
-      if (finalPartyId) {
+      if (saleId && saleId !== '') {
+          const isSale = !!sales.find(s => s.id === saleId);
+          const saleList = isSale ? sales : estimates;
+          const sale = saleList.find(s => s.id === saleId);
+          if (sale) {
+              const newReceived = (sale.receivedAmount || 0) + amount;
+              const newBalance = sale.totalAmount - newReceived;
+              updatedTxns.push({
+                  ...sale,
+                  receivedAmount: newReceived,
+                  balance: newBalance,
+                  paymentType: paymentType,
+                  status: (newBalance <= 0) ? 'Closed' : sale.status
+              });
+          }
+      } else if (finalPartyId) {
+          let remaining = amount;
           const openTxns = [...estimates, ...sales]
             .filter(t => String(t.partyId) === String(finalPartyId) && t.status !== 'Closed' && t.balance > 0)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -601,21 +558,17 @@ export default function App() {
               batch.set(doc(db, 'transactions', ut.id), ut);
           });
 
-          if (newPayment.partyId) {
-             const isNew = !partyDataInput?.id && !parties.find(p => String(p.id) === String(finalPartyId));
-             if (isNew) {
-                // The party was already created with its initial balance in lines 438-448
-                // But we might need to adjust if there were other open txns handled?
-                // Actually if it's BRAND NEW, there are no open txns.
-             } else {
-                batch.update(doc(db, 'parties', String(newPayment.partyId)), { balance: newPartyBalance });
+          if (finalPartyId) {
+             const isNewParty = parties.findIndex(p => String(p.id) === String(finalPartyId)) === -1;
+             if (!isNewParty) {
+                batch.set(doc(db, 'parties', String(finalPartyId)), { balance: newPartyBalance }, { merge: true });
              }
           }
-          batch.commit();
-          console.log("General payment recorded successfully!");
+          await batch.commit();
+          console.log("Payment recorded successfully!");
         } catch (err) { 
             handleFirestoreError(err, OperationType.WRITE, 'transactions'); 
-            console.log("Failed to record general payment.");
+            console.log("Failed to record payment.");
         }
       } else {
         setSales(prev => {
@@ -634,10 +587,10 @@ export default function App() {
             });
             return updatedEsts;
         });
-        if (newPayment.partyId) {
-          setParties(prev => prev.map(p => p.id === newPayment.partyId ? { ...p, balance: newPartyBalance } as Party : p));
+        if (finalPartyId) {
+          setParties(prev => prev.map(p => String(p.id) === String(finalPartyId) ? { ...p, balance: newPartyBalance } as Party : p));
         }
-        console.log("General payment recorded locally.");
+        console.log("Payment recorded locally.");
         if (viewReceipt) {
             setCurrentInvoice(newPayment);
             setCurrentView('RECEIPT_VIEW');
@@ -645,9 +598,8 @@ export default function App() {
             setCurrentView('PAYMENT_IN_LIST');
         }
       }
-    }
 
-    setPaymentInSale(null);
+      setPaymentInSale(null);
   };
 
   const executeDelete = async () => {
@@ -951,7 +903,6 @@ export default function App() {
         setIsCollapsed={setIsSidebarCollapsed}
       />
       <main id="main-content">
-        <TopHeader title={companyData.name} onAction={handleAction} onSearch={setSearchQuery} />
         
         <div id="module-container">
           {currentView === 'HOME' && (

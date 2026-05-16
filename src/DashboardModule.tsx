@@ -23,6 +23,7 @@ export function DashboardModule({ sales, parties, items, onNavigate, onEditSale,
         const matchesSearch = sale.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
             sale.refNo?.toString().includes(searchQuery);
         
+        if (sale.txnType === 'Payment-In') return false;
         if (!matchesSearch) return false;
 
         // If it's a closed estimate, check if there's a corresponding sale in the list
@@ -34,8 +35,8 @@ export function DashboardModule({ sales, parties, items, onNavigate, onEditSale,
         return true;
     });
 
-    const totalSales = sales.filter(s => s.isSale).reduce((sum, s) => sum + s.totalAmount, 0);
-    const totalReceived = sales.filter(s => s.isSale).reduce((sum, s) => sum + (s.receivedAmount || 0), 0);
+    const totalSales = sales.filter(s => s.isSale && s.txnType !== 'Payment-In').reduce((sum, s) => sum + s.totalAmount, 0);
+    const totalReceived = sales.filter(s => s.isSale && s.txnType !== 'Payment-In').reduce((sum, s) => sum + (s.receivedAmount || 0), 0);
     const totalReceivable = totalSales - totalReceived;
 
     return (

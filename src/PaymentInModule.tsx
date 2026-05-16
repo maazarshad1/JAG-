@@ -15,7 +15,7 @@ export function PaymentInModule({
     onDelete: (id: string) => void
 }) {
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-    const filteredSales = sales.filter(s => (s.receivedAmount || 0) > 0);
+    const filteredSales = sales.filter(s => s.txnType === 'Payment-In');
     const totalReceived = filteredSales.reduce((sum, s) => sum + (s.receivedAmount || 0), 0);
 
     return (
@@ -57,8 +57,7 @@ export function PaymentInModule({
                                 <th style={{ padding: '16px 20px', fontSize: '14px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Inv No.</th>
                                 <th style={{ padding: '16px 20px', fontSize: '14px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Cust Ref No.</th>
                                 <th style={{ padding: '16px 20px', fontSize: '14px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Party Name</th>
-                                <th style={{ padding: '16px 20px', fontSize: '14px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Total Amount</th>
-                                <th style={{ padding: '16px 20px', fontSize: '14px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Received</th>
+                                <th style={{ padding: '16px 20px', fontSize: '14px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', textAlign: 'right' }}>Amount</th>
                                 <th style={{ padding: '16px 20px', fontSize: '14px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>Payment Type</th>
                                 <th style={{ padding: '16px 20px', width: '100px', textAlign: 'right', fontSize: '14px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Actions</th>
                             </tr>
@@ -70,7 +69,6 @@ export function PaymentInModule({
                                     <td style={{ padding: '16px 20px', fontSize: '15px', color: '#111827' }}>{sale.refNo || sale.id.slice(0, 4)}</td>
                                     <td style={{ padding: '16px 20px', fontSize: '15px', color: '#111827' }}>{sale.customerRefNo || '-'}</td>
                                     <td style={{ padding: '16px 20px', fontSize: '15px', color: '#111827', fontWeight: 500 }}>{sale.customerName}</td>
-                                    <td style={{ padding: '16px 20px', fontSize: '15px', color: '#111827', textAlign: 'right' }}>Rs {sale.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                                     <td style={{ padding: '16px 20px', fontSize: '15px', color: '#111827', textAlign: 'right' }}>Rs {(sale.receivedAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                                     <td style={{ padding: '16px 20px', fontSize: '15px', color: '#111827' }}>{sale.paymentType || 'Cash'}</td>
                                     <td style={{ padding: '16px 20px', textAlign: 'right' }}>

@@ -157,7 +157,7 @@ export function PartiesModule({
                             <tbody>
                                 {partyTransactions.map(txn => (
                                     <tr key={txn.id} style={{ borderBottom: '1px solid #E5E7EB' }} className="hover:bg-slate-50 transition-colors">
-                                        <td style={{ padding: '16px 20px', fontSize: '15px', color: '#111827', fontWeight: 500 }}>{txn.isSale ? 'Sale' : 'Estimate'}</td>
+                                        <td style={{ padding: '16px 20px', fontSize: '15px', color: '#111827', fontWeight: 500 }}>{txn.txnType === 'Payment-In' ? 'Payment In' : (txn.isSale ? 'Sale' : 'Estimate')}</td>
                                         <td style={{ padding: '16px 20px', fontSize: '15px', color: '#111827' }}>{txn.refNo}</td>
                                         <td style={{ padding: '16px 20px', fontSize: '15px', color: '#111827' }}>{txn.customerRefNo || '-'}</td>
                                         <td style={{ padding: '16px 20px', fontSize: '15px', color: '#111827' }}>{txn.date}</td>
