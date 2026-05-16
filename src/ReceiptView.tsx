@@ -38,13 +38,14 @@ export function ReceiptView({
     try {
       await new Promise(resolve => setTimeout(resolve, 300));
 
+      const elHeight = element.scrollHeight > 1123 ? element.scrollHeight : 1123;
       const dataUrl = await toJpeg(element, {
         quality: 0.6,
         pixelRatio: 1.5,
         cacheBust: true,
         backgroundColor: '#ffffff',
         width: 794,
-        height: 1123,
+        height: elHeight,
         style: {
           transform: 'none',
           boxShadow: 'none',
@@ -54,8 +55,10 @@ export function ReceiptView({
         },
       });
       
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      pdf.addImage(dataUrl, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+      const pdfWidth = 210;
+      const pdfHeight = (elHeight * pdfWidth) / 794;
+      const pdf = new jsPDF('p', 'mm', [pdfWidth, pdfHeight]);
+      pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
       const blob = pdf.output('blob');
       
       return {
@@ -263,7 +266,7 @@ export function ReceiptView({
               </div>
             </div>
 
-            <div id="receipt-paper" className="bg-white border border-slate-200 shadow-xl p-0 print:shadow-none print:border-none print:p-0 relative h-[1123px] w-[794px] mx-auto text-black font-sans leading-snug flex flex-col overflow-hidden">
+            <div id="receipt-paper" className="bg-white border border-slate-200 shadow-xl p-0 print:shadow-none print:border-none print:p-0 relative min-h-[1123px] w-[794px] mx-auto text-black font-sans leading-snug flex flex-col">
           <style dangerouslySetInnerHTML={{__html: `
             #receipt-paper * { box-sizing: border-box; }
             #receipt-paper { padding: 40px !important; }
@@ -276,35 +279,35 @@ export function ReceiptView({
             Receipt
           </h2>
 
-          <div style={{ border: '1.5px solid #000', flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-            <div style={{ display: 'flex', padding: '12px', borderBottom: '1.5px solid #000', alignItems: 'center' }}>
-               <div style={{ width: '90px', height: '90px', border: '1px solid #000', marginRight: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '2px', overflow: 'hidden', backgroundColor: '#fff' }}>
+          <div style={{ border: '1px solid #000', flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <div style={{ display: 'flex', padding: '15px', borderBottom: '1px solid #000', alignItems: 'center' }}>
+               <div style={{ width: '90px', height: '90px', border: '1px solid #000', marginRight: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#fff' }}>
                   {companyData.logo ? (
                      <img src={companyData.logo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                   ) : (
-                     <div style={{ color: '#000', fontWeight: 'bold', fontSize: '24px', border: '2px solid #000', borderRadius: '50%', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>JAG</div>
+                     <div style={{ color: '#000', fontWeight: '900', fontSize: '28px', border: '3px solid #000', borderRadius: '50%', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>JAG</div>
                   )}
                </div>
                <div style={{ flex: 1 }}>
-                  <h1 style={{ margin: '0 0 4px 0', fontSize: '24px', color: '#000', fontWeight: 'bold' }}>{companyData.name || ' Jawad Aluminium and Glass Works'}</h1>
-                  <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#000', fontWeight: '500' }}>{companyData.address || 'Shop#1 Habib Plaza Near River Bridge Main Double Road Phase 5 Ghouri Town Islamabad'}</p>
-                  <div style={{ display: 'flex', fontSize: '13px', color: '#000', gap: '30px' }}>
+                  <h1 style={{ margin: '0 0 4px 0', fontSize: '18px', color: '#000', fontWeight: 'bold' }}>{companyData.name || ' Jawad Aluminium and Glass Works'}</h1>
+                  <p style={{ margin: '0 0 5px 0', fontSize: '11px', color: '#000', fontWeight: '500' }}>{companyData.address || 'Shop#1 Habib Plaza Near River Bridge Main Double Road Phase 5 Ghouri Town Islamabad'}</p>
+                  <div style={{ display: 'flex', fontSize: '11px', color: '#000', gap: '30px' }}>
                      <div>Phone: <b style={{ fontWeight: 'bold' }}>{companyData.phone || '03235528196'}</b></div>
                      <div>Email: <b style={{ fontWeight: 'bold' }}>{companyData.email || 'jawadaluminium786@gmail.com'}</b></div>
                   </div>
                </div>
             </div>
  
-            <div style={{ display: 'flex', borderBottom: '1.5px solid #000' }}>
-               <div style={{ flex: 1, borderRight: '1.5px solid #000', minHeight: '80px' }}>
-                  <div style={{ padding: '6px 15px', borderBottom: '1.5px solid #000', fontSize: '12px', fontWeight: 'bold', background: '#f9fafb', color: '#000' }}>Received From:</div>
-                  <div style={{ padding: '12px 15px', fontSize: '15px', fontWeight: 'bold' }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
+               <div style={{ flex: 1, borderRight: '1px solid #000', minHeight: '60px' }}>
+                  <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '10px', fontWeight: 'bold', background: '#f8fafc', color: '#000' }}>Received From:</div>
+                  <div style={{ padding: '8px 10px', fontSize: '11px', fontWeight: 'bold' }}>
                     {payment.customerName}
                   </div>
                </div>
-               <div style={{ flex: 1 }}>
-                  <div style={{ padding: '6px 15px', borderBottom: '1.5px solid #000', fontSize: '12px', fontWeight: 'bold', background: '#f9fafb', color: '#000' }}>Receipt Details:</div>
-                  <div style={{ padding: '12px 15px', fontSize: '13px', color: '#000', lineHeight: '1.5' }}>
+               <div style={{ width: '300px' }}>
+                  <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '10px', fontWeight: 'bold', background: '#f8fafc', color: '#000' }}>Receipt Details:</div>
+                  <div style={{ padding: '8px 10px', fontSize: '11px', color: '#000', lineHeight: '1.5', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <div style={{ display: 'flex' }}><span style={{ width: '80px' }}>No:</span> <b style={{ fontWeight: 'bold' }}>{payment.refNo}</b></div>
                     <div style={{ display: 'flex' }}><span style={{ width: '80px' }}>Date:</span> <b style={{ fontWeight: 'bold' }}>{payment.date}</b></div>
                     <div style={{ display: 'flex' }}><span style={{ width: '80px' }}>Time:</span> <b style={{ fontWeight: 'bold' }}>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</b></div>
@@ -312,39 +315,39 @@ export function ReceiptView({
                </div>
             </div>
   
-            <div style={{ flex: 1, borderBottom: '1.5px solid #000' }}></div>
+            <div style={{ flex: 1, borderBottom: '1px solid #000' }}></div>
   
-            <div style={{ display: 'flex', borderBottom: '1.5px solid #000' }}>
-               <div style={{ flex: 1, borderRight: '1.5px solid #000' }}></div>
-               <div style={{ width: '380px' }}>
-                  <div style={{ borderBottom: '1px solid #000', padding: '10px 15px', display: 'flex', alignItems: 'center' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 'bold', width: '120px' }}>Received</span>
-                    <span style={{ fontSize: '14px', fontWeight: 'bold', marginRight: '30px' }}>:</span>
-                    <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Rs {(payment.receivedAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+            <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
+               <div style={{ flex: 1, borderRight: '1px solid #000' }}></div>
+               <div style={{ width: '300px' }}>
+                  <div style={{ borderBottom: '1px solid #000', padding: '6px 10px', display: 'flex', alignItems: 'center' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 'bold', width: '120px' }}>Received</span>
+                    <span style={{ fontSize: '11px', fontWeight: 'bold', marginRight: '30px' }}>:</span>
+                    <span style={{ fontSize: '13px', fontWeight: 'bold' }}>Rs {(payment.receivedAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                   </div>
-                  <div style={{ borderBottom: '1px solid #000', padding: '8px 15px', background: '#f9fafb', fontSize: '12px', fontWeight: 'bold' }}>
+                  <div style={{ borderBottom: '1px solid #000', padding: '6px 10px', background: '#f8fafc', fontSize: '10px', fontWeight: 'bold' }}>
                     Amount In Words :
                   </div>
-                  <div style={{ padding: '12px 15px', fontSize: '14px', color: '#000', minHeight: '50px' }}>
+                  <div style={{ padding: '8px 10px', fontSize: '11px', color: '#000', minHeight: '40px' }}>
                     {numberToWords(payment.receivedAmount || 0)}
                   </div>
                </div>
             </div>
   
-            <div style={{ display: 'flex', height: '140px' }}>
-               <div style={{ flex: 1, borderRight: '1.5px solid #000' }}>
+            <div style={{ display: 'flex', height: '110px' }}>
+               <div style={{ flex: 1, borderRight: '1px solid #000' }}>
                </div>
-                <div style={{ width: '380px', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ padding: '8px 15px', borderBottom: '1.5px solid #000', fontSize: '12px', fontWeight: 'bold', background: '#f9fafb' }}>
+                <div style={{ width: '300px', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '10px', fontWeight: 'bold', background: '#f8fafc' }}>
                     For {companyData.name || 'Business Name'}:
                   </div>
-                  <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ padding: '10px', textAlign: 'center', minHeight: '90px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end' }}>
                      {companyData.signature ? (
-                         <img src={companyData.signature} alt="Signature" style={{ maxHeight: '60px', maxWidth: '280px', objectFit: 'contain' }} />
+                         <img src={companyData.signature} alt="Signature" style={{ maxHeight: '60px', maxWidth: '240px', objectFit: 'contain' }} />
                      ) : (
-                         <div style={{ height: '30px', borderBottom: '1px dashed #ccc', width: '150px', marginBottom: '10px' }}></div>
+                         <div style={{ height: '40px' }}></div>
                      )}
-                     <div style={{ fontSize: '13px', color: '#000', fontWeight: 'bold' }}>Authorized Signatory</div>
+                     <div style={{ fontSize: '11px', color: '#555', marginTop: '4px', fontWeight: 'bold' }}>Authorized Signatory</div>
                   </div>
                </div>
             </div>

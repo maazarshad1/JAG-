@@ -38,13 +38,14 @@ export function InvoiceView({
     try {
       await new Promise(resolve => setTimeout(resolve, 300));
 
+      const elHeight = element.scrollHeight > 1123 ? element.scrollHeight : 1123;
       const dataUrl = await toJpeg(element, {
         quality: 0.6,
         pixelRatio: 1.5,
         cacheBust: true,
         backgroundColor: '#ffffff',
         width: 794,
-        height: 1123,
+        height: elHeight,
         style: {
           transform: 'none',
           boxShadow: 'none',
@@ -54,8 +55,10 @@ export function InvoiceView({
         },
       });
       
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      pdf.addImage(dataUrl, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+      const pdfWidth = 210;
+      const pdfHeight = (elHeight * pdfWidth) / 794;
+      const pdf = new jsPDF('p', 'mm', [pdfWidth, pdfHeight]);
+      pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
       const blob = pdf.output('blob');
       
       return {
@@ -259,7 +262,7 @@ export function InvoiceView({
               </div>
             </div>
 
-            <div id="invoice-paper" className="bg-white border border-slate-200 shadow-xl p-0 print:shadow-none print:border-none print:p-0 relative h-[1123px] w-[794px] mx-auto text-black font-sans leading-snug flex flex-col overflow-hidden">
+            <div id="invoice-paper" className="bg-white border border-slate-200 shadow-xl p-0 print:shadow-none print:border-none print:p-0 relative min-h-[1123px] w-[794px] mx-auto text-black font-sans leading-snug flex flex-col">
           <style dangerouslySetInnerHTML={{__html: `
             .repl-table th, .repl-table td { border-bottom: 1px solid #000; border-right: 1px solid #000; padding: 6px 8px; }
             .repl-table th:last-child, .repl-table td:last-child { border-right: none; }
@@ -278,13 +281,13 @@ export function InvoiceView({
                   {companyData.logo ? (
                      <img src={companyData.logo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                   ) : (
-                     <div style={{ color: '#000', fontWeight: '900', fontSize: '32px', border: '3px solid #000', borderRadius: '50%', width: '70px', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>JAG</div>
+                     <div style={{ color: '#000', fontWeight: '900', fontSize: '28px', border: '3px solid #000', borderRadius: '50%', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>JAG</div>
                   )}
                </div>
                <div style={{ flex: 1 }}>
-                  <h1 style={{ margin: '0 0 4px 0', fontSize: '26px', color: '#111827', fontWeight: 'bold' }}>{companyData.name || 'Business Name'}</h1>
-                  <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#374151', fontWeight: '500' }}>{companyData.address || 'Company Address'}</p>
-                  <div style={{ display: 'flex', fontSize: '14px', color: '#111827', gap: '30px', flexWrap: 'wrap' }}>
+                  <h1 style={{ margin: '0 0 4px 0', fontSize: '18px', color: '#111827', fontWeight: 'bold' }}>{companyData.name || 'Business Name'}</h1>
+                  <p style={{ margin: '0 0 5px 0', fontSize: '11px', color: '#374151', fontWeight: '500' }}>{companyData.address || 'Company Address'}</p>
+                  <div style={{ display: 'flex', fontSize: '11px', color: '#111827', gap: '30px', flexWrap: 'wrap' }}>
                      <div>Phone: <b style={{ fontWeight: 'bold' }}>{companyData.phone || '0000000000'}</b></div>
                      {companyData.landline && <div>Landline: <b style={{ fontWeight: 'bold' }}>{companyData.landline}</b></div>}
                      <div>Email: <b style={{ fontWeight: 'bold' }}>{companyData.email || 'email@example.com'}</b></div>
@@ -294,16 +297,16 @@ export function InvoiceView({
 
             <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
                <div style={{ flex: 1, borderRight: '1px solid #000' }}>
-                  <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '13px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice For:' : 'Estimate For:'}</div>
-                  <div style={{ padding: '10px', fontSize: '14px', fontWeight: 'normal', minHeight: '70px', wordBreak: 'break-word', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '10px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice For:' : 'Estimate For:'}</div>
+                  <div style={{ padding: '8px 10px', fontSize: '11px', fontWeight: 'normal', minHeight: '50px', wordBreak: 'break-word', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <div style={{ fontWeight: 'bold' }}>{estimate.customerName}</div>
-                    {estimate.customerPhone && <div style={{ fontSize: '13px' }}>Phone: <span style={{ fontWeight: 'bold' }}>{estimate.customerPhone}</span></div>}
-                    {estimate.billingAddress && <div style={{ fontWeight: 'normal', fontSize: '14px', whiteSpace: 'pre-wrap', color: '#374151' }}>{estimate.billingAddress}</div>}
+                    {estimate.customerPhone && <div style={{ fontSize: '11px' }}>Phone: <span style={{ fontWeight: 'bold' }}>{estimate.customerPhone}</span></div>}
+                    {estimate.billingAddress && <div style={{ fontWeight: 'normal', fontSize: '11px', whiteSpace: 'pre-wrap', color: '#374151' }}>{estimate.billingAddress}</div>}
                   </div>
                </div>
                <div style={{ width: '350px' }}>
-                  <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '13px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice Details:' : 'Estimate Details:'}</div>
-                   <div style={{ padding: '10px', fontSize: '13px', color: '#111827', minHeight: '70px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '10px', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice Details:' : 'Estimate Details:'}</div>
+                   <div style={{ padding: '8px 10px', fontSize: '11px', color: '#111827', minHeight: '50px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <div><span style={{ color: '#374151' }}>No:</span> <b style={{ color: '#000' }}>{estimate.refNo}</b></div>
                     {estimate.customerRefNo && <div><span style={{ color: '#374151' }}>Customer Ref No:</span> <b style={{ color: '#000' }}>{estimate.customerRefNo}</b></div>}
                     <div><span style={{ color: '#374151' }}>Date:</span> <b style={{ color: '#000' }}>{estimate.date}</b></div>
@@ -313,14 +316,14 @@ export function InvoiceView({
             </div>
 
              <div style={{ flex: 1, borderBottom: '1px solid #000' }}>
-                <table className="repl-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', tableLayout: 'fixed' }}>
+                <table className="repl-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', tableLayout: 'fixed' }}>
                  <thead>
-                   <tr style={{ background: '#f8fafc' }}>
+                   <tr style={{ background: '#f8fafc', fontSize: '10px' }}>
                      <th style={{ width: '44px', textAlign: 'left', padding: '6px 10px' }}>#</th>
                      <th style={{ textAlign: 'left', width: 'auto', padding: '6px 10px' }}>Item name</th>
-                     <th style={{ width: '120px', textAlign: 'right', padding: '6px 10px' }}>Quantity</th>
-                     <th style={{ width: '130px', textAlign: 'right', padding: '6px 10px' }}>Price/ Unit (₨)</th>
-                     <th style={{ width: '150px', textAlign: 'right', padding: '6px 10px' }}>Amount(₨)</th>
+                     <th style={{ width: '90px', textAlign: 'right', padding: '6px 10px' }}>Quantity</th>
+                     <th style={{ width: '120px', textAlign: 'right', padding: '6px 10px' }}>Price/ Unit (₨)</th>
+                     <th style={{ width: '140px', textAlign: 'right', padding: '6px 10px' }}>Amount(₨)</th>
                    </tr>
                  </thead>
                  <tbody>
@@ -334,36 +337,35 @@ export function InvoiceView({
                       </tr>
                    ))}
                    <tr>
-                     <td></td>
-                     <td style={{ fontWeight: 'bold' }}>Total</td>
+                     <td colSpan={2} style={{ fontWeight: 'bold', paddingLeft: '10px' }}>Total</td>
                      <td style={{ fontWeight: 'bold', textAlign: 'right' }}>{estimate.items.reduce((s, i) => s + i.quantity, 0)}</td>
                      <td></td>
                      <td style={{ fontWeight: 'bold', textAlign: 'right' }}>₨ {subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                    </tr>
                  </tbody>
-               </table>
+                </table>
              </div>
 
             <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
                <div style={{ flex: 1, borderRight: '1px solid #000' }}></div>
                <div style={{ width: '350px' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                     <tbody>
                       <tr>
-                        <td style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontWeight: '500' }}>Sub Total</td>
-                        <td style={{ padding: '8px 10px', borderBottom: '1px solid #000', textAlign: 'center', width: '20px' }}>:</td>
-                        <td style={{ padding: '8px 15px', borderBottom: '1px solid #000', textAlign: 'right', fontWeight: 'bold' }}>₨ {subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td style={{ padding: '6px 15px', borderBottom: '1px solid #000', fontWeight: '500' }}>Sub Total</td>
+                        <td style={{ padding: '6px 10px', borderBottom: '1px solid #000', textAlign: 'center', width: '20px' }}>:</td>
+                        <td style={{ padding: '6px 15px', borderBottom: '1px solid #000', textAlign: 'right', fontWeight: 'bold' }}>₨ {subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                       <tr>
-                        <td style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontWeight: 'bold' }}>Total</td>
-                        <td style={{ padding: '8px 10px', borderBottom: '1px solid #000', textAlign: 'center', fontWeight: 'bold' }}>:</td>
-                        <td style={{ padding: '8px 15px', borderBottom: '1px solid #000', textAlign: 'right', fontWeight: 'bold', fontSize: '16px' }}>₨ {estimate.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td style={{ padding: '6px 15px', borderBottom: '1px solid #000', fontWeight: 'bold' }}>Total</td>
+                        <td style={{ padding: '6px 10px', borderBottom: '1px solid #000', textAlign: 'center', fontWeight: 'bold' }}>:</td>
+                        <td style={{ padding: '6px 15px', borderBottom: '1px solid #000', textAlign: 'right', fontWeight: 'bold', fontSize: '14px' }}>₨ {estimate.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                       <tr>
-                        <td colSpan={3} style={{ padding: '8px 15px', borderBottom: '1px solid #000', fontWeight: 'bold', background: '#f8fafc' }}>{estimate.isSale ? 'Invoice' : 'Estimate'} Amount In Words :</td>
+                        <td colSpan={3} style={{ padding: '6px 15px', borderBottom: '1px solid #000', fontWeight: 'bold', background: '#f8fafc', fontSize: '11px' }}>{estimate.isSale ? 'Invoice Amount In Words :' : 'Estimate Amount In Words :'}</td>
                       </tr>
                       <tr>
-                        <td colSpan={3} style={{ padding: '8px 15px', minHeight: '50px', verticalAlign: 'top', textTransform: 'capitalize', fontSize: '15px' }}>
+                        <td colSpan={3} style={{ padding: '10px 15px', minHeight: '40px', verticalAlign: 'top', textTransform: 'capitalize', fontSize: '12px' }}>
                           {numberToWords(estimate.totalAmount)}
                         </td>
                       </tr>
@@ -373,8 +375,8 @@ export function InvoiceView({
             </div>
 
             <div style={{ borderBottom: '1px solid #000' }}>
-               <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '13px', fontWeight: 'bold', background: '#f8fafc' }}>Terms And Conditions:</div>
-               <div style={{ padding: '10px 10px', fontSize: '14px', color: '#111', whiteSpace: 'pre-wrap' }}>
+               <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '11px', fontWeight: 'bold', background: '#f8fafc' }}>Terms And Conditions:</div>
+               <div style={{ padding: '10px 10px', fontSize: '12px', color: '#111', whiteSpace: 'pre-wrap' }}>
                   {companyData.terms || 'Thank you for doing business with us.'}
                </div>
             </div>
@@ -382,14 +384,14 @@ export function InvoiceView({
             <div style={{ display: 'flex' }}>
                <div style={{ flex: 1, borderRight: '1px solid #000' }}></div>
                <div style={{ width: '350px', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '13px', fontWeight: 'bold', background: '#f8fafc' }}>For {companyData.name || 'Business Name'}:</div>
-                  <div style={{ padding: '20px', textAlign: 'center', minHeight: '120px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '11px', fontWeight: 'bold', background: '#f8fafc' }}>For {companyData.name || 'Business Name'}:</div>
+                  <div style={{ padding: '15px', textAlign: 'center', minHeight: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end' }}>
                      {companyData.signature ? (
-                         <img src={companyData.signature} alt="Signature" style={{ maxHeight: '80px', maxWidth: '240px', objectFit: 'contain' }} />
+                         <img src={companyData.signature} alt="Signature" style={{ maxHeight: '60px', maxWidth: '240px', objectFit: 'contain' }} />
                      ) : (
-                         <div style={{ height: '60px' }}></div>
+                         <div style={{ height: '50px' }}></div>
                      )}
-                     <div style={{ fontSize: '14px', color: '#555', marginTop: '6px', fontWeight: 'bold' }}>Authorized Signatory</div>
+                     <div style={{ fontSize: '12px', color: '#555', marginTop: '6px', fontWeight: 'bold' }}>Authorized Signatory</div>
                   </div>
                </div>
             </div>
