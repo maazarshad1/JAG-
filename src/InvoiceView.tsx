@@ -365,10 +365,24 @@ export function InvoiceView({
                         <td colSpan={3} style={{ padding: '6px 15px', borderBottom: '1px solid #000', fontWeight: 'bold', background: '#f8fafc', fontSize: '11px' }}>{estimate.isSale ? 'Invoice Amount In Words :' : 'Estimate Amount In Words :'}</td>
                       </tr>
                       <tr>
-                        <td colSpan={3} style={{ padding: '10px 15px', minHeight: '40px', verticalAlign: 'top', textTransform: 'capitalize', fontSize: '12px' }}>
+                        <td colSpan={3} style={{ padding: '10px 15px', borderBottom: '1px solid #000', minHeight: '40px', verticalAlign: 'top', textTransform: 'capitalize', fontSize: '12px' }}>
                           {numberToWords(estimate.totalAmount)}
                         </td>
                       </tr>
+                      {estimate.isSale && (
+                        <>
+                          <tr>
+                            <td style={{ padding: '6px 15px', borderBottom: '1px solid #000', fontWeight: '500' }}>Received</td>
+                            <td style={{ padding: '6px 10px', borderBottom: '1px solid #000', textAlign: 'center', width: '20px' }}>:</td>
+                            <td style={{ padding: '6px 15px', borderBottom: '1px solid #000', textAlign: 'right', fontWeight: 'bold' }}>₨ {(estimate.receivedAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                          </tr>
+                          <tr>
+                            <td style={{ padding: '6px 15px', borderBottom: 'none', fontWeight: '500' }}>Balance</td>
+                            <td style={{ padding: '6px 10px', borderBottom: 'none', textAlign: 'center', width: '20px' }}>:</td>
+                            <td style={{ padding: '6px 15px', borderBottom: 'none', textAlign: 'right', fontWeight: 'bold' }}>₨ {(estimate.balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                          </tr>
+                        </>
+                      )}
                     </tbody>
                   </table>
                </div>

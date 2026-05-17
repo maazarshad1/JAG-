@@ -38,7 +38,7 @@ export function ReceiptView({
     try {
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      const elHeight = element.scrollHeight > 1123 ? element.scrollHeight : 1123;
+      const elHeight = element.scrollHeight;
       const dataUrl = await toJpeg(element, {
         quality: 0.6,
         pixelRatio: 1.5,
@@ -266,7 +266,7 @@ export function ReceiptView({
               </div>
             </div>
 
-            <div id="receipt-paper" className="bg-white border border-slate-200 shadow-xl p-0 print:shadow-none print:border-none print:p-0 relative min-h-[1123px] w-[794px] mx-auto text-black font-sans leading-snug flex flex-col">
+            <div id="receipt-paper" className="bg-white border border-slate-200 shadow-xl p-0 print:shadow-none print:border-none print:p-0 relative w-[794px] mx-auto text-black font-sans leading-snug flex flex-col">
           <style dangerouslySetInnerHTML={{__html: `
             #receipt-paper * { box-sizing: border-box; }
             #receipt-paper { padding: 40px !important; }
@@ -279,7 +279,7 @@ export function ReceiptView({
             Receipt
           </h2>
 
-          <div style={{ border: '1px solid #000', flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          <div style={{ border: '1px solid #000', display: 'flex', flexDirection: 'column', position: 'relative' }}>
             <div style={{ display: 'flex', padding: '15px', borderBottom: '1px solid #000', alignItems: 'center' }}>
                <div style={{ width: '90px', height: '90px', border: '1px solid #000', marginRight: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#fff' }}>
                   {companyData.logo ? (
@@ -310,12 +310,9 @@ export function ReceiptView({
                   <div style={{ padding: '8px 10px', fontSize: '11px', color: '#000', lineHeight: '1.5', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <div style={{ display: 'flex' }}><span style={{ width: '80px' }}>No:</span> <b style={{ fontWeight: 'bold' }}>{payment.refNo}</b></div>
                     <div style={{ display: 'flex' }}><span style={{ width: '80px' }}>Date:</span> <b style={{ fontWeight: 'bold' }}>{payment.date}</b></div>
-                    <div style={{ display: 'flex' }}><span style={{ width: '80px' }}>Time:</span> <b style={{ fontWeight: 'bold' }}>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</b></div>
                   </div>
                </div>
             </div>
-  
-            <div style={{ flex: 1, borderBottom: '1px solid #000' }}></div>
   
             <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
                <div style={{ flex: 1, borderRight: '1px solid #000' }}></div>
