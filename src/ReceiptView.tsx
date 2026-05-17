@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Download, Printer, Share2, Check, Monitor, Trash2 } from 'lucide-react';
-import { toPng, toJpeg } from 'html-to-image';
+import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Estimate, CompanyData } from './types';
 
@@ -39,25 +39,38 @@ export function ReceiptView({
       await new Promise(resolve => setTimeout(resolve, 300));
 
       const elHeight = element.scrollHeight;
-      const dataUrl = await toJpeg(element, {
-        quality: 0.6,
-        pixelRatio: 1.5,
-        cacheBust: true,
+      const canvas = await html2canvas(element, {
+        scale: 1.5,
+        useCORS: true,
         backgroundColor: '#ffffff',
         width: 794,
         height: elHeight,
-        style: {
-          transform: 'none',
-          boxShadow: 'none',
-          margin: '0',
-          border: 'none',
-          padding: '40px',
-        },
+        windowWidth: 794,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (doc) => {
+          doc.body.style.width = '800px';
+          doc.body.style.minWidth = '800px';
+          const el = doc.getElementById('receipt-paper');
+          if (el) {
+            el.style.width = '794px';
+            el.style.minWidth = '794px';
+            el.style.maxWidth = '794px';
+            el.style.position = 'absolute';
+            el.style.top = '0';
+            el.style.left = '0';
+            el.style.margin = '0';
+            el.style.transform = 'none';
+          }
+        }
       });
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
       
-      const pdfWidth = 210;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (elHeight * pdfWidth) / 794;
-      const pdf = new jsPDF('p', 'mm', [pdfWidth, pdfHeight]);
       pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
       const blob = pdf.output('blob');
       
@@ -94,11 +107,35 @@ export function ReceiptView({
     setIsGenerating(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 300));
-      const dataUrl = await toJpeg(element, {
-        quality: 0.95,
-        pixelRatio: 2,
+      const elHeight = element.scrollHeight;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
         backgroundColor: '#ffffff',
+        width: 794,
+        height: elHeight,
+        windowWidth: 794,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (doc) => {
+          doc.body.style.width = '800px';
+          doc.body.style.minWidth = '800px';
+          const el = doc.getElementById('receipt-paper');
+          if (el) {
+            el.style.width = '794px';
+            el.style.minWidth = '794px';
+            el.style.maxWidth = '794px';
+            el.style.position = 'absolute';
+            el.style.top = '0';
+            el.style.left = '0';
+            el.style.margin = '0';
+            el.style.transform = 'none';
+          }
+        }
       });
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
       const response = await fetch(dataUrl);
       const blob = await response.blob();
       return { blob, fileName: `Receipt_${payment.refNo}.jpg` };
@@ -266,7 +303,7 @@ export function ReceiptView({
               </div>
             </div>
 
-            <div id="receipt-paper" className="bg-white border border-slate-200 shadow-xl p-0 print:shadow-none print:border-none print:p-0 relative w-[794px] mx-auto text-black font-sans leading-snug flex flex-col">
+            <div id="receipt-paper" className="bg-white border border-slate-200 shadow-xl p-0 print:shadow-none print:border-none print:p-0 relative w-[794px] min-h-[1123px] mx-auto text-black font-sans leading-snug flex flex-col">
           <style dangerouslySetInnerHTML={{__html: `
             #receipt-paper * { box-sizing: border-box; }
             #receipt-paper { padding: 40px !important; }
@@ -314,9 +351,9 @@ export function ReceiptView({
                </div>
             </div>
   
-            <div style={{ display: 'flex', borderBottom: '1px solid #000' }}>
+            <div style={{ display: 'flex', flex: 1 }}>
                <div style={{ flex: 1, borderRight: '1px solid #000' }}></div>
-               <div style={{ width: '300px' }}>
+               <div style={{ width: '300px', display: 'flex', flexDirection: 'column' }}>
                   <div style={{ borderBottom: '1px solid #000', padding: '6px 10px', display: 'flex', alignItems: 'center' }}>
                     <span style={{ fontSize: '11px', fontWeight: 'bold', width: '120px' }}>Received</span>
                     <span style={{ fontSize: '11px', fontWeight: 'bold', marginRight: '30px' }}>:</span>
@@ -325,16 +362,10 @@ export function ReceiptView({
                   <div style={{ borderBottom: '1px solid #000', padding: '6px 10px', background: '#f8fafc', fontSize: '10px', fontWeight: 'bold' }}>
                     Amount In Words :
                   </div>
-                  <div style={{ padding: '8px 10px', fontSize: '11px', color: '#000', minHeight: '40px' }}>
+                  <div style={{ borderBottom: '1px solid #000', padding: '8px 10px', fontSize: '11px', color: '#000', minHeight: '40px' }}>
                     {numberToWords(payment.receivedAmount || 0)}
                   </div>
-               </div>
-            </div>
-  
-            <div style={{ display: 'flex', height: '110px' }}>
-               <div style={{ flex: 1, borderRight: '1px solid #000' }}>
-               </div>
-                <div style={{ width: '300px', display: 'flex', flexDirection: 'column' }}>
+                  
                   <div style={{ padding: '6px 10px', borderBottom: '1px solid #000', fontSize: '10px', fontWeight: 'bold', background: '#f8fafc' }}>
                     For {companyData.name || 'Business Name'}:
                   </div>

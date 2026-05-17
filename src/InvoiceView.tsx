@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Download, Printer, Share2, Check, Monitor } from 'lucide-react';
-import { toPng, toJpeg } from 'html-to-image';
+import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Estimate, CompanyData } from './types';
 
@@ -39,25 +39,38 @@ export function InvoiceView({
       await new Promise(resolve => setTimeout(resolve, 300));
 
       const elHeight = element.scrollHeight > 1123 ? element.scrollHeight : 1123;
-      const dataUrl = await toJpeg(element, {
-        quality: 0.6,
-        pixelRatio: 1.5,
-        cacheBust: true,
+      const canvas = await html2canvas(element, {
+        scale: 1.5,
+        useCORS: true,
         backgroundColor: '#ffffff',
         width: 794,
         height: elHeight,
-        style: {
-          transform: 'none',
-          boxShadow: 'none',
-          margin: '0',
-          border: 'none',
-          padding: '40px',
-        },
+        windowWidth: 794,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (doc) => {
+          doc.body.style.width = '800px';
+          doc.body.style.minWidth = '800px';
+          const el = doc.getElementById('invoice-paper');
+          if (el) {
+            el.style.width = '794px';
+            el.style.minWidth = '794px';
+            el.style.maxWidth = '794px';
+            el.style.position = 'absolute';
+            el.style.top = '0';
+            el.style.left = '0';
+            el.style.margin = '0';
+            el.style.transform = 'none';
+          }
+        }
       });
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
       
-      const pdfWidth = 210;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (elHeight * pdfWidth) / 794;
-      const pdf = new jsPDF('p', 'mm', [pdfWidth, pdfHeight]);
       pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
       const blob = pdf.output('blob');
       
@@ -94,11 +107,35 @@ export function InvoiceView({
     setIsGenerating(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 300));
-      const dataUrl = await toJpeg(element, {
-        quality: 0.95,
-        pixelRatio: 2,
+      const elHeight = element.scrollHeight > 1123 ? element.scrollHeight : 1123;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
         backgroundColor: '#ffffff',
+        width: 794,
+        height: elHeight,
+        windowWidth: 794,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (doc) => {
+          doc.body.style.width = '800px';
+          doc.body.style.minWidth = '800px';
+          const el = doc.getElementById('invoice-paper');
+          if (el) {
+            el.style.width = '794px';
+            el.style.minWidth = '794px';
+            el.style.maxWidth = '794px';
+            el.style.position = 'absolute';
+            el.style.top = '0';
+            el.style.left = '0';
+            el.style.margin = '0';
+            el.style.transform = 'none';
+          }
+        }
       });
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
       const response = await fetch(dataUrl);
       const blob = await response.blob();
       return { blob, fileName: `${estimate.isSale ? 'Invoice' : 'Estimate'}_${estimate.refNo}.jpg` };
