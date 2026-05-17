@@ -109,7 +109,7 @@ export function InvoiceForm({
           customerRefNo: selectedParty?.customerRefNo ?? null,
           date,
           refNo: invoiceNumber,
-          status: isSale ? (balance <= 0 ? 'Closed' : 'Open') : status,
+          status: balance <= 0 ? 'Closed' : 'Open',
           items,
           totalAmount,
           receivedAmount,

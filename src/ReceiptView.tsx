@@ -303,7 +303,7 @@ export function ReceiptView({
               </div>
             </div>
 
-            <div id="receipt-paper" className="bg-white border border-slate-200 shadow-xl p-0 print:shadow-none print:border-none print:p-0 relative w-[794px] min-h-[1123px] mx-auto text-black font-sans leading-snug flex flex-col">
+            <div id="receipt-paper" className="bg-white border border-slate-200 shadow-xl p-0 print:shadow-none print:border-none print:p-0 relative w-[794px] mx-auto text-black font-sans leading-snug flex flex-col">
           <style dangerouslySetInnerHTML={{__html: `
             #receipt-paper * { box-sizing: border-box; }
             #receipt-paper { padding: 40px !important; }

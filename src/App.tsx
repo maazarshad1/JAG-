@@ -523,7 +523,12 @@ export default function App() {
       } else if (finalPartyId) {
           let remaining = amount;
           const openTxns = [...estimates, ...sales]
-            .filter(t => String(t.partyId) === String(finalPartyId) && t.status !== 'Closed' && t.balance > 0)
+            .filter(t => {
+              if (String(t.partyId) !== String(finalPartyId) || t.status === 'Closed' || t.balance <= 0) return false;
+              // If it's an estimate, check if it was converted to a sale. If so, don't apply bulk payment to it.
+              if (!t.isSale && sales.some(s => s.convertedFromId === t.id)) return false;
+              return true;
+            })
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
           for (const txn of openTxns) {
@@ -813,7 +818,8 @@ export default function App() {
           } else {
             if (isSale && convertingEstimateId) {
               inv.convertedFromId = convertingEstimateId;
-              batch.update(doc(db, 'transactions', convertingEstimateId), { status: 'Closed' });
+              const newBalance = inv.totalAmount - inv.receivedAmount;
+              batch.update(doc(db, 'transactions', convertingEstimateId), { status: newBalance <= 0 ? 'Closed' : 'Open' });
               setConvertingEstimateId(null);
             }
             const txnRef = doc(collection(db, 'transactions'));
@@ -839,7 +845,8 @@ export default function App() {
         } else {
             if (isSale && convertingEstimateId) {
                 inv.convertedFromId = convertingEstimateId;
-                setEstimates(prev => prev.map(e => e.id === convertingEstimateId ? { ...e, status: 'Closed' } : e));
+                const newBalance = inv.totalAmount - inv.receivedAmount;
+                setEstimates(prev => prev.map(e => e.id === convertingEstimateId ? { ...e, status: newBalance <= 0 ? 'Closed' : 'Open' } : e));
                 setConvertingEstimateId(null);
             }
             
