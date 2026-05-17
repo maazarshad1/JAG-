@@ -406,8 +406,6 @@ export function InvoiceView({
                           {numberToWords(estimate.totalAmount)}
                         </td>
                       </tr>
-                      {estimate.isSale && (
-                        <>
                           <tr>
                             <td style={{ padding: '6px 15px', borderBottom: '1px solid #000', fontWeight: '500' }}>Received</td>
                             <td style={{ padding: '6px 10px', borderBottom: '1px solid #000', textAlign: 'center', width: '20px' }}>:</td>
@@ -418,8 +416,6 @@ export function InvoiceView({
                             <td style={{ padding: '6px 10px', borderBottom: 'none', textAlign: 'center', width: '20px' }}>:</td>
                             <td style={{ padding: '6px 15px', borderBottom: 'none', textAlign: 'right', fontWeight: 'bold' }}>₨ {(estimate.balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                           </tr>
-                        </>
-                      )}
                     </tbody>
                   </table>
                </div>

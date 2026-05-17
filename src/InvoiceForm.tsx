@@ -336,23 +336,19 @@ export function InvoiceForm({
               <span style={{ color: '#6b7280' }}>Total Amount</span>
               <span style={{ fontWeight: 'bold' }}>Rs {totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
             </div>
-            {(isSale || status === 'Closed') && (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <span style={{ color: '#6b7280' }}>Received Amount</span>
-                  <input 
-                    type="number" 
-                    value={isNaN(receivedAmount) ? '' : receivedAmount} 
-                    onChange={e => setReceivedAmount(parseFloat(e.target.value) || 0)}
-                    style={{ width: '100px', padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid #f3f4f6' }}>
-                  <span style={{ fontWeight: 'bold' }}>Balance Due</span>
-                  <span style={{ fontWeight: 'bold', color: '#ef4444' }}>Rs {balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-              </>
-            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <span style={{ color: '#6b7280' }}>Received Amount</span>
+              <input 
+                type="number" 
+                value={isNaN(receivedAmount) ? '' : receivedAmount} 
+                onChange={e => setReceivedAmount(parseFloat(e.target.value) || 0)}
+                style={{ width: '100px', padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: '4px', textAlign: 'right' }}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid #f3f4f6' }}>
+              <span style={{ fontWeight: 'bold' }}>Balance Due</span>
+              <span style={{ fontWeight: 'bold', color: '#ef4444' }}>Rs {balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+            </div>
           </div>
         </div>
       </form>

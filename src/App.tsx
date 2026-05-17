@@ -819,7 +819,11 @@ export default function App() {
             if (isSale && convertingEstimateId) {
               inv.convertedFromId = convertingEstimateId;
               const newBalance = inv.totalAmount - inv.receivedAmount;
-              batch.update(doc(db, 'transactions', convertingEstimateId), { status: newBalance <= 0 ? 'Closed' : 'Open' });
+              batch.update(doc(db, 'transactions', convertingEstimateId), { 
+                status: newBalance <= 0 ? 'Closed' : 'Open',
+                receivedAmount: inv.receivedAmount,
+                balance: newBalance
+              });
               setConvertingEstimateId(null);
             }
             const txnRef = doc(collection(db, 'transactions'));
@@ -846,7 +850,12 @@ export default function App() {
             if (isSale && convertingEstimateId) {
                 inv.convertedFromId = convertingEstimateId;
                 const newBalance = inv.totalAmount - inv.receivedAmount;
-                setEstimates(prev => prev.map(e => e.id === convertingEstimateId ? { ...e, status: newBalance <= 0 ? 'Closed' : 'Open' } : e));
+                setEstimates(prev => prev.map(e => e.id === convertingEstimateId ? { 
+                    ...e, 
+                    status: newBalance <= 0 ? 'Closed' : 'Open',
+                    receivedAmount: inv.receivedAmount,
+                    balance: newBalance
+                } : e));
                 setConvertingEstimateId(null);
             }
             
